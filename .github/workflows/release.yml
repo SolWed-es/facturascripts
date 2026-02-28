@@ -1,0 +1,35 @@
+name: Build Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: solwed/production   # siempre desde esta rama
+
+      - name: Install dependencies
+        run: composer install --no-dev --optimize-autoloader
+
+      - name: Build ZIP
+        run: |
+          mkdir -p /tmp/build/facturascripts
+          rsync -av \
+            --exclude='.git' --exclude='.github' \
+            --exclude='.docker' --exclude='Dockerfile' \
+            --exclude='docker-compose.yml' \
+            --exclude='MyFiles' --exclude='Plugins' \
+            . /tmp/build/facturascripts/
+          cd /tmp/build && zip -r facturascripts.zip facturascripts/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: /tmp/build/facturascripts.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

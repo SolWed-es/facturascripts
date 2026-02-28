@@ -1,0 +1,77 @@
+name: Build Plugin Release
+
+# Se dispara con tags del formato "NombrePlugin-vX.Y"
+# Ejemplo: git tag SolwedTheme-v1.73 && git push origin SolwedTheme-v1.73
+
+on:
+  push:
+    tags:
+      - '*-v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Extract plugin name and version
+        id: info
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          PLUGIN="${TAG%-v*}"
+          VERSION="${TAG#$PLUGIN-v}"
+          echo "plugin=$PLUGIN" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "Plugin: $PLUGIN  Version: $VERSION"
+
+      - uses: actions/checkout@v4
+        with:
+          ref: plugin/${{ steps.info.outputs.plugin }}
+
+      - name: Build ZIP
+        run: |
+          PLUGIN="${{ steps.info.outputs.plugin }}"
+          mkdir -p /tmp/build/$PLUGIN
+          rsync -av \
+            --exclude='.git' --exclude='.github' \
+            Plugins/$PLUGIN/ /tmp/build/$PLUGIN/
+          cd /tmp/build && zip -r $PLUGIN.zip $PLUGIN/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.info.outputs.tag }}
+          files: /tmp/build/${{ steps.info.outputs.plugin }}.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update plugin-list.json in solwed/production
+        run: |
+          PLUGIN="${{ steps.info.outputs.plugin }}"
+          VERSION="${{ steps.info.outputs.version }}"
+
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git fetch origin solwed/production
+          git checkout solwed/production
+
+          # Actualizar la versión del plugin en el JSON
+          php -r "
+            \$json = json_decode(file_get_contents('plugin-list.json'), true);
+            foreach (\$json['plugins'] as &\$p) {
+              if (\$p['name'] === '$PLUGIN') {
+                \$p['version'] = '$VERSION';
+                break;
+              }
+            }
+            file_put_contents('plugin-list.json', json_encode(\$json, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . PHP_EOL);
+            echo 'Updated ' . '$PLUGIN' . ' to v' . '$VERSION' . PHP_EOL;
+          "
+
+          git add plugin-list.json
+          git diff --staged --quiet || git commit -m "chore: bump $PLUGIN to v$VERSION"
+          git push origin solwed/production
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
