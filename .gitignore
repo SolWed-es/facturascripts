@@ -5,6 +5,11 @@
 /MyFiles/
 /node_modules/
 /Plugins/
+!/Plugins/SolwedTheme/
+!/Plugins/ImportarFacturasEmail/
+!/Plugins/Blog/
+!/Plugins/SolwedPlugins/
+!/Plugins/SolwedTheme/
 /vendor/
 .DS_Store
 .htaccess
