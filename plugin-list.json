@@ -213,7 +213,7 @@
         {
             "name": "ProductoPack",
             "description": "Permite indicar a un producto que es un pack de otros productos. Al añadir un producto que es un pack a un documento agrega la lista de productos que lo componen en su lugar.",
-            "version": "2",
+            "version": "2.0",
             "min_version": "2025",
             "min_php": "8",
             "source": "github"
