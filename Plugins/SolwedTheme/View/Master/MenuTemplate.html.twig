@@ -17,12 +17,10 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 #}
-{% import 'Macro/GoogleTagManager.html.twig' as GoogleTagManager %}
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" lang="{{ constant('FS_LANG') | slice(0, 2) }}"
       xml:lang="{{ constant('FS_LANG') | slice(0, 2) }}">
 <head>
-    {{ GoogleTagManager.head() }}
     {% for includeView in getIncludeViews('MenuTemplate', 'HeadFirst') %}
         {% include includeView['path'] %}
     {% endfor %}
@@ -96,7 +94,6 @@
     <body>
     <!--  Body Wrapper -->
     <div class="page-wrapper" id="main-wrapper" data-layout="vertical" data-sidebartype="full">
-        {{ GoogleTagManager.body() }}
         {% for includeView in getIncludeViews('MenuTemplate', 'BodyFirst') %}
             {% include includeView['path'] %}
         {% endfor %}

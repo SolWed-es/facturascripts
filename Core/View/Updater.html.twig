@@ -18,7 +18,6 @@
  */
 #}
 {% extends "Master/MenuTemplate.html.twig" %}
-{% import 'Macro/Utils.html.twig' as Utils %}
 {% from 'Macro/Utils.html.twig' import messageCompat as showMessage %}
 
 {% block messages %}
@@ -48,19 +47,6 @@
                         <i class="fa-solid fa-redo" aria-hidden="true"></i>
                     </a>
                 </div>
-                {% if fsc.telemetryManager.ready() %}
-                    <button class="btn btn-secondary" type="button" data-bs-toggle="modal"
-                            data-bs-target="#modalTelemetry">
-                        <i class="fa-solid fa-registered fa-fw" aria-hidden="true"></i>
-                        <span class="d-none d-md-inline-block">{{ trans('manage-installation') }} </span>
-                    </button>
-                {% else %}
-                    <button class="btn btn-warning" type="button" data-bs-toggle="modal"
-                            data-bs-target="#modalTelemetry">
-                        <i class="fa-solid fa-registered fa-fw" aria-hidden="true"></i>
-                        <span class="d-none d-md-inline-block">{{ trans('register-installation') }}</span>
-                    </button>
-                {% endif %}
             </div>
             <div class="col-sm-6 text-end">
                 <h1 class="h3">
@@ -155,63 +141,6 @@
                             </form>
                         </div>
                     </div>
-                {% elseif fsc.telemetryManager.ready() == false %}
-                    <hr/>
-                    <div class="mt-4 mb-3">
-                        {{ Utils.registerInstall(false) }}
-                    </div>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-    <div class="modal fade" id="modalTelemetry" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                {% if fsc.telemetryManager.ready() %}
-                    <div class="modal-header">
-                        <h5 class="modal-title">
-                            <i class="fa-solid fa-registered me-1"></i>
-                            {{ trans('registered-installation', {'%number%': fsc.telemetryManager.id()}) }}
-                        </h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                aria-label="{{ trans('close') }}"></button>
-                    </div>
-                    <div class="modal-body">
-                        <p>{{ trans('registered-installation-p') }}</p>
-                        <p>{{ trans('telemetry-data-to-send') }}</p>
-                        <a class="btn btn-primary float-start" href="{{ fsc.url() }}?action=claim-install"
-                           target="_blank">
-                            <i class="fa-solid fa-cog fa-fw" aria-hidden="true"></i>
-                            {{ trans('manage') }}
-                        </a>
-                        <form action="{{ fsc.url() }}" method="post" onsubmit="animateSpinner('add')">
-                            {{ formToken() }}
-                            <input type="hidden" name="action" value="unlink"/>
-                            <button type="submit" class="btn btn-danger btn-spin-action float-end">
-                                <i class="fa-solid fa-unlink fa-fw" aria-hidden="true"></i>
-                                {{ trans('unlink') }}
-                            </button>
-                        </form>
-                    </div>
-                {% else %}
-                    <form action="{{ fsc.url() }}" method="post" onsubmit="animateSpinner('add')">
-                        {{ formToken() }}
-                        <input type="hidden" name="action" value="register"/>
-                        <div class="modal-header">
-                            <h5 class="modal-title">
-                                <i class="fa-solid fa-registered me-1"></i> {{ trans('register-installation') }}
-                            </h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                    aria-label="{{ trans('close') }}"></button>
-                        </div>
-                        <div class="modal-body">
-                            <p>{{ trans('register-installation-p') }}</p>
-                            <p>{{ trans('telemetry-data-to-send') }}</p>
-                            <button type="submit" class="btn btn-primary btn-spin-action w-100">
-                                {{ trans('register-installation') }}
-                            </button>
-                        </div>
-                    </form>
                 {% endif %}
             </div>
         </div>

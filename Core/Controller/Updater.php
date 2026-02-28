@@ -25,11 +25,11 @@ use FacturaScripts\Core\Cache;
 use FacturaScripts\Core\Http;
 use FacturaScripts\Core\Internal\Forja;
 use FacturaScripts\Core\Internal\Plugin;
+use FacturaScripts\Core\Internal\SolwedGitHub;
 use FacturaScripts\Core\Kernel;
 use FacturaScripts\Core\Migrations;
 use FacturaScripts\Core\Plugins;
 use FacturaScripts\Core\Response;
-use FacturaScripts\Core\Telemetry;
 use FacturaScripts\Core\Tools;
 use FacturaScripts\Dinamic\Model\User;
 use ZipArchive;
@@ -42,13 +42,10 @@ use ZipArchive;
 class Updater extends Controller
 {
     const CORE_ZIP_FOLDER = 'facturascripts';
-    const UPDATE_CORE_URL = 'https://facturascripts.com/DownloadBuild';
+    const SOLWED_CORE_ITEM_ID = 'solwed-core';
 
     /** @var array */
     public $coreUpdateWarnings = [];
-
-    /** @var Telemetry */
-    public $telemetryManager;
 
     /** @var array */
     public $updaterItems = [];
@@ -82,7 +79,7 @@ class Updater extends Controller
         $items = [];
 
         // comprobamos si se puede actualizar el core
-        if (Forja::canUpdateCore()) {
+        if (SolwedGitHub::canUpdateCore()) {
             $item = self::getUpdateItemsCore();
             if (!empty($item)) {
                 $items[] = $item;
@@ -108,8 +105,6 @@ class Updater extends Controller
     public function privateCore(&$response, $user, $permissions)
     {
         parent::privateCore($response, $user, $permissions);
-
-        $this->telemetryManager = new Telemetry();
 
         // Folders writable?
         $folders = $this->notWritableFolders();
@@ -167,8 +162,8 @@ class Updater extends Controller
                 unlink(Tools::folder($item['filename']));
             }
 
-            $url = $this->telemetryManager->signUrl($item['url']);
-            $http = Http::get($url);
+            $http = Http::get($item['url'])
+                ->setHeader('User-Agent', 'FacturaScripts-SolWed/' . Kernel::version());
             if ($http->saveAs(Tools::folder($item['filename']))) {
                 Tools::log()->notice('download-completed');
                 $this->updaterItems[$key]['downloaded'] = true;
@@ -196,10 +191,6 @@ class Updater extends Controller
                 $this->cancelAction();
                 return;
 
-            case 'claim-install':
-                $this->redirect($this->telemetryManager->claimUrl());
-                return;
-
             case 'disable-beta':
                 $this->disableBetaUpdatesAction();
                 return;
@@ -210,23 +201,6 @@ class Updater extends Controller
 
             case 'post-update':
                 $this->postUpdateAction();
-                break;
-
-            case 'register':
-                if ($this->telemetryManager->install()) {
-                    Tools::log()->notice('record-updated-correctly');
-                    break;
-                }
-                Tools::log()->error('record-save-error');
-                break;
-
-            case 'unlink':
-                if ($this->telemetryManager->unlink()) {
-                    $this->telemetryManager = new Telemetry();
-                    Tools::log()->notice('unlink-install-ok');
-                    break;
-                }
-                Tools::log()->error('unlink-install-ko');
                 break;
 
             case 'update':
@@ -240,32 +214,31 @@ class Updater extends Controller
 
     private static function getUpdateItemsCore(): array
     {
-        $fileName = 'update-' . Forja::CORE_PROJECT_ID . '.zip';
-        foreach (Forja::getBuilds(Forja::CORE_PROJECT_ID) as $build) {
-            if ($build['version'] <= self::getCoreVersion()) {
-                continue;
-            }
+        $build = SolwedGitHub::getCoreBuild();
+        if (empty($build) || $build['version'] <= self::getCoreVersion()) {
+            return [];
+        }
 
-            $item = [
-                'description' => Tools::trans('core-update', ['%version%' => $build['version']]),
-                'downloaded' => file_exists(Tools::folder($fileName)),
-                'filename' => $fileName,
-                'id' => Forja::CORE_PROJECT_ID,
-                'name' => 'CORE',
-                'stable' => $build['stable'],
-                'url' => self::UPDATE_CORE_URL . '/' . Forja::CORE_PROJECT_ID . '/' . $build['version'],
-                'version' => $build['version'],
-                'mincore' => 0,
-                'maxcore' => 0
-            ];
+        $fileName = 'update-' . self::SOLWED_CORE_ITEM_ID . '.zip';
+        $item = [
+            'description' => Tools::trans('core-update', ['%version%' => $build['version']]),
+            'downloaded'  => file_exists(Tools::folder($fileName)),
+            'filename'    => $fileName,
+            'id'          => self::SOLWED_CORE_ITEM_ID,
+            'name'        => 'CORE',
+            'stable'      => $build['stable'],
+            'url'         => $build['url'],
+            'version'     => $build['version'],
+            'mincore'     => 0,
+            'maxcore'     => 0,
+        ];
 
-            if ($build['stable']) {
-                return $item;
-            }
+        if ($build['stable']) {
+            return $item;
+        }
 
-            if ($build['beta'] && Tools::settings('default', 'enableupdatesbeta', false)) {
-                return $item;
-            }
+        if ($build['beta'] && Tools::settings('default', 'enableupdatesbeta', false)) {
+            return $item;
         }
 
         return [];
@@ -273,7 +246,57 @@ class Updater extends Controller
 
     private static function getUpdateItemsPlugin(Plugin $plugin): array
     {
+        // Si el plugin tiene campo github en su ini, usamos GitHub Releases
+        if (!empty(SolwedGitHub::getPluginRepo($plugin))) {
+            return self::getUpdateItemsPluginGitHub($plugin);
+        }
+
+        // Fallback: Forja oficial de facturascripts.com
+        return self::getUpdateItemsPluginForja($plugin);
+    }
+
+    private static function getUpdateItemsPluginGitHub(Plugin $plugin): array
+    {
+        $build = SolwedGitHub::getPluginBuild($plugin);
+        if (empty($build) || $build['version'] <= $plugin->version) {
+            return [];
+        }
+
+        $fileName = 'update-' . $plugin->name . '.zip';
+        $item = [
+            'description' => Tools::trans('plugin-update', [
+                '%pluginName%' => $plugin->name,
+                '%version%' => $build['version']
+            ]),
+            'downloaded' => file_exists(Tools::folder($fileName)),
+            'filename'   => $fileName,
+            'id'         => $plugin->name,
+            'name'       => $plugin->name,
+            'stable'     => $build['stable'],
+            'url'        => $build['url'],
+            'version'    => $build['version'],
+            'mincore'    => 0,
+            'maxcore'    => 0,
+        ];
+
+        if ($build['stable']) {
+            return $item;
+        }
+
+        if ($build['beta'] && Tools::settings('default', 'enableupdatesbeta', false)) {
+            return $item;
+        }
+
+        return [];
+    }
+
+    private static function getUpdateItemsPluginForja(Plugin $plugin): array
+    {
         $id = $plugin->forja('idplugin', 0);
+        if ($id <= 0) {
+            return [];
+        }
+
         $fileName = 'update-' . $id . '.zip';
         $coreVersion = self::getCoreVersion();
 
@@ -282,9 +305,8 @@ class Updater extends Controller
                 continue;
             }
 
-            // Verificar compatibilidad con el core actual
             if ($build['mincore'] > $coreVersion) {
-                continue; // Requiere un core más reciente
+                continue;
             }
 
             $item = [
@@ -293,14 +315,14 @@ class Updater extends Controller
                     '%version%' => $build['version']
                 ]),
                 'downloaded' => file_exists(Tools::folder($fileName)),
-                'filename' => $fileName,
-                'id' => $id,
-                'name' => $plugin->name,
-                'stable' => $build['stable'],
-                'url' => self::UPDATE_CORE_URL . '/' . $id . '/' . $build['version'],
-                'version' => $build['version'],
-                'mincore' => $build['mincore'],
-                'maxcore' => $build['maxcore']
+                'filename'   => $fileName,
+                'id'         => $id,
+                'name'       => $plugin->name,
+                'stable'     => $build['stable'],
+                'url'        => Forja::BUILDS_URL . '/' . $id . '/' . $build['version'],
+                'version'    => $build['version'],
+                'mincore'    => $build['mincore'],
+                'maxcore'    => $build['maxcore'],
             ];
 
             if ($build['stable']) {
@@ -362,42 +384,7 @@ class Updater extends Controller
 
     private function setCoreWarnings(): void
     {
-        // comprobamos si hay actualización del core
-        $newCore = 0;
-        foreach ($this->updaterItems as $item) {
-            if ($item['id'] === Forja::CORE_PROJECT_ID) {
-                $newCore = $item['version'];
-                break;
-            }
-        }
-        if (empty($newCore)) {
-            return;
-        }
-
-        // comprobamos los plugins instalados
-        foreach (Plugins::list() as $plugin) {
-            // ¿El plugin está activo?
-            if (false === $plugin->enabled) {
-                continue;
-            }
-
-            // ¿Funcionará con el nuevo core?
-            if ($this->willItWorkOnNewCore($plugin, $newCore)) {
-                continue;
-            }
-
-            // ¿Hay actualización para el nuevo core?
-            if ($plugin->forja('maxcore', 0) >= $newCore) {
-                $this->coreUpdateWarnings[$plugin->name] = Tools::trans('plugin-need-update', [
-                    '%plugin%' => $plugin->name
-                ]);
-                continue;
-            }
-
-            $this->coreUpdateWarnings[$plugin->name] = Tools::trans('plugin-need-update-but', [
-                '%plugin%' => $plugin->name
-            ]);
-        }
+        // Los plugins SolWed no están en la Forja → sin warnings de compatibilidad
     }
 
     /**
@@ -419,7 +406,7 @@ class Updater extends Controller
         // get the name of the plugin to init after update (if the plugin is enabled)
         $init = '';
         foreach (self::getUpdateItems() as $item) {
-            if ($idItem == Forja::CORE_PROJECT_ID) {
+            if ($idItem == self::SOLWED_CORE_ITEM_ID) {
                 break;
             }
 
@@ -430,7 +417,7 @@ class Updater extends Controller
         }
 
         // extract core/plugin zip file
-        $done = ($idItem == Forja::CORE_PROJECT_ID) ?
+        $done = ($idItem == self::SOLWED_CORE_ITEM_ID) ?
             $this->updateCore($zip, $fileName) :
             $this->updatePlugin($zip, $fileName);
 
@@ -493,18 +480,5 @@ class Updater extends Controller
         // remove zip file
         unlink(Tools::folder($fileName));
         return $return;
-    }
-
-    private function willItWorkOnNewCore(Plugin $plugin, float $newCore): bool
-    {
-        // buscamos información del plugin en la forja
-        foreach (Forja::getBuildsByName($plugin->name) as $build) {
-            if ($build['version'] == $plugin->version) {
-                // si soporta un core mayor o igual al que estamos actualizando, entonces funcionará
-                return $build['maxcore'] >= $newCore;
-            }
-        }
-
-        return false;
     }
 }
