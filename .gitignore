@@ -24,13 +24,10 @@ package-lock.json
 .buildpath
 .project
 .settings
-
 # netbeans
 /nbproject/
-
 # phpstorm
 /.idea/
-
 # vscode
 .vscode
 *.code-workspace
