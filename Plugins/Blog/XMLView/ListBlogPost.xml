@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view>
+    <columns>
+        <column name="id" order="10">
+            <widget type="text" fieldname="id" readonly="true"/>
+        </column>
+        <column name="title" order="20">
+            <widget type="text" fieldname="title"/>
+        </column>
+        <column name="slug" order="30">
+            <widget type="text" fieldname="slug"/>
+        </column>
+        <column name="status" order="40">
+            <widget type="select" fieldname="status">
+                <values title="draft">draft</values>
+                <values title="published">published</values>
+            </widget>
+        </column>
+        <column name="author" order="50">
+            <widget type="text" fieldname="author"/>
+        </column>
+        <column name="published-at" order="60">
+            <widget type="datetime" fieldname="published_at"/>
+        </column>
+        <column name="created-at" order="70">
+            <widget type="datetime" fieldname="created_at" readonly="true"/>
+        </column>
+    </columns>
+</view>
