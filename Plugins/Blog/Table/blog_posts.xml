@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<table>
+    <column>
+        <name>id</name>
+        <type>serial</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>title</name>
+        <type>character varying(255)</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>slug</name>
+        <type>character varying(255)</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>content</name>
+        <type>text</type>
+    </column>
+    <column>
+        <name>excerpt</name>
+        <type>character varying(500)</type>
+    </column>
+    <column>
+        <name>status</name>
+        <type>character varying(20)</type>
+        <default>'draft'</default>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>author</name>
+        <type>character varying(50)</type>
+    </column>
+    <column>
+        <name>published_at</name>
+        <type>timestamp</type>
+    </column>
+    <column>
+        <name>featured_image</name>
+        <type>character varying(500)</type>
+    </column>
+    <column>
+        <name>meta_title</name>
+        <type>character varying(255)</type>
+    </column>
+    <column>
+        <name>meta_description</name>
+        <type>character varying(500)</type>
+    </column>
+    <column>
+        <name>meta_keywords</name>
+        <type>character varying(255)</type>
+    </column>
+    <column>
+        <name>created_at</name>
+        <type>timestamp</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>updated_at</name>
+        <type>timestamp</type>
+        <null>NO</null>
+    </column>
+
+    <constraint>
+        <name>blog_posts_pkey</name>
+        <type>PRIMARY KEY (id)</type>
+    </constraint>
+
+    <constraint>
+        <name>unique_blog_post_slug</name>
+        <type>UNIQUE (slug)</type>
+    </constraint>
+</table>

@@ -5,6 +5,7 @@
 /MyFiles/
 /node_modules/
 /Plugins/
+!/Plugins/Blog/
 /vendor/
 .DS_Store
 .htaccess
