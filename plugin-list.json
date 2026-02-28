@@ -280,7 +280,7 @@
         {
             "name": "Vehiculos",
             "description": "Gestión integral de vehículos: ficha completa (matrícula, bastidor, kilómetros, combustible, color, fabricante), asociación automática a facturas y exportación profesional a PDF.",
-            "version": "2",
+            "version": "2.0",
             "min_version": "2025.43",
             "min_php": "8",
             "source": "github",
