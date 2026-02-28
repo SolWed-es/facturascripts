@@ -53,8 +53,10 @@ class AdminPlugins extends CoreAdminPlugins
         $githubPlugins = $this->github->getPlugins();
         $demoPlugins = $this->demoErp->getPlugins();
 
-        // Merge both plugin lists
-        $this->solwedPluginList = array_merge($githubPlugins, $demoPlugins);
+        // Merge: JSON (github) tiene prioridad. Omitir del demo los que ya están en el JSON.
+        $githubNames = array_column($githubPlugins, 'name');
+        $demoOnly = array_values(array_filter($demoPlugins, fn($p) => !in_array($p['name'], $githubNames)));
+        $this->solwedPluginList = array_merge($githubPlugins, $demoOnly);
 
         // Mark which plugins are already installed
         $this->markInstalledPlugins();

@@ -17,13 +17,11 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 #}
-{% import 'Macro/GoogleTagManager.html.twig' as GoogleTagManager %}
 {% extends "Master/MenuTemplate.html.twig" %}
 
 {% block fullBody %}
     <body class="bg-light">
     <div class="page-wrapper" id="main-wrapper" data-layout="vertical" data-sidebartype="full">
-        {{ GoogleTagManager.body() }}
         {% block navbar %}
             {{ parent() }}
         {% endblock %}

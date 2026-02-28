@@ -2,6 +2,8 @@
 
 namespace FacturaScripts\Plugins\SolwedPlugins;
 
+use FacturaScripts\Core\Controller\ApiRoot;
+use FacturaScripts\Core\Kernel;
 use FacturaScripts\Core\Template\InitClass;
 use FacturaScripts\Core\Plugins;
 use FacturaScripts\Plugins\SolwedPlugins\Lib\PluginCompatibilityOverride;
@@ -21,6 +23,7 @@ class Init extends InitClass
     public function init(): void
     {
         $this->applyCompatibilityOverride();
+        $this->registerApiRoutes();
     }
 
     /**
@@ -50,6 +53,15 @@ class Init extends InitClass
     /**
      * Aplica el override de compatibilidad a todos los plugins cargados
      */
+    /**
+     * Registra endpoints API del plugin en el Kernel de FacturaScripts
+     */
+    private function registerApiRoutes(): void
+    {
+        Kernel::addRoute('/api/3/enviarDocumento', 'ApiEnviarDocumento', 10, 'solwed-enviar-doc');
+        ApiRoot::addCustomResource('enviarDocumento');
+    }
+
     private function applyCompatibilityOverride(): void
     {
         try {

@@ -96,11 +96,6 @@
                 <div class="ms-2 mt-4 me-2 mb-3">
                     {{ Utils.updateInstall() }}
                 </div>
-            {% elseif fsc.registered == false %}
-                <hr/>
-                <div class="ms-2 mt-4 me-2 mb-3">
-                    {{ Utils.registerInstall() }}
-                </div>
             {% endif %}
         </div>
         {% if config('disable_add_plugins', false) == false %}

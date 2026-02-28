@@ -10,6 +10,7 @@ class SolwedGitHubPlugins
 {
     private string $githubUsername;
     private string $repoName;
+    private string $repoBranch;
     private string $jsonUrl;
     private array $plugins = [];
     private bool $initialized = false;
@@ -20,8 +21,9 @@ class SolwedGitHubPlugins
     public function __construct()
     {
         $this->githubUsername = Tools::settings('solwedplugins', 'github_username', 'SolWed-es');
-        $this->repoName = Tools::settings('solwedplugins', 'repo_name', 'SolwedPlugins-container');
-        $this->jsonUrl = "https://raw.githubusercontent.com/{$this->githubUsername}/{$this->repoName}/main/plugin-list.json";
+        $this->repoName = Tools::settings('solwedplugins', 'repo_name', 'facturascripts');
+        $this->repoBranch = Tools::settings('solwedplugins', 'repo_branch', 'solwed/production');
+        $this->jsonUrl = "https://raw.githubusercontent.com/{$this->githubUsername}/{$this->repoName}/{$this->repoBranch}/plugin-list.json";
 
         // Configurar directorios de caché
         $this->cacheDir = FS_FOLDER . '/MyFiles/Cache/SolwedPlugins';
@@ -95,10 +97,7 @@ class SolwedGitHubPlugins
 
             if ($data && isset($data['plugins']) && is_array($data['plugins'])) {
                 // Add 'source' field to each plugin when loading from cache
-                $this->plugins = array_map(function($plugin) {
-                    $plugin['source'] = 'github';
-                    return $plugin;
-                }, $data['plugins']);
+                $this->plugins = $data['plugins'];
 
                 $this->initialized = true;
 
@@ -178,11 +177,8 @@ class SolwedGitHubPlugins
                 return;
             }
 
-            // Add 'source' field to each plugin to identify it as from GitHub
-            $this->plugins = array_map(function($plugin) {
-                $plugin['source'] = 'github';
-                return $plugin;
-            }, $data['plugins']);
+            // Preserve 'source' field from JSON (github or demo)
+            $this->plugins = $data['plugins'];
 
             $this->initialized = true;
 
