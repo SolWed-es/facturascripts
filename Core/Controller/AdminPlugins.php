@@ -23,6 +23,7 @@ use FacturaScripts\Core\Base\Controller;
 use FacturaScripts\Core\Base\ControllerPermissions;
 use FacturaScripts\Core\Cache;
 use FacturaScripts\Core\Internal\Forja;
+use FacturaScripts\Core\Internal\SolwedGitHubPlugins;
 use FacturaScripts\Core\Plugins;
 use FacturaScripts\Core\Response;
 use FacturaScripts\Core\Telemetry;
@@ -92,6 +93,10 @@ class AdminPlugins extends Controller
                 $this->removePluginAction();
                 break;
 
+            case 'github-install':
+                $this->githubInstallAction();
+                break;
+
             case 'upload':
                 $this->uploadPluginAction();
                 break;
@@ -110,6 +115,7 @@ class AdminPlugins extends Controller
         // cargamos la lista de plugins
         $this->pluginList = Plugins::list();
         $this->loadRemotePluginList();
+        $this->markGithubPlugins();
 
         // comprobamos si la instalación está registrada
         $telemetry = new Telemetry();
@@ -243,6 +249,75 @@ class AdminPlugins extends Controller
         $pluginName = $this->request->queryOrInput('plugin', '');
         Plugins::remove($pluginName);
         Cache::clear();
+    }
+
+    private function githubInstallAction(): void
+    {
+        if (false === $this->permissions->allowUpdate) {
+            Tools::log()->warning('not-allowed-modify');
+            return;
+        } elseif (false === $this->validateFormToken()) {
+            return;
+        }
+
+        $pluginName = $this->request->queryOrInput('plugin', '');
+        if (empty($pluginName)) {
+            Tools::log()->error('plugin-name-required');
+            return;
+        }
+
+        $githubMap = SolwedGitHubPlugins::getPluginMap();
+        if (!isset($githubMap[$pluginName])) {
+            Tools::log()->error('plugin-not-found-source', ['%plugin%' => $pluginName, '%source%' => 'GitHub']);
+            return;
+        }
+
+        $pluginInfo = $githubMap[$pluginName];
+        $version = $pluginInfo['version'] ?? '0';
+        $downloadUrl = $pluginInfo['download_url'] ?? SolwedGitHubPlugins::getDownloadUrl($pluginName, $version);
+
+        $tmpFile = Tools::folder('MyFiles/Tmp') . DIRECTORY_SEPARATOR . $pluginName . '.zip';
+        if (!is_dir(dirname($tmpFile))) {
+            mkdir(dirname($tmpFile), 0755, true);
+        }
+
+        $response = \FacturaScripts\Core\Http::get($downloadUrl)
+            ->setTimeout(45)
+            ->setHeader('User-Agent', 'FacturaScripts-SolWed/1.0')
+            ->setHeader('Accept', 'application/octet-stream');
+
+        if ($response->failed() || empty($response->body())) {
+            Tools::log()->error('download-failed', ['%url%' => $downloadUrl]);
+            return;
+        }
+
+        file_put_contents($tmpFile, $response->body());
+
+        if (Plugins::add($tmpFile, $pluginName . '.zip')) {
+            Plugins::enable($pluginName);
+        }
+
+        if (file_exists($tmpFile)) {
+            unlink($tmpFile);
+        }
+
+        Cache::clear();
+    }
+
+    private function markGithubPlugins(): void
+    {
+        if (empty($this->remotePluginList)) {
+            return;
+        }
+
+        $githubMap = SolwedGitHubPlugins::getPluginMap();
+        if (empty($githubMap)) {
+            return;
+        }
+
+        foreach ($this->remotePluginList as &$plugin) {
+            $plugin['in_github'] = isset($githubMap[$plugin['name']]);
+        }
     }
 
     private function uploadPluginAction(): void
