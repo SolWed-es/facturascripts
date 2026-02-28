@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    SolwedFacturasEmail - Vista edicion configuracion
+    Copyright (C) 2026 SOLWED <admin@solwed.es>
+-->
+<view>
+    <columns>
+        <group name="imap" title="Servidor IMAP" icon="fa-solid fa-envelope" numcolumns="12">
+            <column name="imap_host" title="Host IMAP" order="10" numcolumns="4">
+                <widget type="text" fieldname="imap_host" required="true" hint="ej: mail.solwed.es"/>
+            </column>
+            <column name="imap_port" title="Puerto" order="20" numcolumns="2">
+                <widget type="number" fieldname="imap_port" min="1" max="65535" hint="993 para SSL"/>
+            </column>
+            <column name="imap_ssl" title="Usar SSL" order="30" numcolumns="2">
+                <widget type="checkbox" fieldname="imap_ssl"/>
+            </column>
+            <column name="imap_folder" title="Carpeta" order="40" numcolumns="4">
+                <widget type="text" fieldname="imap_folder" hint="INBOX"/>
+            </column>
+            <column name="imap_user" title="Usuario (email)" order="50" numcolumns="6">
+                <widget type="text" fieldname="imap_user" required="true" hint="facturas@dominio.com"/>
+            </column>
+            <column name="imap_password" title="Password" order="60" numcolumns="6">
+                <widget type="password" fieldname="imap_password" required="true"/>
+            </column>
+        </group>
+        <group name="groq" title="Groq IA (Extraccion de datos)" icon="fa-solid fa-brain" numcolumns="12">
+            <column name="groq_api_key" title="API Key" order="10" numcolumns="8" description="Obtener en console.groq.com">
+                <widget type="password" fieldname="groq_api_key" required="true"/>
+            </column>
+            <column name="groq_model" title="Modelo" order="20" numcolumns="4">
+                <widget type="text" fieldname="groq_model" hint="llama-3.3-70b-versatile"/>
+            </column>
+        </group>
+        <group name="options" title="Opciones de procesamiento" icon="fa-solid fa-cogs" numcolumns="12">
+            <column name="auto_create_supplier" title="Crear proveedor automaticamente" order="10" numcolumns="4" description="Si el CIF no existe, crea el proveedor">
+                <widget type="checkbox" fieldname="auto_create_supplier"/>
+            </column>
+            <column name="default_codserie" title="Serie por defecto" order="20" numcolumns="4">
+                <widget type="select" fieldname="default_codserie">
+                    <values source="series" fieldcode="codserie" fieldtitle="descripcion"/>
+                </widget>
+            </column>
+        </group>
+    </columns>
+    <rows>
+        <row type="actions">
+            <button type="action" action="test-imap" label="Probar IMAP" icon="fa-solid fa-plug" color="info"/>
+            <button type="action" action="test-groq" label="Probar Groq" icon="fa-solid fa-robot" color="info"/>
+        </row>
+    </rows>
+</view>
