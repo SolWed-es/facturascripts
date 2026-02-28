@@ -1,0 +1,37 @@
+services:
+  app:
+    build: .
+    ports:
+      - "8080:80"
+    volumes:
+      - .:/var/www/html
+      - vendor:/var/www/html/vendor
+      - dinamic:/var/www/html/Dinamic
+      - myfiles:/var/www/html/MyFiles
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      APACHE_DOCUMENT_ROOT: /var/www/html
+
+  db:
+    image: postgres:alpine
+    environment:
+      POSTGRES_DB: facturascripts
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:
+  vendor:
+  dinamic:
+  myfiles:
