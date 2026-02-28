@@ -7,6 +7,11 @@ on:
   push:
     tags:
       - '*-v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to build (e.g. LoginLog-v1.6)'
+        required: true
 
 jobs:
   build:
@@ -18,7 +23,7 @@ jobs:
       - name: Extract plugin name and version
         id: info
         run: |
-          TAG="${GITHUB_REF_NAME}"
+          TAG="${{ github.event.inputs.tag || github.ref_name }}"
           PLUGIN="${TAG%-v*}"
           VERSION="${TAG#$PLUGIN-v}"
           echo "plugin=$PLUGIN" >> $GITHUB_OUTPUT
