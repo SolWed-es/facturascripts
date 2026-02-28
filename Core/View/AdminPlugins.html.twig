@@ -299,7 +299,14 @@
                     </div>
                     <div class="card-footer p-2">
                         {% set extraBtnClass = plugin.health > 2 ? 'btn-outline-success' : plugin.health == 0 ? 'btn-outline-danger' : 'btn-outline-warning' %}
-                        <a href="{{ plugin.url }}" class="btn {{ extraBtnClass }}" target="_blank">{{ trans('add') }}</a>
+                        {% if plugin.in_github is defined and plugin.in_github %}
+                            <a href="{{ fsc.url() }}?action=github-install&plugin={{ plugin.name }}&multireqtoken={{ formToken(false) }}"
+                               class="btn btn-primary btn-spin-action btn-sm" onclick="animateSpinner('add')">
+                                <i class="fa-solid fa-download me-1" aria-hidden="true"></i> {{ trans('install') }}
+                            </a>
+                        {% else %}
+                            <a href="{{ plugin.url }}" class="btn {{ extraBtnClass }}" target="_blank">{{ trans('add') }}</a>
+                        {% endif %}
                         <span class="ms-2 text-danger" title="{{ trans('health') }}">
                             {{ _self.healthStatus(plugin.health) }}
                         </span>

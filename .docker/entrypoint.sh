@@ -20,9 +20,10 @@ if [ ! -f /var/www/html/.htaccess ]; then
 fi
 
 # Create writable directories and fix ownership for www-data
-echo "[entrypoint] Fixing permissions on MyFiles/ and Dinamic/..."
+echo "[entrypoint] Fixing permissions on MyFiles/, Core/, Plugins/..."
 mkdir -p /var/www/html/MyFiles/Tmp /var/www/html/MyFiles/uploads
-chown -R www-data:www-data /var/www/html/MyFiles /var/www/html/config.php
+chown -R www-data:www-data /var/www/html/MyFiles /var/www/html/config.php \
+    /var/www/html/Core /var/www/html/Plugins
 
 # Deploy Dinamic/ if empty (volume mount creates empty dir before our code runs)
 if [ -z "$(ls -A /var/www/html/Dinamic 2>/dev/null)" ]; then
