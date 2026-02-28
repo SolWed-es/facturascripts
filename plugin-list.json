@@ -119,7 +119,7 @@
         {
             "name": "HumanResourcesProyectos",
             "description": "Vincula fichajes de empleados con proyectos. Requiere plugins Proyectos y HumanResources.",
-            "version": "1",
+            "version": "1.0",
             "min_version": "2025",
             "min_php": "8",
             "source": "github"
