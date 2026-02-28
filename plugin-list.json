@@ -202,7 +202,7 @@
         {
             "name": "PortalClienteChat",
             "description": "Adds a client assistance tab to PortalCliente.",
-            "version": "1",
+            "version": "1.0",
             "min_version": "2025.2",
             "min_php": "8",
             "source": "github",
