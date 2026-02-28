@@ -1,0 +1,601 @@
+{#
+/**
+ * SolwedPlugins - Plugin Manager for FacturaScripts
+ * Override of AdminPlugins to add Portal Solwed tab with complete functionality
+ */
+#}
+{% extends "@Core/AdminPlugins.html.twig" %}
+{% import 'Macro/Utils.html.twig' as Utils %}
+
+{% block bodyHeaderOptions %}
+    <div class="container-fluid mb-2">
+        <div class="row">
+            <div class="col-sm-6">
+                <div class="btn-group">
+                    <a class="btn btn-sm btn-secondary" href="{{ fsc.url() }}" title="{{ trans('refresh') }}">
+                        <i class="fa-solid fa-redo" aria-hidden="true"></i>
+                    </a>
+                    {% if fsc.getPageData()['name'] == fsc.user.homepage %}
+                        <a class="btn btn-sm btn-secondary active" href="{{ fsc.url() }}?defaultPage=FALSE"
+                           title="{{ trans('marked-as-homepage') }}">
+                            <i class="fa-solid fa-bookmark" aria-hidden="true"></i>
+                        </a>
+                    {% else %}
+                        <a class="btn btn-sm btn-secondary" href="{{ fsc.url() }}?defaultPage=TRUE"
+                           title="{{ trans('mark-as-homepage') }}">
+                            <i class="fa-regular fa-bookmark" aria-hidden="true"></i>
+                        </a>
+                    {% endif %}
+                </div>
+                {% if config('disable_add_plugins', false) == false %}
+                    <button class="btn btn-spin-action btn-sm btn-success" type="button" data-bs-toggle="modal"
+                            data-bs-target="#modalAddPlugin">
+                        <i class="fa-solid fa-plus fa-fw" aria-hidden="true"></i>
+                        <span class="d-none d-sm-inline-block">{{ trans('add') }}</span>
+                    </button>
+                {% endif %}
+                <div class="btn-group">
+                    <a href="{{ fsc.url() }}?action=rebuild&multireqtoken={{ formToken(false) }}"
+                       onclick="animateSpinner('add')" class="btn btn-spin-action btn-sm btn-warning">
+                        <i class="fa-solid fa-hammer fa-fw" aria-hidden="true"></i>
+                        <span class="d-none d-sm-inline-block">{{ trans('rebuild') }}</span>
+                    </a>
+                </div>
+            </div>
+            <div class="col-sm text-end">
+                <h1 class="h3">
+                    {{ trans(fsc.getPageData()['title']) | capitalize }}
+                    <i class="{{ fsc.getPageData()['icon'] }}" aria-hidden="true"></i>
+                </h1>
+            </div>
+        </div>
+    </div>
+    <ul class="nav nav-tabs" role="tablist">
+        <li class="nav-item">
+            <a class="nav-link active" id="installedPluginsTab" data-bs-toggle="tab" href="#installed" role="tab">
+                <i class="fa-solid fa-box-open fa-fw" aria-hidden="true"></i> {{ trans('installed-plugins') }}
+                {% if fsc.pluginList | length > 0 %}
+                    <span class="badge bg-secondary">{{ fsc.pluginList | length }}</span>
+                {% endif %}
+            </a>
+        </li>
+        {% if config('disable_add_plugins', false) == false %}
+            <li class="nav-item">
+                <a class="nav-link" id="allPluginsTab" data-bs-toggle="tab" href="#all" role="tab">
+                    <i class="fa-solid fa-boxes fa-fw" aria-hidden="true"></i>
+                    <span class="d-none d-sm-inline-block">{{ trans('more-plugins') }}</span>
+                    {% if fsc.remotePluginList | length > 0 %}
+                        <span class="badge bg-secondary">{{ fsc.remotePluginList | length }}</span>
+                    {% endif %}
+                </a>
+            </li>
+        {% endif %}
+        {# Portal Solwed Tab #}
+        <li class="nav-item">
+            <a class="nav-link" id="portalSolwedTab" data-bs-toggle="tab" href="#solwedPortal" role="tab">
+                <i class="fa-solid fa-cloud-download-alt fa-fw" aria-hidden="true"></i>
+                <span class="d-none d-sm-inline-block">Portal Solwed</span>
+                {% if fsc.solwedPluginList | length > 0 %}
+                    <span class="badge bg-secondary">{{ fsc.solwedPluginList | length }}</span>
+                {% endif %}
+            </a>
+        </li>
+    </ul>
+{% endblock %}
+
+{% block body %}
+    <div class="tab-content">
+        <div class="tab-pane fade show active" id="installed" role="tabpanel">
+            {{ _self.showInstalledPlugins(fsc) }}
+            {% if fsc.updated == false %}
+                <div class="ms-2 mt-4 me-2 mb-3">
+                    {{ Utils.updateInstall() }}
+                </div>
+            {% elseif fsc.registered == false %}
+                <hr/>
+                <div class="ms-2 mt-4 me-2 mb-3">
+                    {{ Utils.registerInstall() }}
+                </div>
+            {% endif %}
+        </div>
+        {% if config('disable_add_plugins', false) == false %}
+            <div class="tab-pane fade" id="all" role="tabpanel">
+                {{ _self.showAllPlugins(fsc) }}
+            </div>
+        {% endif %}
+
+        {# Portal Solwed Tab - Exact Copy of SolwedPluginPortal #}
+        <div class="tab-pane fade" id="solwedPortal" role="tabpanel">
+            <div class="container-fluid mt-4">
+                <!-- Refresh Button -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <a href="{{ fsc.url() }}?action=refreshSolwed&multireqtoken={{ formToken(false) }}"
+                           class="btn btn-sm btn-secondary"
+                           title="{{ trans('refresh') }}"
+                           onclick="animateSpinner('add')">
+                            <i class="fas fa-sync-alt mr-1"></i> {{ trans('refresh') }}
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Filters and Search -->
+                <div class="row mb-4">
+                    <div class="col-md-12 mb-2">
+                        <div class="filter-buttons">
+                            <strong class="mr-2">{{ trans('status') }}:</strong>
+                            <button class="btn btn-sm btn-outline-primary active" data-filter="all" title="{{ trans('all') }}">
+                                <i class="fas fa-boxes mr-1"></i> {{ trans('all') }}
+                            </button>
+                            <button class="btn btn-sm btn-outline-success" data-filter="installed" title="{{ trans('installed') }}">
+                                <i class="fas fa-check-circle mr-1"></i> {{ trans('installed') }}
+                            </button>
+                            <button class="btn btn-sm btn-outline-warning" data-filter="updates" title="{{ trans('updates-available') }}">
+                                <i class="fas fa-sync-alt mr-1"></i> {{ trans('updates-available') }}
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" data-filter="incompatible">
+                                <i class="fas fa-exclamation-triangle mr-1"></i> {{ trans('incompatible') }}
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="source-filter-buttons">
+                            <strong class="mr-2">{{ trans('source') }}:</strong>
+                            <button class="btn btn-sm btn-outline-secondary active" data-source-filter="all" title="{{ trans('all') }}">
+                                <i class="fas fa-globe mr-1"></i> {{ trans('all') }}
+                            </button>
+                            <button class="btn btn-sm btn-outline-dark" data-source-filter="github" title="{{ trans('source-github') }}" style="background-color: #171516; color: white; border-color: #171516;">
+                                <i class="fab fa-github mr-1"></i> {{ trans('source-github') }}
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary" data-source-filter="demo" title="{{ trans('source-demo') }}" style="background-color: #f2e500; color: #333d3e; border-color: #f2e500;">
+                                <i class="fas fa-server mr-1"></i> {{ trans('source-demo') }}
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mt-3 mt-md-0 d-flex justify-content-md-end">
+                        <div class="input-group search-box">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                            </div>
+                            <input type="text" id="pluginSearch" class="form-control" placeholder="Buscar plugins...">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Plugin Cards -->
+                <div class="row" id="pluginContainer">
+                    {% for plugin in fsc.solwedPluginList %}
+                        <div class="col-lg-4 col-md-6 mb-4 plugin-item"
+                             data-name="{{ plugin.name|lower }}"
+                             data-status="{% if not plugin.compatible %}incompatible{% elseif plugin.update_available %}updates{% elseif plugin.installed %}installed{% else %}available{% endif %}"
+                             data-source="{{ plugin.source|default('github') }}">
+                            <div class="card plugin-card h-100 {%
+                                if not plugin.compatible %}incompatible{%
+                                elseif plugin.update_available %}update-available{%
+                                elseif plugin.installed %}installed{%
+                                else %}available{%
+                                endif
+                            %}">
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <h5 class="card-title mb-0">{{ plugin.name }}</h5>
+                                            <div class="text-muted small">v{{ plugin.version }}</div>
+                                        </div>
+
+                                        <div class="mt-1">
+                                            {% if plugin.source is defined and plugin.source == 'demo' %}
+                                                <span class="badge" style="font-size: 0.75rem; padding: 0.35rem 0.6rem; background-color: #f2e500 !important; color: #333d3e !important; display: inline-block;">
+                                                    <i class="fas fa-server"></i> {{ trans('source-demo') }}
+                                                </span>
+                                            {% else %}
+                                                <span class="badge" style="font-size: 0.75rem; padding: 0.35rem 0.6rem; background-color: #171516 !important; color: white !important; display: inline-block;">
+                                                    <i class="fab fa-github"></i> {{ trans('source-github') }}
+                                                </span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+
+
+                                    <p class="card-text plugin-description">
+                                        {{ plugin.description }}
+                                    </p>
+
+                                    <div class="d-flex justify-content-between align-items-center mt-3">
+                                        <div class="text-muted small">
+                                            <i class="far fa-calendar-alt mr-1"></i>
+                                            {{ trans('updated') }}: {{ plugin.last_updated }}
+                                        </div>
+
+                                        <div class="plugin-actions">
+                                            {% if plugin.installed %}
+                                                {% if plugin.update_available %}
+                                                    <a href="{{ fsc.url() }}?action=update&plugin={{ plugin.name }}&source={{ plugin.source|default('github') }}&multireqtoken={{ formToken(false) }}"
+                                                       class="btn btn-warning btn-sm"
+                                                       data-confirm-message="{{ trans('confirm-update-plugin') }}?">
+                                                        <i class="fas fa-sync-alt mr-1"></i> {{ trans('update') }}
+                                                    </a>
+                                                {% else %}
+                                                    <button class="btn btn-success btn-sm" disabled>
+                                                        <i class="fas fa-check mr-1"></i> {{ trans('installed') }}
+                                                    </button>
+                                                {% endif %}
+                                            {% else %}
+                                                {% if not plugin.compatible %}
+                                                    <a href="{{ fsc.url() }}?action=install&plugin={{ plugin.name }}&source={{ plugin.source|default('github') }}&multireqtoken={{ formToken(false) }}"
+                                                       class="btn btn-danger btn-sm"
+                                                       data-confirm-message="{{ trans('warning-plugin-incompatible') }}\n\n{{ plugin.compatibility_message }}\n\n{{ trans('confirm-install-anyway') }}">
+                                                        <i class="fas fa-exclamation-triangle mr-1"></i> {{ trans('install-anyway') }}
+                                                    </a>
+                                                {% else %}
+                                                    <a href="{{ fsc.url() }}?action=install&plugin={{ plugin.name }}&source={{ plugin.source|default('github') }}&multireqtoken={{ formToken(false) }}"
+                                                       class="btn btn-primary btn-sm"
+                                                       data-confirm-message="{{ trans('confirm-install-plugin') }}?">
+                                                        <i class="fas fa-download mr-1"></i> {{ trans('install') }}
+                                                    </a>
+                                                {% endif %}
+                                            {% endif %}
+                                        </div>
+                                    </div>
+
+                                    {% if not plugin.compatible %}
+                                        <div class="alert alert-warning mt-3 mb-0 py-2 small" role="alert">
+                                            <i class="fas fa-exclamation-circle mr-1"></i>
+                                            {{ plugin.compatibility_message }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="col-12">
+                            <div class="alert alert-info text-center">
+                                <i class="fas fa-info-circle fa-2x mb-3"></i>
+                                <h4>{{ trans('no-plugins-found') }}</h4>
+                                <p class="mb-0">{{ trans('no-plugins-available-repository') }}</p>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# Modal for add new plugins #}
+    {% if config('disable_add_plugins', false) == false %}
+        <form action="{{ fsc.url() }}" class="form" enctype="multipart/form-data" id="f_add_plugins" method="post"
+              name="upload-plugins" onsubmit="animateSpinner('add')">
+            {{ formToken() }}
+            <input type="hidden" name="action" value="upload"/>
+            <div class="modal fade" id="modalAddPlugin" tabindex="-1" role="dialog" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">
+                                <i class="fa-solid fa-file-zipper me-2"></i> {{ trans('add-new-plugin') }}
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ trans('close') }}"></button>
+                        </div>
+                        {% if fsc.getMaxFileUpload() < 99 %}
+                            <div class="alert alert-dismissible alert-warning mb-0">
+                                {{ trans('help-server-accepts-filesize', {'%size%': fsc.getMaxFileUpload()}) }}
+                            </div>
+                        {% endif %}
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label class="form-label">{{ trans('select-plugin-zip-file') }}</label>
+                                <input type="file" name="plugin[]" class="form-control" accept="application/zip" multiple required/>
+                                {% if fsc.getMaxFileUpload() >= 99 %}
+                                    <div class="form-text">
+                                        {{ trans('help-server-accepts-filesize', {'%size%': fsc.getMaxFileUpload()}) }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="text-end mt-5">
+                                <button type="button" class="btn btn-spin-action btn-secondary" data-bs-dismiss="modal">
+                                    {{ trans('cancel') }}
+                                </button>
+                                <button type="submit" class="btn btn-spin-action btn-success">
+                                    {{ trans('continue') }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    {% endif %}
+{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="{{ asset('Plugins/SolwedPlugins/webroot/css/solwed-portal.css') }}">
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="{{ asset('Plugins/SolwedPlugins/webroot/js/solwed-portal.js') }}"></script>
+    {% if config('disable_rm_plugins', false) == false %}
+        <script>
+            function deletePlugin(pluginName) {
+                // Si ya existe un modal con el ID 'dynamicAdminPluginsDeleteModal', lo eliminamos
+                const existingModal = document.getElementById('dynamicAdminPluginsDeleteModal');
+                if (existingModal) {
+                    existingModal.remove();
+                }
+
+                const adminPluginsDeleteCancel = "{{ trans('cancel') }}";
+                const adminPluginsDeleteConfirm = "{{ trans('delete') }}";
+                const adminPluginsDeleteMessage = "{{ trans('are-you-sure') }}";
+                const adminPluginsDeleteTitle = "{{ trans('confirm-delete')|raw }}";
+
+                // Crear el HTML del modal como string usando los parámetros
+                const modalHTML = `
+                    <div class="modal fade" id="dynamicAdminPluginsDeleteModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="dynamicAdminPluginsDeleteModalLabel" aria-hidden="true">
+                      <div class="modal-dialog">
+                        <div class="modal-content">
+                          <div class="modal-header">
+                            <h5 class="modal-title" id="dynamicAdminPluginsDeleteModalLabel">${adminPluginsDeleteTitle}</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                          </div>
+                          <div class="modal-body">
+                            ${adminPluginsDeleteMessage}
+                          </div>
+                          <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary btn-spin-action" data-bs-dismiss="modal">${adminPluginsDeleteCancel}</button>
+                            <button type="button" id="saveDynamicAdminPluginsDeleteModalBtn" class="btn btn-danger btn-spin-action">${adminPluginsDeleteConfirm}</button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  `;
+
+                // Insertar el modal en el body
+                document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+                // Crear una instancia del modal y mostrarlo
+                const myModal = new bootstrap.Modal(document.getElementById('dynamicAdminPluginsDeleteModal'));
+                myModal.show();
+
+                // Añadir comportamiento al botón de "Guardar cambios"
+                document.getElementById('saveDynamicAdminPluginsDeleteModalBtn').addEventListener('click', function () {
+                    // Ejecutar la acción de eliminar
+                    animateSpinner('add');
+                    window.location = "{{ fsc.url() }}?action=remove" + "\u0026" + "plugin=" + pluginName
+                        + "\u0026" + "multireqtoken={{ formToken(false) }}";
+
+                    // Cierra el modal
+                    myModal.hide();
+                });
+
+                // Eliminar el modal del DOM cuando se cierra
+                document.getElementById('dynamicAdminPluginsDeleteModal').addEventListener('hidden.bs.modal', function () {
+                    document.getElementById('dynamicAdminPluginsDeleteModal').remove();
+                });
+            }
+
+            $(document).ready(function () {
+                searchList('#querySearchPlugin', '#all-plugins .wrapper-card', '.card-title');
+                searchList('#querySearchInstalledPlugins', '#installed-plugins .item-plugin', '.plugin-name');
+
+                // si los archivos son demasiado grandes, no se pueden subir
+                $("#f_add_plugins").submit(function (e) {
+                    let size = 0;
+                    let files = document.querySelector('input[type=file]').files;
+                    for (let i = 0; i < files.length; i++) {
+                        size += files[i].size;
+                    }
+
+                    if (size > {{ fsc.getMaxFileUpload() }} * 1024 * 1024) { // MB
+                        e.preventDefault();
+                        alert('{{ trans('plugin-file-too-big', {'%size%': fsc.getMaxFileUpload()}) }}');
+                        animateSpinner('remove');
+                    }
+                });
+            });
+
+            function searchList(querySelectorInput, querySelectorItem, querySelectorPluginName) {
+                $(querySelectorInput).on('keyup', function (e) {
+                    const query = this.value.toLowerCase().trim();
+                    $(querySelectorItem).each(function (index, value) {
+                        $(value).toggle($(querySelectorPluginName, value).text().toLowerCase().trim().includes(query));
+                    });
+                });
+            }
+        </script>
+    {% endif %}
+{% endblock %}
+
+{% macro healthStatus(value) %}
+    {% if value < 1 %}
+        <i class="fa-solid fa-heart-broken"></i>
+        <i class="fa-regular fa-heart"></i>
+        <i class="fa-regular fa-heart"></i>
+        <i class="fa-regular fa-heart"></i>
+        <i class="fa-regular fa-heart"></i>
+    {% elseif value < 2 %}
+        <i class="fa-solid fa-heart"></i>
+        <i class="fa-regular fa-heart"></i>
+        <i class="fa-regular fa-heart"></i>
+        <i class="fa-regular fa-heart"></i>
+        <i class="fa-regular fa-heart"></i>
+    {% elseif value < 3 %}
+        <i class="fa-solid fa-heart"></i>
+        <i class="fa-solid fa-heart"></i>
+        <i class="fa-regular fa-heart"></i>
+        <i class="fa-regular fa-heart"></i>
+        <i class="fa-regular fa-heart"></i>
+    {% elseif value < 4 %}
+        <i class="fa-solid fa-heart"></i>
+        <i class="fa-solid fa-heart"></i>
+        <i class="fa-solid fa-heart"></i>
+        <i class="fa-regular fa-heart"></i>
+        <i class="fa-regular fa-heart"></i>
+    {% elseif value < 5 %}
+        <i class="fa-solid fa-heart"></i>
+        <i class="fa-solid fa-heart"></i>
+        <i class="fa-solid fa-heart"></i>
+        <i class="fa-solid fa-heart"></i>
+        <i class="fa-regular fa-heart"></i>
+    {% else %}
+        <i class="fa-solid fa-heart"></i>
+        <i class="fa-solid fa-heart"></i>
+        <i class="fa-solid fa-heart"></i>
+        <i class="fa-solid fa-heart"></i>
+        <i class="fa-solid fa-heart"></i>
+    {% endif %}
+{% endmacro %}
+
+{% macro showAllPlugins(fsc) %}
+    <div class="p-2">
+        <input type="text" class="form-control shadow-sm" id="querySearchPlugin" placeholder="{{ trans('search') }}"/>
+    </div>
+    <div class="row row-cols-3 ps-2 pe-2" id="all-plugins">
+        {% for plugin in fsc.remotePluginList %}
+            {% set extraClass = plugin.health > 2 ? 'border-success' : plugin.health == 0 ? 'border-danger' : 'border-warning' %}
+            <div class="col mb-2 wrapper-card">
+                <div class="card {{ extraClass }} shadow-sm h-100" id="{{ plugin.idplugin }}">
+                    <div class="card-body p-2">
+                        <h5 class="card-title">{{ plugin.name }} v{{ plugin.version }}</h5>
+                        <p class="card-text">{{ plugin.description | slice(0, 300) | nl2br }}</p>
+                    </div>
+                    <div class="card-footer p-2">
+                        {% set extraBtnClass = plugin.health > 2 ? 'btn-outline-success' : plugin.health == 0 ? 'btn-outline-danger' : 'btn-outline-warning' %}
+                        <a href="{{ plugin.url }}" class="btn {{ extraBtnClass }}" target="_blank">{{ trans('add') }}</a>
+                        <span class="ms-2 text-danger" title="{{ trans('health') }}">
+                            {{ _self.healthStatus(plugin.health) }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <div class="text-center bg-warning rounded">
+                <h2>{{ trans('no-data') }}</h2>
+            </div>
+        {% endfor %}
+    </div>
+{% endmacro %}
+
+{% macro showInstalledPlugins(fsc) %}
+    <div class="m-2 mb-3">
+        <input type="text" class="form-control border-dark" id="querySearchInstalledPlugins"
+               placeholder="{{ trans('search') }}"/>
+    </div>
+
+    <div class="card border-success m-2 mb-3">
+        <div class="card-header border-success">{{ trans('enabled-plugins') }}</div>
+        {{ _self.tablePlugins(fsc.pluginList | filter(plugin => plugin.enabled)|sort((a, b) => a.order <=> b.order), fsc.url()) }}
+    </div>
+
+    <div class="card border-dark m-2 mb-4">
+        <div class="card-header border-dark">{{ trans('disabled-plugins') }}</div>
+        {{ _self.tablePlugins(fsc.pluginList | filter(plugin => plugin.enabled == false), fsc.url()) }}
+    </div>
+{% endmacro %}
+
+{% macro tablePlugins(pluginList, url) %}
+    <div class="table-responsive" id="installed-plugins">
+        <table class="table table-striped table-hover mb-0">
+            <thead>
+            <tr>
+                <th>{{ trans('name') }}</th>
+                <th class="text-end">{{ trans('version') }}</th>
+                <th>{{ trans('description') }}</th>
+                <th class="text-end pe-3">{{ trans('actions') }}</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for plugin in pluginList %}
+                {% set trClass = 'table-danger' %}
+                {% if plugin.enabled %}
+                    {% set trClass = 'table-success' %}
+                {% elseif plugin.compatible %}
+                    {% set trClass = '' %}
+                {% endif %}
+                <tr class="{{ trClass }} item-plugin">
+                    <td class="plugin-name">{{ plugin.name }}</td>
+                    <td class="text-end">
+                        {% if plugin.version == 0 %}
+                            <span class="text-danger">v{{ plugin.version }}</span>
+                        {% elseif plugin.version < 1 %}
+                            <span class="text-warning">v{{ plugin.version }}</span>
+                        {% else %}
+                            v{{ plugin.version }}
+                        {% endif %}
+                    </td>
+                    <td>
+                        {{ plugin.description | nl2br }}
+                        {% if plugin.forja('url', '') %}
+                            <a href="{{ plugin.forja('url', '') }}" target="_blank" class="ms-2">
+                                {{ trans('more') }} <i class="fa-solid fa-external-link-alt"></i>
+                            </a>
+                        {% endif %}
+                        <br/>
+                        {% for requiredPluginName in plugin.require %}
+                            <div class="badge bg-secondary">
+                                {{ trans('plugin-needed', {'%pluginName%': requiredPluginName}) }}
+                            </div>
+                        {% endfor %}
+                    </td>
+                    <td class="text-end text-nowrap">
+                        {% if plugin.hasUpdate() %}
+                            <a href="Updater" class="btn btn-spin-action btn-sm btn-info me-1"
+                               title="{{ trans('updater') }}">
+                                <i class="fa-solid fa-cloud-download-alt" aria-hidden="true"></i>
+                            </a>
+                        {% endif %}
+                        {% if plugin.enabled %}
+                            <a class="btn btn-sm btn-secondary btn-spin-action" onclick="animateSpinner('add');"
+                               href="{{ url }}?action=disable&amp;plugin={{ plugin.name }}&amp;multireqtoken={{ formToken(false) }}">
+                                <i class="fa-solid fa-toggle-off me-1" aria-hidden="true"></i>
+                                <span class="d-none d-sm-inline-block">{{ trans('disable') }}</span>
+                            </a>
+                            <br/>
+                            <small>{{ trans('plugin-order', {'%num%': plugin.order}) }}</small>
+                        {% elseif plugin.compatible %}
+                            {% if plugin.hasUpdate() %}
+                                <div class="btn-group">
+                                    <button type="button" class="btn btn-sm btn-warning dropdown-toggle"
+                                            data-bs-toggle="dropdown" aria-expanded="false">
+                                        {{ trans('enable') }}
+                                    </button>
+                                    <div class="dropdown-menu">
+                                        <a class="dropdown-item" href="Updater">
+                                            <i class="fa-solid fa-cloud-download-alt fa-fw me-1" aria-hidden="true"></i>
+                                            {{ trans('update') }}
+                                        </a>
+                                        <div class="dropdown-divider"></div>
+                                        <a class="dropdown-item"
+                                           href="{{ url }}?action=enable&amp;plugin={{ plugin.name }}&amp;multireqtoken={{ formToken(false) }}">
+                                            <i class="fa-solid fa-check fa-fw me-1" aria-hidden="true"></i>
+                                            {{ trans('enable') }}
+                                        </a>
+                                    </div>
+                                </div>
+                            {% else %}
+                                <a class="btn btn-sm btn-success btn-spin-action" onclick="animateSpinner('add');"
+                                   href="{{ url }}?action=enable&amp;plugin={{ plugin.name }}&amp;multireqtoken={{ formToken(false) }}">
+                                    <i class="fa-solid fa-toggle-on me-1" aria-hidden="true"></i>
+                                    <span class="d-none d-sm-inline-block">{{ trans('enable') }}</span>
+                                </a>
+                            {% endif %}
+                        {% else %}
+                            {{ plugin.compatibilityDescription() }}
+                        {% endif %}
+                        {% if plugin.enabled == false and config('disable_rm_plugins', false) == false %}
+                            <a class="btn btn-sm btn-danger ms-2 btn-spin-action" href="#"
+                               title="{{ trans('delete') }}" onclick="deletePlugin('{{ plugin.name }}');">
+                                <i class="fa-solid fa-trash-alt"></i>
+                            </a>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% else %}
+                <tr class="table-warning">
+                    <td colspan="4"><b>{{ trans('no-data') }}</b></td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endmacro %}

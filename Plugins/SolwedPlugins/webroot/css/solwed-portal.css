@@ -1,0 +1,78 @@
+/**
+ * SolwedPlugins - Portal Solwed CSS Styles
+ * Styles for the Portal Solwed tab in AdminPlugins
+ */
+
+.plugin-card {
+    transition: all 0.3s ease;
+    border-left: 4px solid #007bff;
+}
+
+.plugin-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.plugin-card.installed {
+    border-left-color: #28a745;
+}
+
+.plugin-card.update-available {
+    border-left-color: #ffc107;
+}
+
+.plugin-card.incompatible {
+    border-left-color: #dc3545;
+}
+
+.plugin-icon {
+    font-size: 2rem;
+    color: #6c757d;
+}
+
+.plugin-badge {
+    font-size: 0.8rem;
+}
+
+.plugin-description {
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+.plugin-actions {
+    min-width: 140px;
+    text-align: right;
+}
+
+.search-box {
+    max-width: 300px;
+}
+
+.filter-buttons .btn {
+    margin-right: 5px;
+    margin-bottom: 5px;
+}
+
+.status-indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 5px;
+}
+
+.status-installed {
+    background-color: #28a745;
+}
+
+.status-update {
+    background-color: #ffc107;
+}
+
+.status-not-installed {
+    background-color: #6c757d;
+}
+
+.status-incompatible {
+    background-color: #dc3545;
+}
