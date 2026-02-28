@@ -47,7 +47,7 @@
         {
             "name": "Certificaciones",
             "description": "Renombra proyectos como obras usando extensiones y traducciones.",
-            "version": "1",
+            "version": "1.0",
             "min_version": "2025",
             "min_php": "8",
             "source": "github"
