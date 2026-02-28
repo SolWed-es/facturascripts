@@ -72,6 +72,51 @@ MyFiles/erpsolwed/
 2. **Desarrollar plugin**: trabajar en la rama `plugin/NombrePlugin`
 3. **Producción**: mergear plugins necesarios en `solwed/production`
 
+## Docker (desarrollo local)
+
+### Arranque
+
+```bash
+docker compose up -d
+```
+
+- App: http://localhost:8080
+- PostgreSQL: `localhost:5432`
+
+### Credenciales PostgreSQL por defecto
+
+| Campo | Valor |
+|-------|-------|
+| Host | `db` (dentro de Docker) / `localhost` (desde host) |
+| Puerto | `5432` |
+| Base de datos | `facturascripts` |
+| Usuario | `postgres` |
+| Contraseña | `postgres` |
+
+### Instalación inicial
+
+**Opción A — Web installer** (primera vez sin config.php):
+1. `docker compose up -d`
+2. Acceder a http://localhost:8080 y seguir el instalador web
+3. Usar las credenciales PostgreSQL de arriba
+
+**Opción B — Config automática** (el entrypoint ya lo hace si no existe `config.php`):
+```bash
+cp .docker/config.php config.php
+docker compose up -d
+```
+
+### Archivos Docker
+
+| Archivo | Propósito |
+|---------|-----------|
+| `Dockerfile` | php:8.2-apache + extensiones pgsql/gd/bcmath/zip |
+| `docker-compose.yml` | Servicios app + db (postgres:alpine) |
+| `.docker/apache.conf` | VirtualHost con AllowOverride All |
+| `.docker/php.ini` | 99M upload, 256M memory, 10000 input_vars |
+| `.docker/config.php` | Plantilla de config pre-configurada para Docker |
+| `.docker/entrypoint.sh` | Auto-composer + copia de config al arrancar |
+
 ## Git config para commits SolWed
 
 ```bash
