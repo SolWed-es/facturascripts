@@ -6,10 +6,9 @@
 /node_modules/
 /Plugins/
 !/Plugins/SolwedTheme/
-!/Plugins/ImportarFacturasEmail/
-!/Plugins/Blog/
 !/Plugins/SolwedPlugins/
-!/Plugins/SolwedTheme/
+!/Plugins/Blog/
+!/Plugins/ImportarFacturasEmail/
 /vendor/
 .DS_Store
 .htaccess
