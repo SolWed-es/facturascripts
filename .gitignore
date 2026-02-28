@@ -5,6 +5,7 @@
 /MyFiles/
 /node_modules/
 /Plugins/
+!/Plugins/ImportarFacturasEmail/
 /vendor/
 .DS_Store
 .htaccess
