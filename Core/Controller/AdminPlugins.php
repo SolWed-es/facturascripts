@@ -23,11 +23,10 @@ use FacturaScripts\Core\Base\Controller;
 use FacturaScripts\Core\Base\ControllerPermissions;
 use FacturaScripts\Core\Cache;
 use FacturaScripts\Core\Http;
-use FacturaScripts\Core\Internal\Forja;
+use FacturaScripts\Core\Internal\SolwedDemoPlugins;
 use FacturaScripts\Core\Internal\SolwedGitHubPlugins;
 use FacturaScripts\Core\Plugins;
 use FacturaScripts\Core\Response;
-use FacturaScripts\Core\Telemetry;
 use FacturaScripts\Core\Tools;
 use FacturaScripts\Core\UploadedFile;
 use FacturaScripts\Dinamic\Model\User;
@@ -121,12 +120,9 @@ class AdminPlugins extends Controller
         $this->loadRemotePluginList();
         $this->loadSolwedPlugins();
 
-        // comprobamos si la instalación está registrada
-        $telemetry = new Telemetry();
-        $this->registered = $telemetry->ready();
-
-        // comprobamos si hay actualizaciones disponibles
-        $this->updated = Forja::canUpdateCore() === false;
+        // las actualizaciones se gestionan en el Updater
+        $this->registered = true;
+        $this->updated = true;
     }
 
     private function disablePluginAction(): void
@@ -214,16 +210,21 @@ class AdminPlugins extends Controller
             return;
         }
 
-        $installedPlugins = Plugins::list();
-        foreach (Forja::plugins() as $item) {
-            // plugin is already installed?
-            foreach ($installedPlugins as $plugin) {
-                if ($plugin->name == $item['name']) {
-                    continue 2;
-                }
-            }
+        $installedMap = [];
+        foreach ($this->pluginList as $plugin) {
+            $installedMap[$plugin->name] = $plugin->version;
+        }
 
-            $this->remotePluginList[] = $item;
+        foreach (SolwedDemoPlugins::getPluginMap() as $item) {
+            if (!isset($installedMap[$item['name']])) {
+                // no instalado → mostrar botón Instalar
+                $this->remotePluginList[] = $item;
+            } elseif ((float)($item['version'] ?? 0) > (float)$installedMap[$item['name']]) {
+                // versión más reciente disponible → mostrar botón Actualizar
+                $item['needs_update'] = true;
+                $item['installed_version'] = $installedMap[$item['name']];
+                $this->remotePluginList[] = $item;
+            }
         }
     }
 
@@ -270,13 +271,14 @@ class AdminPlugins extends Controller
             return;
         }
 
-        $githubMap = SolwedGitHubPlugins::getPluginMap();
-        if (!isset($githubMap[$pluginName])) {
-            Tools::log()->error('plugin-not-found-source', ['%plugin%' => $pluginName, '%source%' => 'GitHub']);
+        // buscar en ambas fuentes; GitHub tiene prioridad sobre demo
+        $allMap = array_merge(SolwedDemoPlugins::getPluginMap(), SolwedGitHubPlugins::getPluginMap());
+        if (!isset($allMap[$pluginName])) {
+            Tools::log()->error('plugin-not-found-source', ['%plugin%' => $pluginName, '%source%' => 'SolWed']);
             return;
         }
 
-        $pluginInfo = $githubMap[$pluginName];
+        $pluginInfo = $allMap[$pluginName];
         $version = $pluginInfo['version'] ?? '0';
         $downloadUrl = $pluginInfo['download_url'] ?? SolwedGitHubPlugins::getDownloadUrl($pluginName, $version);
 
@@ -319,14 +321,21 @@ class AdminPlugins extends Controller
             return;
         }
 
-        $installedPlugins = Plugins::list();
+        $installedMap = [];
+        foreach ($this->pluginList as $plugin) {
+            $installedMap[$plugin->name] = $plugin->version;
+        }
+
         foreach (SolwedGitHubPlugins::getPluginMap() as $plugin) {
-            foreach ($installedPlugins as $installed) {
-                if ($installed->name == $plugin['name']) {
-                    continue 2;
-                }
+            if (!isset($installedMap[$plugin['name']])) {
+                // no instalado → mostrar botón Instalar
+                $this->solwedPluginList[] = $plugin;
+            } elseif ((float)($plugin['version'] ?? 0) > (float)$installedMap[$plugin['name']]) {
+                // versión más reciente disponible → mostrar botón Actualizar
+                $plugin['needs_update'] = true;
+                $plugin['installed_version'] = $installedMap[$plugin['name']];
+                $this->solwedPluginList[] = $plugin;
             }
-            $this->solwedPluginList[] = $plugin;
         }
     }
 

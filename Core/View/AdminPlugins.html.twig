@@ -313,10 +313,19 @@
                             <p class="card-text text-muted small">{{ plugin.description | slice(0, 200) }}</p>
                         </div>
                         <div class="card-footer p-2">
-                            <a href="{{ fsc.url() }}?action=github-install&plugin={{ plugin.name }}&multireqtoken={{ formToken(false) }}"
-                               class="btn btn-primary btn-sm btn-spin-action" onclick="animateSpinner('add')">
-                                <i class="fa-solid fa-download me-1" aria-hidden="true"></i> {{ trans('install') }}
-                            </a>
+                            {% if plugin.needs_update is defined and plugin.needs_update %}
+                                <a href="{{ fsc.url() }}?action=github-install&plugin={{ plugin.name }}&multireqtoken={{ formToken(false) }}"
+                                   class="btn btn-warning btn-sm btn-spin-action" onclick="animateSpinner('add')">
+                                    <i class="fa-solid fa-sync me-1" aria-hidden="true"></i>
+                                    {{ trans('update') }}
+                                    <small class="ms-1">v{{ plugin.installed_version }} → v{{ plugin.version }}</small>
+                                </a>
+                            {% else %}
+                                <a href="{{ fsc.url() }}?action=github-install&plugin={{ plugin.name }}&multireqtoken={{ formToken(false) }}"
+                                   class="btn btn-primary btn-sm btn-spin-action" onclick="animateSpinner('add')">
+                                    <i class="fa-solid fa-download me-1" aria-hidden="true"></i> {{ trans('install') }}
+                                </a>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
@@ -341,10 +350,19 @@
                     <div class="card-footer p-2">
                         {% set extraBtnClass = plugin.health > 2 ? 'btn-outline-success' : plugin.health == 0 ? 'btn-outline-danger' : 'btn-outline-warning' %}
                         {% if plugin.in_github is defined and plugin.in_github %}
-                            <a href="{{ fsc.url() }}?action=github-install&plugin={{ plugin.name }}&multireqtoken={{ formToken(false) }}"
-                               class="btn btn-primary btn-spin-action btn-sm" onclick="animateSpinner('add')">
-                                <i class="fa-solid fa-download me-1" aria-hidden="true"></i> {{ trans('install') }}
-                            </a>
+                            {% if plugin.needs_update is defined and plugin.needs_update %}
+                                <a href="{{ fsc.url() }}?action=github-install&plugin={{ plugin.name }}&multireqtoken={{ formToken(false) }}"
+                                   class="btn btn-warning btn-spin-action btn-sm" onclick="animateSpinner('add')">
+                                    <i class="fa-solid fa-sync me-1" aria-hidden="true"></i>
+                                    {{ trans('update') }}
+                                    <small class="ms-1">v{{ plugin.installed_version }} → v{{ plugin.version }}</small>
+                                </a>
+                            {% else %}
+                                <a href="{{ fsc.url() }}?action=github-install&plugin={{ plugin.name }}&multireqtoken={{ formToken(false) }}"
+                                   class="btn btn-primary btn-spin-action btn-sm" onclick="animateSpinner('add')">
+                                    <i class="fa-solid fa-download me-1" aria-hidden="true"></i> {{ trans('install') }}
+                                </a>
+                            {% endif %}
                         {% else %}
                             <a href="{{ plugin.url }}" class="btn {{ extraBtnClass }}" target="_blank">{{ trans('add') }}</a>
                         {% endif %}
