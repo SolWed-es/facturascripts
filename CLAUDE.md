@@ -1,54 +1,67 @@
 # FacturaScripts - SolWed
 
-## Estructura de repositorios
+## Arquitectura de repositorios
 
-Todo el ecosistema FacturaScripts de SolWed está centralizado en **SolWed-es/facturascripts**.
+El ecosistema SolWed se distribuye en **3 repositorios**:
 
-### Ramas principales
+| Repo | Propósito |
+|------|-----------|
+| `SolWed-es/facturascripts` | **CORE solo** — fork de NeoRazorX con modificaciones SolWed |
+| `SolWed-es/SolwedPlugins` | Plugin gestor/tienda — se mantiene como está |
+| `SolWed-es/SolwedPlugins-container` | **Todos los plugins** — código fuente, ZIPs y catálogo |
+
+### Regla fundamental
+
+- `SolWed-es/facturascripts` contiene **únicamente el core**. NO debe tener ramas ni releases de plugins.
+- Todos los plugins (propios e importados) viven en `SolWed-es/SolwedPlugins-container`.
+
+---
+
+## Repo 1: SolWed-es/facturascripts (CORE)
+
+### Ramas
 
 | Rama | Propósito |
 |------|-----------|
-| `master` | **INTOCABLE** — sync con upstream NeoRazorX/facturascripts. Solo se actualiza haciendo merge del upstream. |
-| `solwed/production` | Rama de producción. Core modificado + assets erpsolwed + plugin-list.json. **Rama por defecto en GitHub.** |
+| `master` | **INTOCABLE** — sync con upstream NeoRazorX/facturascripts |
+| `solwed/production` | Producción. Core modificado + assets erpsolwed. **Rama por defecto.** |
 
-### Ramas de plugins propios (4)
+### Modificaciones al Core (solwed/production)
 
-Cada plugin parte de `master` y añade únicamente su carpeta `Plugins/NombrePlugin/`.
-El `.gitignore` de cada rama excluye todos los plugins excepto el propio.
-
-| Rama | Plugin | Descripción |
-|------|--------|-------------|
-| `plugin/SolwedTheme` | `Plugins/SolwedTheme/` | Tema visual personalizado de SolWed (CSS, JS, Twig templates) |
-| `plugin/SolwedPlugins` | `Plugins/SolwedPlugins/` | Gestor de plugins con tienda Portal Solwed y descarga desde GitHub |
-| `plugin/Blog` | `Plugins/Blog/` | Plugin de blog con modelos, API y soporte AI |
-| `plugin/ImportarFacturasEmail` | `Plugins/ImportarFacturasEmail/` | Importación automática de facturas por email (IMAP + cron) |
-
-### Ramas de plugins importados (31)
-
-31 plugins del fork demo.erpsolwed.es importados como ramas `plugin/*`.
-Todos tienen release publicado en GitHub. Ver `plugin-list.json` para la lista completa.
-
-## Modificaciones al Core (solwed/production)
-
-El Core de FacturaScripts tiene las siguientes modificaciones propias en `solwed/production`:
-
-### Sistema de actualizaciones (reemplaza Forja/Telemetría)
+#### Sistema de actualizaciones (reemplaza Forja/Telemetría)
 
 | Archivo | Cambio |
 |---------|--------|
-| `Core/Internal/SolwedGitHub.php` | **NUEVO** — cliente GitHub API para updates del core y plugins propios |
+| `Core/Internal/SolwedGitHub.php` | **NUEVO** — cliente GitHub API para updates del core |
 | `Core/Controller/Updater.php` | Reemplaza Forja/Telemetría por `SolwedGitHub` |
 | `Core/View/Updater.html.twig` | Sin telemetría ni registro |
 
-### Instalación directa desde GitHub Releases (en "Más plugins")
+#### Tienda de plugins (apunta a SolwedPlugins-container)
 
 | Archivo | Cambio |
 |---------|--------|
-| `Core/Internal/SolwedGitHubPlugins.php` | **NUEVO** — fetcha `plugin-list.json` de GitHub, devuelve mapa de plugins disponibles |
-| `Core/Controller/AdminPlugins.php` | Añade acción `github-install` + `markGithubPlugins()` (marca `in_github` en Forja list) |
-| `Core/View/AdminPlugins.html.twig` | `showAllPlugins` muestra botón "Instalar" directo cuando `plugin.in_github` |
+| `Core/Internal/SolwedGitHubPlugins.php` | **NUEVO** — fetcha `plugin-list.json` de SolwedPlugins-container |
+| `Core/Controller/AdminPlugins.php` | Añade acción `github-install` + `markGithubPlugins()` |
+| `Core/View/AdminPlugins.html.twig` | Muestra botón "Instalar" directo cuando `plugin.in_github` |
 
-Cuando SolwedPlugins está activo, su `Controller/AdminPlugins.php` extiende el Core y añade el tab "Portal Solwed" con los 35 plugins de GitHub.
+`SolwedGitHubPlugins.php` lee el catálogo desde:
+```
+https://raw.githubusercontent.com/SolWed-es/SolwedPlugins-container/main/plugin-list.json
+```
+
+#### Conexión con mind.solwed.es
+
+| Archivo | Cambio |
+|---------|--------|
+| `Core/Internal/MindClient.php` | **NUEVO** — fire-and-forget emitter: `MindClient::emit($event, $data)` |
+| `Core/Controller/SolwedMindConnect.php` | **NUEVO** — webhook público que recibe registro desde mind |
+| `Core/Kernel.php` | Ruta `/SolwedMindConnect` registrada |
+
+Eventos emitidos: `factura.created`, `cliente.created`, `pago.recibido`, `plugin.enabled/disabled/updated/removed`
+
+#### Dashboard
+
+- Sección de noticias eliminada (`loadNews()`, `sectionNews`) — no hay llamadas externas en el dashboard.
 
 ### Reglas Dinamic/
 
@@ -64,60 +77,88 @@ Siempre que se use `trans('clave')` en una view o `Tools::log()->error/warning('
 
 Las claves van en **orden alfabético** dentro del JSON.
 
-## Sistema de releases (GitHub Actions)
-
-Todo el sistema de publicación usa un único repo: **SolWed-es/facturascripts**.
-
-### Formato de tags
-
-| Tipo | Tag | Asset |
-|------|-----|-------|
-| Core | `v2025.93` | `facturascripts.zip` |
-| Plugin | `SolwedTheme-v1.73` | `SolwedTheme.zip` |
-
-### Workflows
-
-| Archivo | Trigger | Qué hace |
-|---------|---------|----------|
-| `.github/workflows/release.yml` | push `v*` | Build ZIP del core desde `solwed/production` |
-| `.github/workflows/release-plugin.yml` | push `*-v*` o `workflow_dispatch` | Build ZIP del plugin + actualiza `plugin-list.json` en `solwed/production` |
-
-### facturascripts.ini de cada plugin
-
-```ini
-github = 'SolWed-es/facturascripts:SolwedTheme'
-```
-
-Formato: `repo:TagPrefix`. `SolwedGitHub` filtra releases por tags que empiecen por `TagPrefix-v`.
-
-### Catálogo (plugin-list.json)
-
-Ubicado en la raíz de `solwed/production`. Contiene los 35 plugins con `source: github`.
-Se actualiza automáticamente al publicar una release de plugin.
-
-La tienda (`SolwedGitHubPlugins.php`) lo fetcha desde:
-```
-https://raw.githubusercontent.com/SolWed-es/facturascripts/solwed/production/plugin-list.json
-```
-
-### Publicar release
+### Release del Core
 
 ```bash
-# Core
 git tag v2025.93 && git push origin v2025.93
-
-# Plugin (plugin-list.json se actualiza automáticamente vía Actions)
-git tag SolwedTheme-v1.73 && git push origin SolwedTheme-v1.73
 ```
 
-## Scripts de mantenimiento
+El workflow `.github/workflows/release.yml` build el ZIP desde `solwed/production` y publica la release en GitHub.
 
-| Script | Propósito |
-|--------|-----------|
-| `scripts/import-demo-plugins.py` | Importa plugins de demo.erpsolwed.es → crea ramas `plugin/*` |
-| `scripts/tag-plugins.sh` | Crea tags para todos los `plugin/*` |
+---
 
-**Antes de usar los scripts**: `sudo chown -R ivan:ivan Core/ Plugins/`
+## Repo 2: SolWed-es/SolwedPlugins
+
+Plugin gestor/tienda. Se mantiene como está. No requiere cambios de arquitectura.
+
+---
+
+## Repo 3: SolWed-es/SolwedPlugins-container (PLUGINS)
+
+### Estructura
+
+```
+SolwedPlugins-container/
+├── plugins/          ← código fuente de cada plugin
+│   ├── CRM/
+│   ├── IeCRMCalendar/
+│   ├── SolwedTheme/
+│   └── ...
+├── zip/              ← ZIPs generados automáticamente
+├── plugin-list.json  ← catálogo actualizado automáticamente
+└── .github/workflows/update-plugin-list.yml
+```
+
+### Flujo de publicación de plugins
+
+1. Desarrollar/modificar el plugin en `plugins/NombrePlugin/`
+2. Hacer push a `main`
+3. El workflow `update-plugin-list.yml` genera automáticamente:
+   - Los ZIPs en `zip/`
+   - Actualiza `plugin-list.json`
+4. La tienda del Core descarga desde `zip/NombrePlugin.zip`
+
+**No se usan GitHub Releases para plugins** — los ZIPs se sirven directamente desde el repo.
+
+### Estado actual (mar 2026)
+
+Plugins presentes en SolwedPlugins-container: 13 (DescargarFacturasZIP, DescuentoProducto, DocumentosProyectos, Dominios, HumanResourcesSolwed, IeCRMFormularioElementor, IeWhatsapp, MerakiPlugin, PleskServers, Rdgarantia, SolwedTheme, SolwedTiendaWeb, Vehiculos)
+
+**Pendiente de migrar** desde facturascripts al container: CRM, IeCRMCalendar, Blog, ImportarFacturasEmail, SolwedPlugins, y los demás plugins importados.
+
+---
+
+## Estado actual del repo facturascripts (deuda técnica)
+
+El repo `facturascripts` tiene actualmente ramas `plugin/*` y releases de plugins que son **legacy** y no deberían estar ahí:
+
+- ~35 ramas `plugin/*` — a eliminar progresivamente
+- ~31 releases de plugins — legacy, se mantendrán pero no se actualizarán
+- `plugin-list.json` en `solwed/production` — obsoleto (el Core ya lee de SolwedPlugins-container)
+
+**NO crear nuevas ramas plugin/* ni nuevas releases de plugins en este repo.**
+
+---
+
+## Flujo de trabajo correcto
+
+### Desarrollar o modificar un plugin
+
+1. Clonar/editar en `SolwedPlugins-container/plugins/NombrePlugin/`
+2. Push a `main` → el workflow genera el ZIP y actualiza `plugin-list.json`
+
+### Actualizar el core
+
+1. Trabajar en `solwed/production`
+2. `git tag v2025.XX && git push origin v2025.XX`
+
+### Sincronizar con upstream
+
+1. `git fetch upstream`
+2. Merge `upstream/master` → `master`
+3. Merge/rebase `master` → `solwed/production`
+
+---
 
 ## Assets de diseño (solwed/production)
 
@@ -130,20 +171,7 @@ MyFiles/erpsolwed/
     └── features/  (contabilidad, facturacion, informes, inventario, tpv, verifactu, analisis, logistica)
 ```
 
-## Otros repositorios relacionados (SolWed-es)
-
-| Repo | Visibilidad | Descripción |
-|------|-------------|-------------|
-| `SolwedTheme` | Público | Espejo/versión standalone del tema CSS |
-| `SyncWoocommerceProducts` | Público | Plugin sync productos con WooCommerce |
-| `IeWhatsapp` | Público | Plugin WhatsApp para FacturaScripts |
-
-## Flujo de trabajo
-
-1. **Actualizar core**: merge desde `upstream/master` → `master`
-2. **Desarrollar plugin**: trabajar en la rama `plugin/NombrePlugin`
-3. **Producción**: mergear plugins necesarios en `solwed/production`
-4. **Publicar**: `git tag NombrePlugin-vX.Y && git push origin NombrePlugin-vX.Y`
+---
 
 ## Docker (desarrollo local)
 
@@ -204,6 +232,8 @@ sudo docker exec facturascripts-app-1 bash -c \
 
 # docker compose restart también restaura permisos (el entrypoint hace el chown)
 ```
+
+---
 
 ## Git config para commits SolWed
 
