@@ -109,7 +109,7 @@
         },
         {
             "name": "HumanResources",
-            "description": "Gestion del personal asalariado de la empresa, sus datos laborales y control de presencia (entrada/salida, e informes).",
+            "description": "Gestion del personal asalariado de la empresa, sus datos laborales y control de presencia (entrada\/salida, e informes).",
             "version": "2.07",
             "min_version": "2025.51",
             "min_php": "8",
@@ -126,7 +126,7 @@
         {
             "name": "IeCRMCalendar",
             "description": "Calendario CRM. Permite crear notas como eventos, asignándole fecha y hora.",
-            "version": "3.3",
+            "version": "3.4",
             "min_version": "2025.3",
             "min_php": "8",
             "source": "github",
