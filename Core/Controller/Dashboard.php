@@ -98,8 +98,11 @@ class Dashboard extends Controller
 
         $this->title = Tools::trans('dashboard-for', ['%company%' => $this->empresa->nombrecorto]);
 
-        $this->loadExtensions();
+        // las actualizaciones se gestionan en el Updater, no en el Dashboard
+        $this->updated = true;
+        $this->registered = true;
 
+        $this->loadExtensions();
     }
 
     public function showBackupWarning(): bool
