@@ -10,13 +10,13 @@ use FacturaScripts\Core\Cache;
 use FacturaScripts\Core\Http;
 
 /**
- * Fetches the SolWed own plugin list from the solwed/production branch of GitHub.
- * Used by AdminPlugins to show and install the 4 SolWed own plugins (Portal SolWed section).
+ * Fetches the SolWed plugin list from the SolwedPlugins-container repository.
+ * Used by AdminPlugins to show and install SolWed plugins (Portal SolWed section).
  */
 class SolwedGitHubPlugins
 {
     const CACHE_KEY = 'solwed_github_plugin_list';
-    const JSON_URL  = 'https://raw.githubusercontent.com/SolWed-es/facturascripts/solwed/production/plugin-list.json';
+    const JSON_URL  = 'https://raw.githubusercontent.com/SolWed-es/SolwedPlugins-container/main/plugin-list.json';
 
     /** Returns a name-indexed map of all SolWed own plugins available on GitHub. */
     public static function getPluginMap(): array
@@ -31,10 +31,10 @@ class SolwedGitHubPlugins
         return $map;
     }
 
-    /** Returns the GitHub Releases download URL for a plugin. */
+    /** Returns the fallback download URL for a plugin (when download_url is not in the list). */
     public static function getDownloadUrl(string $name, string $version): string
     {
-        return "https://github.com/SolWed-es/facturascripts/releases/download/{$name}-v{$version}/{$name}.zip";
+        return "https://github.com/SolWed-es/SolwedPlugins-container/raw/main/zip/{$name}.zip";
     }
 
     private static function fetchPlugins(): array
