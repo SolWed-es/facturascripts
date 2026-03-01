@@ -341,8 +341,8 @@ class Updater extends Controller
     {
         $notWritable = [];
 
-        // Solo verificamos las carpetas que FacturaScripts necesita actualizar
-        $foldersToCheck = ['Core', 'Dinamic', 'MyFiles', 'Plugins', 'vendor', 'node_modules'];
+        // Core y vendor se actualizan via git, no desde el navegador
+        $foldersToCheck = ['Dinamic', 'MyFiles', 'Plugins'];
 
         foreach ($foldersToCheck as $folderName) {
             $folderPath = Tools::folder($folderName);
