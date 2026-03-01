@@ -20,6 +20,7 @@
 namespace FacturaScripts\Core\Model;
 
 use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
+use FacturaScripts\Core\Internal\MindClient;
 use FacturaScripts\Core\Model\Base\CompanyRelationTrait;
 use FacturaScripts\Core\Model\Base\PaymentRelationTrait;
 use FacturaScripts\Core\Session;
@@ -301,6 +302,16 @@ class ReciboCliente extends ModelClass
 
             case 'pagado':
                 $this->newPayment();
+                if ($this->pagado && !$this->getOriginal('pagado')) {
+                    MindClient::emit('pago.recibido', [
+                        'idrecibo' => $this->idrecibo,
+                        'idfactura' => $this->idfactura,
+                        'codigofactura' => $this->codigofactura,
+                        'importe' => $this->importe,
+                        'fechapago' => $this->fechapago,
+                        'codcliente' => $this->codcliente,
+                    ]);
+                }
                 return true;
 
             default:
@@ -321,6 +332,17 @@ class ReciboCliente extends ModelClass
         $this->updateCustomerRisk();
 
         parent::onInsert();
+
+        if ($this->pagado) {
+            MindClient::emit('pago.recibido', [
+                'idrecibo' => $this->idrecibo,
+                'idfactura' => $this->idfactura,
+                'codigofactura' => $this->codigofactura,
+                'importe' => $this->importe,
+                'fechapago' => $this->fechapago,
+                'codcliente' => $this->codcliente,
+            ]);
+        }
     }
 
     protected function onUpdate(): void

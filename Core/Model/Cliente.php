@@ -21,6 +21,7 @@ namespace FacturaScripts\Core\Model;
 
 use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
 use FacturaScripts\Core\DataSrc\Paises;
+use FacturaScripts\Core\Internal\MindClient;
 use FacturaScripts\Core\Lib\Vies;
 use FacturaScripts\Core\Model\Base\EmailAndPhonesTrait;
 use FacturaScripts\Core\Model\Base\FiscalNumberTrait;
@@ -377,6 +378,19 @@ class Cliente extends ModelClass
         $this->save();
 
         return $subAccount;
+    }
+
+    protected function onInsert(): void
+    {
+        parent::onInsert();
+
+        MindClient::emit('cliente.created', [
+            'codcliente' => $this->codcliente,
+            'nombre' => $this->nombre,
+            'razonsocial' => $this->razonsocial,
+            'email' => $this->email,
+            'fechaalta' => $this->fechaalta,
+        ]);
     }
 
     protected function saveInsert(): bool

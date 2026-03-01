@@ -10,16 +10,15 @@ use FacturaScripts\Core\Cache;
 use FacturaScripts\Core\Http;
 
 /**
- * Fetches the plugin list from the SolWed GitHub repository.
- * Used by AdminPlugins to offer direct installation from GitHub Releases
- * instead of redirecting to an external website.
+ * Fetches the SolWed own plugin list from the solwed/production branch of GitHub.
+ * Used by AdminPlugins to show and install the 4 SolWed own plugins (Portal SolWed section).
  */
 class SolwedGitHubPlugins
 {
     const CACHE_KEY = 'solwed_github_plugin_list';
-    const JSON_URL = 'https://raw.githubusercontent.com/SolWed-es/facturascripts/solwed/production/plugin-list.json';
+    const JSON_URL  = 'https://raw.githubusercontent.com/SolWed-es/facturascripts/solwed/production/plugin-list.json';
 
-    /** Returns a name-indexed map of all plugins available on GitHub. */
+    /** Returns a name-indexed map of all SolWed own plugins available on GitHub. */
     public static function getPluginMap(): array
     {
         $plugins = self::fetchPlugins();
@@ -32,7 +31,7 @@ class SolwedGitHubPlugins
         return $map;
     }
 
-    /** Returns the direct download URL for a plugin. */
+    /** Returns the GitHub Releases download URL for a plugin. */
     public static function getDownloadUrl(string $name, string $version): string
     {
         return "https://github.com/SolWed-es/facturascripts/releases/download/{$name}-v{$version}/{$name}.zip";
@@ -48,7 +47,7 @@ class SolwedGitHubPlugins
                 return [];
             }
             $data = json_decode($response->body(), true);
-            return $data['plugins'] ?? [];
+            return is_array($data) && isset($data['plugins']) ? $data['plugins'] : [];
         });
     }
 }

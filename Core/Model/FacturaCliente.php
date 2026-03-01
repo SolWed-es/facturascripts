@@ -20,6 +20,7 @@
 namespace FacturaScripts\Core\Model;
 
 use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
+use FacturaScripts\Core\Internal\MindClient;
 use FacturaScripts\Core\Lib\Calculator;
 use FacturaScripts\Core\Model\Base\InvoiceTrait;
 use FacturaScripts\Core\Model\Base\SalesDocument;
@@ -133,6 +134,19 @@ class FacturaCliente extends SalesDocument
     public static function tableName(): string
     {
         return 'facturascli';
+    }
+
+    protected function onInsert(): void
+    {
+        parent::onInsert();
+
+        MindClient::emit('factura.created', [
+            'idfactura' => $this->idfactura,
+            'codigo' => $this->codigo,
+            'codcliente' => $this->codcliente,
+            'total' => $this->total,
+            'fecha' => $this->fecha,
+        ]);
     }
 
     protected function saveInsert(): bool

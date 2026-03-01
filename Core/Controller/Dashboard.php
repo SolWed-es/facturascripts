@@ -24,11 +24,9 @@ use FacturaScripts\Core\Base\ControllerPermissions;
 use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
 use FacturaScripts\Core\Cache;
 use FacturaScripts\Core\Http;
-use FacturaScripts\Core\Internal\Forja;
 use FacturaScripts\Core\Model\Base\BusinessDocument;
 use FacturaScripts\Core\Plugins;
 use FacturaScripts\Core\Response;
-use FacturaScripts\Core\Telemetry;
 use FacturaScripts\Core\Tools;
 use FacturaScripts\Dinamic\Model\AlbaranCliente;
 use FacturaScripts\Dinamic\Model\Cliente;
@@ -102,11 +100,6 @@ class Dashboard extends Controller
 
         $this->loadExtensions();
 
-        // comprobamos si la instalación está registrada
-        $this->registered = Telemetry::init()->ready();
-
-        // comprobamos si hay actualizaciones disponibles
-        $this->updated = Forja::canUpdateCore() === false;
     }
 
     public function showBackupWarning(): bool
@@ -211,14 +204,30 @@ class Dashboard extends Controller
     }
 
     /**
-     * Load last news from facturascripts.com
+     * Load last releases from SolWed GitHub repository.
      */
     private function loadNews(): void
     {
-        $this->news = Cache::remember('dashboard-news', function () {
-            return Http::get('https://facturascripts.com/comm3/index.php?page=community_changelog&json=TRUE')
+        $this->news = Cache::remember('dashboard-news-solwed', function () {
+            $http = Http::get('https://api.github.com/repos/SolWed-es/facturascripts/releases?per_page=5')
                 ->setTimeout(5)
-                ->json() ?? [];
+                ->setHeader('Accept', 'application/vnd.github+json')
+                ->setHeader('User-Agent', 'FacturaScripts-SolWed/' . \FacturaScripts\Core\Kernel::version())
+                ->setHeader('X-GitHub-Api-Version', '2022-11-28');
+            if ($http->status() !== 200) {
+                return [];
+            }
+            $releases = $http->json() ?? [];
+            $items = [];
+            foreach ($releases as $release) {
+                $items[] = [
+                    'title'       => $release['tag_name'] ?? '',
+                    'description' => $release['name'] ?? '',
+                    'date'        => substr($release['published_at'] ?? '', 0, 10),
+                    'url'         => $release['html_url'] ?? '',
+                ];
+            }
+            return $items;
         });
     }
 

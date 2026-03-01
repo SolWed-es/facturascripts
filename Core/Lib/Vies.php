@@ -20,6 +20,8 @@
 namespace FacturaScripts\Core\Lib;
 
 use Exception;
+use FacturaScripts\Core\Cache;
+use FacturaScripts\Core\Http;
 use FacturaScripts\Core\Tools;
 use SoapClient;
 
@@ -65,10 +67,9 @@ class Vies
             return self::$simulatedResponse;
         }
 
-        // comprobamos si la extensión soap está instalada
+        // si la extensión soap no está instalada, usamos el mind API como alternativa
         if (false === extension_loaded('soap')) {
-            static::setMessage($msg, 'soap-extension-not-installed');
-            return self::RESULT_ERROR;
+            return self::checkViaMind($cifnif, $codiso, $msg);
         }
 
         // si el país no es de la unión europea, devolvemos error
@@ -103,6 +104,68 @@ class Vies
     public static function getLastError(): string
     {
         return self::$lastError;
+    }
+
+    private static function checkViaMind(string $cifnif, string $codiso, bool $msg): int
+    {
+        if (!in_array($codiso, self::EU_COUNTRIES)) {
+            static::setMessage($msg, 'country-not-in-eu', ['%codiso%' => $codiso]);
+            return self::RESULT_ERROR;
+        }
+
+        $cifnif = str_replace(['_', '-', '.', ',', '?', '¿', ' ', '/', '\\'], '', strtoupper(trim($cifnif)));
+        if (strlen($cifnif) < 5) {
+            static::setMessage($msg, 'vat-number-is-short', ['%vat-number%' => $cifnif]);
+            return self::RESULT_ERROR;
+        }
+        if (substr($cifnif, 0, 2) === $codiso) {
+            $cifnif = substr($cifnif, 2);
+        }
+
+        $mindApiUrl = Tools::config('mind_api_url', 'https://mind.solwed.es/api/v1');
+        $mindApiToken = self::getMindToken($mindApiUrl);
+        if (empty($mindApiToken)) {
+            static::setMessage($msg, 'vies-service-unavailable');
+            return self::RESULT_ERROR;
+        }
+
+        $response = Http::post($mindApiUrl . '/tools/consultar_vat_eu/execute')
+            ->setHeader('Authorization', 'Bearer ' . $mindApiToken)
+            ->setHeader('Content-Type', 'application/json')
+            ->setTimeout(10)
+            ->setBody(json_encode(['vat_number' => $codiso . $cifnif]));
+
+        if ($response->failed()) {
+            static::setMessage($msg, 'error-checking-vat-number', ['%vat-number%' => $cifnif]);
+            return self::RESULT_ERROR;
+        }
+
+        $data = $response->json();
+        if (($data['valid'] ?? false) === true) {
+            return self::RESULT_VALID;
+        }
+        if (($data['valid'] ?? null) === false) {
+            static::setMessage($msg, 'vat-number-not-valid', ['%vat-number%' => $cifnif]);
+            return self::RESULT_INVALID;
+        }
+
+        return self::RESULT_ERROR;
+    }
+
+    private static function getMindToken(string $baseUrl): string
+    {
+        return Cache::remember('mind_api_token', function () use ($baseUrl) {
+            $user = Tools::config('mind_api_user', '');
+            $pass = Tools::config('mind_api_password', '');
+            if (empty($user) || empty($pass)) {
+                return '';
+            }
+            $resp = Http::post($baseUrl . '/auth/login')
+                ->setHeader('Content-Type', 'application/json')
+                ->setTimeout(5)
+                ->setBody(json_encode(['email' => $user, 'password' => $pass]));
+            return $resp->json()['token'] ?? '';
+        });
     }
 
     private static function getViesInfo(string $vatNumber, string $codiso, bool $msg): int

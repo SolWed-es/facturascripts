@@ -62,17 +62,23 @@ jobs:
           git fetch origin solwed/production
           git checkout solwed/production
 
-          # Actualizar la versión del plugin en el JSON
+          # Solo actualiza si el plugin está en la lista (plugins propios SolWed)
           php -r "
             \$json = json_decode(file_get_contents('plugin-list.json'), true);
+            \$found = false;
             foreach (\$json['plugins'] as &\$p) {
               if (\$p['name'] === '$PLUGIN') {
                 \$p['version'] = '$VERSION';
+                \$found = true;
                 break;
               }
             }
-            file_put_contents('plugin-list.json', json_encode(\$json, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . PHP_EOL);
-            echo 'Updated ' . '$PLUGIN' . ' to v' . '$VERSION' . PHP_EOL;
+            if (\$found) {
+              file_put_contents('plugin-list.json', json_encode(\$json, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . PHP_EOL);
+              echo 'Updated ' . '$PLUGIN' . ' to v' . '$VERSION' . PHP_EOL;
+            } else {
+              echo 'Plugin $PLUGIN not in plugin-list.json, skipping.' . PHP_EOL;
+            }
           "
 
           git add plugin-list.json
@@ -80,3 +86,4 @@ jobs:
           git push origin solwed/production
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+

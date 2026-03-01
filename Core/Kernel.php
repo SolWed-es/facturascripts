@@ -385,6 +385,7 @@ final class Kernel
             '/MyFiles/*' => 'Myfiles',
             '/node_modules/*' => 'Files',
             '/Plugins/*' => 'Files',
+            '/SolwedMindConnect' => 'SolwedMindConnect',
             '/Updater' => 'Updater',
         ];
 
