@@ -74,6 +74,15 @@
             </a>
         </li>
         {% if config('disable_add_plugins', false) == false %}
+            {% if fsc.solwedPluginList | length > 0 %}
+                <li class="nav-item">
+                    <a class="nav-link" id="solwedPluginsTab" data-bs-toggle="tab" href="#solwed" role="tab">
+                        <i class="fa-solid fa-store fa-fw" aria-hidden="true"></i>
+                        <span class="d-none d-sm-inline-block">Portal SolWed</span>
+                        <span class="badge bg-primary">{{ fsc.solwedPluginList | length }}</span>
+                    </a>
+                </li>
+            {% endif %}
             <li class="nav-item">
                 <a class="nav-link" id="allPluginsTab" data-bs-toggle="tab" href="#all" role="tab">
                     <i class="fa-solid fa-boxes fa-fw" aria-hidden="true"></i>
@@ -99,6 +108,11 @@
             {% endif %}
         </div>
         {% if config('disable_add_plugins', false) == false %}
+            {% if fsc.solwedPluginList | length > 0 %}
+                <div class="tab-pane fade" id="solwed" role="tabpanel">
+                    {{ _self.showSolwedPlugins(fsc) }}
+                </div>
+            {% endif %}
             <div class="tab-pane fade" id="all" role="tabpanel">
                 {{ _self.showAllPlugins(fsc) }}
             </div>
@@ -282,6 +296,33 @@
         <i class="fa-solid fa-heart"></i>
         <i class="fa-solid fa-heart"></i>
     {% endif %}
+{% endmacro %}
+
+{% macro showSolwedPlugins(fsc) %}
+    <div class="p-3">
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
+            {% for plugin in fsc.solwedPluginList %}
+                <div class="col">
+                    <div class="card shadow-sm h-100 border-primary">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="fa-solid fa-plug me-1 text-primary" aria-hidden="true"></i>
+                                {{ plugin.name }}
+                                <small class="text-muted">v{{ plugin.version }}</small>
+                            </h5>
+                            <p class="card-text text-muted small">{{ plugin.description | slice(0, 200) }}</p>
+                        </div>
+                        <div class="card-footer p-2">
+                            <a href="{{ fsc.url() }}?action=github-install&plugin={{ plugin.name }}&multireqtoken={{ formToken(false) }}"
+                               class="btn btn-primary btn-sm btn-spin-action" onclick="animateSpinner('add')">
+                                <i class="fa-solid fa-download me-1" aria-hidden="true"></i> {{ trans('install') }}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
 {% endmacro %}
 
 {% macro showAllPlugins(fsc) %}

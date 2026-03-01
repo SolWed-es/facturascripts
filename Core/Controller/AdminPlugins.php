@@ -22,6 +22,7 @@ namespace FacturaScripts\Core\Controller;
 use FacturaScripts\Core\Base\Controller;
 use FacturaScripts\Core\Base\ControllerPermissions;
 use FacturaScripts\Core\Cache;
+use FacturaScripts\Core\Http;
 use FacturaScripts\Core\Internal\Forja;
 use FacturaScripts\Core\Internal\SolwedGitHubPlugins;
 use FacturaScripts\Core\Plugins;
@@ -41,11 +42,14 @@ class AdminPlugins extends Controller
     /** @var array */
     public $pluginList = [];
 
+    /** @var bool */
+    public $registered = false;
+
     /** @var array */
     public $remotePluginList = [];
 
-    /** @var bool */
-    public $registered = false;
+    /** @var array */
+    public $solwedPluginList = [];
 
     /** @var bool */
     public $updated = false;
@@ -115,7 +119,7 @@ class AdminPlugins extends Controller
         // cargamos la lista de plugins
         $this->pluginList = Plugins::list();
         $this->loadRemotePluginList();
-        $this->markGithubPlugins();
+        $this->loadSolwedPlugins();
 
         // comprobamos si la instalación está registrada
         $telemetry = new Telemetry();
@@ -254,7 +258,7 @@ class AdminPlugins extends Controller
     private function githubInstallAction(): void
     {
         if (false === $this->permissions->allowUpdate) {
-            Tools::log()->warning('not-allowed-modify');
+            Tools::log()->warning('not-allowed-update');
             return;
         } elseif (false === $this->validateFormToken()) {
             return;
@@ -281,7 +285,7 @@ class AdminPlugins extends Controller
             mkdir(dirname($tmpFile), 0755, true);
         }
 
-        $response = \FacturaScripts\Core\Http::get($downloadUrl)
+        $response = Http::get($downloadUrl)
             ->setTimeout(45)
             ->setHeader('User-Agent', 'FacturaScripts-SolWed/1.0')
             ->setHeader('Accept', 'application/octet-stream');
@@ -294,7 +298,12 @@ class AdminPlugins extends Controller
         file_put_contents($tmpFile, $response->body());
 
         if (Plugins::add($tmpFile, $pluginName . '.zip')) {
-            Plugins::enable($pluginName);
+            if (false === Plugins::enable($pluginName)) {
+                Tools::log()->warning('plugin-enable-failed', ['%plugin%' => $pluginName]);
+            } else {
+                Tools::log()->notice('reloading');
+                $this->redirect($this->url(), 3);
+            }
         }
 
         if (file_exists($tmpFile)) {
@@ -304,19 +313,20 @@ class AdminPlugins extends Controller
         Cache::clear();
     }
 
-    private function markGithubPlugins(): void
+    private function loadSolwedPlugins(): void
     {
-        if (empty($this->remotePluginList)) {
+        if (Tools::config('disable_add_plugins', false)) {
             return;
         }
 
-        $githubMap = SolwedGitHubPlugins::getPluginMap();
-        if (empty($githubMap)) {
-            return;
-        }
-
-        foreach ($this->remotePluginList as &$plugin) {
-            $plugin['in_github'] = isset($githubMap[$plugin['name']]);
+        $installedPlugins = Plugins::list();
+        foreach (SolwedGitHubPlugins::getPluginMap() as $plugin) {
+            foreach ($installedPlugins as $installed) {
+                if ($installed->name == $plugin['name']) {
+                    continue 2;
+                }
+            }
+            $this->solwedPluginList[] = $plugin;
         }
     }
 

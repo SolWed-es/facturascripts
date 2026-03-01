@@ -122,6 +122,45 @@ final class CrashReport
         $info['created_at'] = date('Y-m-d H:i:s');
 
         file_put_contents($file_path, json_encode($info, JSON_PRETTY_PRINT));
+
+        // enviamos el informe por email a soporte SolWed
+        self::sendEmailReport($info);
+    }
+
+    private static function sendEmailReport(array $info): void
+    {
+        if (!class_exists('PHPMailer\PHPMailer\PHPMailer')) {
+            return;
+        }
+
+        try {
+            $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
+            $mail->isSMTP();
+            $mail->Host       = Tools::config('mail_host', '');
+            $mail->SMTPAuth   = true;
+            $mail->Username   = Tools::config('mail_user', '');
+            $mail->Password   = Tools::config('mail_password', '');
+            $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
+            $mail->Port       = (int)Tools::config('mail_port', 587);
+            $mail->CharSet    = 'UTF-8';
+
+            $from = Tools::config('mail_from', Tools::config('mail_user', 'no-reply@solwed.es'));
+            $mail->setFrom($from, 'FacturaScripts SolWed');
+            $mail->addAddress('soporte@solwed.es');
+
+            $mail->isHTML(false);
+            $mail->Subject = 'Error ' . $info['hash'] . ' — ' . ($_SERVER['HTTP_HOST'] ?? 'unknown');
+            $mail->Body    = "Error: {$info['hash']}\n"
+                . "URL: {$info['url']}\n"
+                . "File: {$info['file']}:{$info['line']}\n"
+                . "Core: {$info['core_version']}\n"
+                . "Plugins: {$info['plugin_list']}\n\n"
+                . $info['message'];
+
+            $mail->send();
+        } catch (\Exception $e) {
+            // Silenciar: no queremos un error dentro del handler de errores
+        }
     }
 
     public static function shutdown(): void
