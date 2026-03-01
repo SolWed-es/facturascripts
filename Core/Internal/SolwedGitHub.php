@@ -102,7 +102,7 @@ class SolwedGitHub
         }
 
         $tagPrefix = $prefix . '-v';
-        foreach ($http->json() as $release) {
+        foreach ($http->json() ?? [] as $release) {
             if (str_starts_with($release['tag_name'] ?? '', $tagPrefix)) {
                 return $release;
             }

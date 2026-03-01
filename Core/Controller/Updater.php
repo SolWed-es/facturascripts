@@ -25,6 +25,7 @@ use FacturaScripts\Core\Cache;
 use FacturaScripts\Core\Http;
 use FacturaScripts\Core\Internal\Forja;
 use FacturaScripts\Core\Internal\Plugin;
+use FacturaScripts\Core\Internal\SolwedDemoPlugins;
 use FacturaScripts\Core\Internal\SolwedGitHub;
 use FacturaScripts\Core\Kernel;
 use FacturaScripts\Core\Migrations;
@@ -246,13 +247,59 @@ class Updater extends Controller
 
     private static function getUpdateItemsPlugin(Plugin $plugin): array
     {
-        // Si el plugin tiene campo github en su ini, usamos GitHub Releases
+        // 1. GitHub Releases — si tiene github= en el ini y hay versión más reciente
         if (!empty(SolwedGitHub::getPluginRepo($plugin))) {
-            return self::getUpdateItemsPluginGitHub($plugin);
+            $item = self::getUpdateItemsPluginGitHub($plugin);
+            if (!empty($item)) {
+                return $item;
+            }
         }
 
-        // Fallback: Forja oficial de facturascripts.com
+        // 2. demo.erpsolwed.es — aunque el plugin tenga github= puede estar más actualizado en demo
+        $demoItem = self::getUpdateItemsPluginDemo($plugin);
+        if (!empty($demoItem)) {
+            return $demoItem;
+        }
+
+        // 3. Forja upstream (fallback para plugins sin fuente SolWed)
         return self::getUpdateItemsPluginForja($plugin);
+    }
+
+    private static function getUpdateItemsPluginDemo(Plugin $plugin): array
+    {
+        $demoMap = SolwedDemoPlugins::getPluginMap();
+        if (!isset($demoMap[$plugin->name])) {
+            return [];
+        }
+
+        $demoPlugin = $demoMap[$plugin->name];
+        $demoVersion = (float)($demoPlugin['version'] ?? 0);
+        if ($demoVersion <= (float)$plugin->version) {
+            return [];
+        }
+
+        $fileName = 'update-' . $plugin->name . '.zip';
+        $minCore = (float)($demoPlugin['min_version'] ?? 0);
+
+        if ($minCore > self::getCoreVersion()) {
+            return [];
+        }
+
+        return [
+            'description' => Tools::trans('plugin-update', [
+                '%pluginName%' => $plugin->name,
+                '%version%'    => $demoVersion,
+            ]),
+            'downloaded' => file_exists(Tools::folder($fileName)),
+            'filename'   => $fileName,
+            'id'         => $plugin->name,
+            'name'       => $plugin->name,
+            'stable'     => true,
+            'url'        => $demoPlugin['download_url'],
+            'version'    => $demoVersion,
+            'mincore'    => $minCore,
+            'maxcore'    => 0,
+        ];
     }
 
     private static function getUpdateItemsPluginGitHub(Plugin $plugin): array
