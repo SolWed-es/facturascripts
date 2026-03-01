@@ -24,6 +24,7 @@ use FacturaScripts\Core\Base\ControllerPermissions;
 use FacturaScripts\Core\Cache;
 use FacturaScripts\Core\Http;
 use FacturaScripts\Core\Internal\Forja;
+use FacturaScripts\Core\Internal\MindClient;
 use FacturaScripts\Core\Internal\Plugin;
 use FacturaScripts\Core\Internal\SolwedDemoPlugins;
 use FacturaScripts\Core\Internal\SolwedGitHub;
@@ -451,15 +452,31 @@ class Updater extends Controller
         }
 
         // get the name of the plugin to init after update (if the plugin is enabled)
+        // and collect info for the MindClient event
         $init = '';
+        $updateItem = [];
         foreach (self::getUpdateItems() as $item) {
             if ($idItem == self::SOLWED_CORE_ITEM_ID) {
                 break;
             }
 
-            if ($item['id'] == $idItem && Plugins::isEnabled($item['name'])) {
-                $init = $item['name'];
+            if ($item['id'] == $idItem) {
+                $updateItem = $item;
+                if (Plugins::isEnabled($item['name'])) {
+                    $init = $item['name'];
+                }
                 break;
+            }
+        }
+
+        // capture old version before overwriting
+        $oldVersion = null;
+        if (!empty($updateItem)) {
+            foreach (Plugins::list() as $plugin) {
+                if ($plugin->name === $updateItem['name']) {
+                    $oldVersion = (float)$plugin->version;
+                    break;
+                }
             }
         }
 
@@ -469,6 +486,16 @@ class Updater extends Controller
             $this->updatePlugin($zip, $fileName);
 
         if ($done) {
+            // emit event for plugin updates (not for core)
+            if (!empty($updateItem) && $idItem !== self::SOLWED_CORE_ITEM_ID) {
+                MindClient::emit('plugin.updated', [
+                    'name' => $updateItem['name'],
+                    'version' => $updateItem['version'],
+                    'old_version' => $oldVersion,
+                    'source' => 'updater',
+                ]);
+            }
+
             Plugins::deploy(true, false);
             Cache::clear();
             $this->setTemplate(false);
