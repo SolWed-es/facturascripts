@@ -24,6 +24,7 @@ use FacturaScripts\Core\Base\ControllerPermissions;
 use FacturaScripts\Core\Cache;
 use FacturaScripts\Core\Http;
 use FacturaScripts\Core\Internal\Forja;
+use FacturaScripts\Core\Internal\MindClient;
 use FacturaScripts\Core\Internal\SolwedDemoPlugins;
 use FacturaScripts\Core\Internal\SolwedGitHubPlugins;
 use FacturaScripts\Core\Plugins;
@@ -136,8 +137,11 @@ class AdminPlugins extends Controller
         }
 
         $pluginName = $this->request->queryOrInput('plugin', '');
+        $version = $this->getInstalledVersion($pluginName);
         Plugins::disable($pluginName);
         Cache::clear();
+
+        MindClient::emit('plugin.disabled', ['name' => $pluginName, 'version' => $version]);
     }
 
     private function disableIncompatiblePlugins(): void
@@ -178,8 +182,11 @@ class AdminPlugins extends Controller
         }
 
         $pluginName = $this->request->queryOrInput('plugin', '');
+        $version = $this->getInstalledVersion($pluginName);
         Plugins::enable($pluginName);
         Cache::clear();
+
+        MindClient::emit('plugin.enabled', ['name' => $pluginName, 'version' => $version]);
     }
 
     private function extractPluginsZipFiles(): void
@@ -266,8 +273,21 @@ class AdminPlugins extends Controller
         }
 
         $pluginName = $this->request->queryOrInput('plugin', '');
+        $version = $this->getInstalledVersion($pluginName);
         Plugins::remove($pluginName);
         Cache::clear();
+
+        MindClient::emit('plugin.removed', ['name' => $pluginName, 'version' => $version]);
+    }
+
+    private function getInstalledVersion(string $pluginName): ?float
+    {
+        foreach (Plugins::list() as $plugin) {
+            if ($plugin->name === $pluginName) {
+                return (float)$plugin->version;
+            }
+        }
+        return null;
     }
 
     private function githubInstallAction(): void
@@ -293,8 +313,9 @@ class AdminPlugins extends Controller
         }
 
         $pluginInfo = $allMap[$pluginName];
-        $version = $pluginInfo['version'] ?? '0';
-        $downloadUrl = $pluginInfo['download_url'] ?? SolwedGitHubPlugins::getDownloadUrl($pluginName, $version);
+        $newVersion = (float)($pluginInfo['version'] ?? 0);
+        $oldVersion = $this->getInstalledVersion($pluginName);
+        $downloadUrl = $pluginInfo['download_url'] ?? SolwedGitHubPlugins::getDownloadUrl($pluginName, (string)$newVersion);
 
         $tmpFile = Tools::folder('MyFiles/Tmp') . DIRECTORY_SEPARATOR . $pluginName . '.zip';
         if (!is_dir(dirname($tmpFile))) {
@@ -314,6 +335,14 @@ class AdminPlugins extends Controller
         file_put_contents($tmpFile, $response->body());
 
         if (Plugins::add($tmpFile, $pluginName . '.zip')) {
+            $eventName = $oldVersion !== null ? 'plugin.updated' : 'plugin.installed';
+            MindClient::emit($eventName, [
+                'name' => $pluginName,
+                'version' => $newVersion,
+                'old_version' => $oldVersion,
+                'source' => strpos($downloadUrl, 'demo.erpsolwed.es') !== false ? 'demo' : 'github',
+            ]);
+
             if (false === Plugins::enable($pluginName)) {
                 Tools::log()->warning('plugin-enable-failed', ['%plugin%' => $pluginName]);
             } else {
@@ -375,8 +404,20 @@ class AdminPlugins extends Controller
                 continue;
             }
 
+            // nombre del plugin = nombre del ZIP sin extensión
+            $pluginName = pathinfo($uploadFile->getClientOriginalName(), PATHINFO_FILENAME);
+            $oldVersion = $this->getInstalledVersion($pluginName);
+
             if (false === Plugins::add($uploadFile->getPathname(), $uploadFile->getClientOriginalName())) {
                 $ok = false;
+            } else {
+                $eventName = $oldVersion !== null ? 'plugin.updated' : 'plugin.installed';
+                MindClient::emit($eventName, [
+                    'name' => $pluginName,
+                    'version' => $this->getInstalledVersion($pluginName),
+                    'old_version' => $oldVersion,
+                    'source' => 'upload',
+                ]);
             }
 
             unlink($uploadFile->getPathname());
