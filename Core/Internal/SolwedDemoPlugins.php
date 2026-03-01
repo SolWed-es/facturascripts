@@ -49,10 +49,15 @@ class SolwedDemoPlugins
                 if (empty($plugin['name'])) {
                     continue;
                 }
-                // asegurar siempre download_url
+                // asegurar siempre download_url válida (el API devuelve la barra omitida)
                 if (empty($plugin['download_url'])) {
                     $plugin['download_url'] = self::BASE_URL . '/SolwedPluginExport?action=download&plugin='
                         . urlencode($plugin['name']);
+                } elseif (strpos($plugin['download_url'], self::BASE_URL . '/') !== 0
+                    && strpos($plugin['download_url'], self::BASE_URL) === 0) {
+                    // URL malformada: https://demo.erpsolwed.esSolwedPlugin... → añadir /
+                    $plugin['download_url'] = self::BASE_URL . '/'
+                        . substr($plugin['download_url'], strlen(self::BASE_URL));
                 }
                 $plugin['in_github'] = true;
                 $plugin['health'] = $plugin['health'] ?? 5;
