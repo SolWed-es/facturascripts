@@ -129,11 +129,9 @@ class Vies
             return self::RESULT_ERROR;
         }
 
-        $response = Http::post($mindApiUrl . '/tools/consultar_vat_eu/execute')
+        $response = Http::postJson($mindApiUrl . '/tools/consultar_vat_eu/execute', ['vat_number' => $codiso . $cifnif])
             ->setHeader('Authorization', 'Bearer ' . $mindApiToken)
-            ->setHeader('Content-Type', 'application/json')
-            ->setTimeout(10)
-            ->setBody(json_encode(['vat_number' => $codiso . $cifnif]));
+            ->setTimeout(10);
 
         if ($response->failed()) {
             static::setMessage($msg, 'error-checking-vat-number', ['%vat-number%' => $cifnif]);
@@ -160,10 +158,8 @@ class Vies
             if (empty($user) || empty($pass)) {
                 return '';
             }
-            $resp = Http::post($baseUrl . '/auth/login')
-                ->setHeader('Content-Type', 'application/json')
-                ->setTimeout(5)
-                ->setBody(json_encode(['email' => $user, 'password' => $pass]));
+            $resp = Http::postJson($baseUrl . '/auth/login', ['email' => $user, 'password' => $pass])
+                ->setTimeout(5);
             return $resp->json()['token'] ?? '';
         });
     }
