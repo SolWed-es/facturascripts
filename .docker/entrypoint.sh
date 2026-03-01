@@ -19,11 +19,8 @@ if [ ! -f /var/www/html/.htaccess ]; then
     cp /var/www/html/htaccess-sample /var/www/html/.htaccess
 fi
 
-# Create writable directories and fix ownership for www-data
-echo "[entrypoint] Fixing permissions on MyFiles/, Core/, Plugins/..."
-mkdir -p /var/www/html/MyFiles/Tmp /var/www/html/MyFiles/uploads
-chown -R www-data:www-data /var/www/html/MyFiles /var/www/html/config.php \
-    /var/www/html/Core /var/www/html/Plugins
+# Ensure writable directories exist
+mkdir -p /var/www/html/MyFiles/Tmp /var/www/html/MyFiles/uploads /var/www/html/Dinamic
 
 # Deploy Dinamic/ if empty (volume mount creates empty dir before our code runs)
 if [ -z "$(ls -A /var/www/html/Dinamic 2>/dev/null)" ]; then
@@ -36,7 +33,20 @@ if [ -z "$(ls -A /var/www/html/Dinamic 2>/dev/null)" ]; then
         Plugins::deploy();
         echo 'Deploy done.' . PHP_EOL;
     "
-    chown -R www-data:www-data /var/www/html/Dinamic
 fi
+
+# Fix permissions for www-data on all writable directories.
+# - MyFiles/: uploads, cache, logs, crash reports
+# - Dinamic/: regenerated on deploy (may contain root-owned files from CLI deploys)
+# - Plugins/: installed/removed by the app at runtime
+# - config.php: written by the installer
+# Note: Core/ is intentionally excluded — read-only for Apache (o+r already set),
+#       and keeping host ownership avoids permission issues in development.
+echo "[entrypoint] Fixing permissions (MyFiles, Dinamic, Plugins, config.php)..."
+chown -R www-data:www-data \
+    /var/www/html/MyFiles \
+    /var/www/html/Dinamic \
+    /var/www/html/Plugins \
+    /var/www/html/config.php
 
 exec apache2-foreground
