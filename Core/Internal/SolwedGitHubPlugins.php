@@ -10,21 +10,15 @@ use FacturaScripts\Core\Cache;
 use FacturaScripts\Core\Http;
 
 /**
- * Fetches the SolWed plugin list from two sources:
- *   1. SolWed-es/SolwedPlugins-container (GitHub) — plugin-list.json with download_url per plugin
- *   2. demo.erpsolwed.es — SolwedPluginExport?action=list API
- *
- * Both lists are merged and deduplicated (GitHub takes priority).
+ * Fetches the SolWed plugin list from SolWed-es/SolwedPlugins-container.
  * Used by AdminPlugins to populate the "Portal SolWed" tab.
  */
 class SolwedGitHubPlugins
 {
-    const CACHE_KEY  = 'solwed_plugin_list_v2';
-    const GITHUB_URL = 'https://raw.githubusercontent.com/SolWed-es/SolwedPlugins-container/main/plugin-list.json';
-    const DEMO_URL   = 'https://demo.erpsolwed.es/SolwedPluginExport?action=list';
-    const DEMO_BASE  = 'https://demo.erpsolwed.es';
+    const CACHE_KEY = 'solwed_github_plugin_list';
+    const JSON_URL  = 'https://raw.githubusercontent.com/SolWed-es/SolwedPlugins-container/main/plugin-list.json';
 
-    /** Returns a name-indexed map of all SolWed plugins available for install. */
+    /** Returns a name-indexed map of all SolWed GitHub plugins available for install. */
     public static function getPluginMap(): array
     {
         $map = [];
@@ -45,74 +39,14 @@ class SolwedGitHubPlugins
     private static function fetchPlugins(): array
     {
         return Cache::remember(self::CACHE_KEY, function () {
-            $github = self::fetchFromGitHub();
-            $demo   = self::fetchFromDemo();
-
-            // merge: GitHub takes priority, demo fills in missing plugins
-            $merged = $github;
-            foreach ($demo as $plugin) {
-                if (!empty($plugin['name']) && !isset($merged[$plugin['name']])) {
-                    $merged[$plugin['name']] = $plugin;
-                }
+            $response = Http::get(self::JSON_URL)
+                ->setTimeout(10)
+                ->setHeader('User-Agent', 'FacturaScripts-SolWed/1.0');
+            if ($response->failed()) {
+                return [];
             }
-
-            return array_values($merged);
+            $data = json_decode($response->body(), true);
+            return is_array($data) && isset($data['plugins']) ? $data['plugins'] : [];
         });
-    }
-
-    /** Fetches plugins from SolWed-es/SolwedPlugins-container plugin-list.json */
-    private static function fetchFromGitHub(): array
-    {
-        $response = Http::get(self::GITHUB_URL)
-            ->setTimeout(10)
-            ->setHeader('User-Agent', 'FacturaScripts-SolWed/1.0');
-
-        if ($response->failed()) {
-            return [];
-        }
-
-        $data = json_decode($response->body(), true);
-        if (!is_array($data) || !isset($data['plugins'])) {
-            return [];
-        }
-
-        $result = [];
-        foreach ($data['plugins'] as $plugin) {
-            if (!empty($plugin['name'])) {
-                $result[$plugin['name']] = $plugin;
-            }
-        }
-        return $result;
-    }
-
-    /** Fetches plugins from demo.erpsolwed.es SolwedPluginExport API */
-    private static function fetchFromDemo(): array
-    {
-        $response = Http::get(self::DEMO_URL)
-            ->setTimeout(10)
-            ->setHeader('User-Agent', 'FacturaScripts-SolWed/1.0');
-
-        if ($response->failed()) {
-            return [];
-        }
-
-        $data = json_decode($response->body(), true);
-        if (!is_array($data) || !isset($data['plugins'])) {
-            return [];
-        }
-
-        $result = [];
-        foreach ($data['plugins'] as $plugin) {
-            if (empty($plugin['name'])) {
-                continue;
-            }
-            // aseguramos que siempre hay download_url
-            if (empty($plugin['download_url'])) {
-                $plugin['download_url'] = self::DEMO_BASE . '/SolwedPluginExport?action=download&plugin='
-                    . urlencode($plugin['name']);
-            }
-            $result[$plugin['name']] = $plugin;
-        }
-        return $result;
     }
 }
