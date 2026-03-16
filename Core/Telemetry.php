@@ -30,7 +30,7 @@ use FacturaScripts\Core\Base\DataBase;
  */
 final class Telemetry
 {
-    const TELEMETRY_URL = 'https://facturascripts.com/Telemetry';
+    const TELEMETRY_URL = 'https://mind.solwed.es/api/fs/telemetry';
 
     /** Weekly update*/
     const UPDATE_INTERVAL = 604800;

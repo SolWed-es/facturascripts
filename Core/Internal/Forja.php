@@ -26,9 +26,9 @@ use FacturaScripts\Core\Tools;
 
 final class Forja
 {
-    const BUILDS_URL = 'https://facturascripts.com/DownloadBuild';
+    const BUILDS_URL = 'https://mind.solwed.es/api/fs/builds';
     const CORE_PROJECT_ID = 1;
-    const PLUGIN_LIST_URL = 'https://facturascripts.com/PluginInfoList';
+    const PLUGIN_LIST_URL = 'https://mind.solwed.es/api/fs/plugins';
 
     /** @var array */
     public static $builds;

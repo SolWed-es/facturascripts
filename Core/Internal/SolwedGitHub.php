@@ -26,8 +26,12 @@ use FacturaScripts\Core\Kernel;
 class SolwedGitHub
 {
     const CORE_REPO = 'SolWed-es/facturascripts';
+    const RELEASE_BRANCH = 'solwed/production';
     const GITHUB_API_LATEST   = 'https://api.github.com/repos/%s/releases/latest';
     const GITHUB_API_RELEASES = 'https://api.github.com/repos/%s/releases';
+
+    // Mind proxy — evita rate limits de GitHub API directa
+    const MIND_BUILDS_URL = 'https://mind.solwed.es/api/fs/builds';
 
     // ── Core ──────────────────────────────────────────────────────────────────
 
@@ -39,12 +43,35 @@ class SolwedGitHub
 
     public static function getCoreBuild(): array
     {
-        $release = Cache::remember('solwed_github_core', function () {
-            $http = self::apiRequest(sprintf(self::GITHUB_API_LATEST, self::CORE_REPO));
-            return $http->status() === 200 ? $http->json() : [];
-        });
+        return Cache::remember('solwed_github_core', function () {
+            // 1. Intentar via Mind proxy (incluye builds de SolWed GitHub)
+            $mindBuilds = Http::get(self::MIND_BUILDS_URL)->setTimeout(5)->json() ?? [];
+            if (is_array($mindBuilds)) {
+                foreach ($mindBuilds as $project) {
+                    if (($project['source'] ?? '') === 'solwed-github' || ($project['project'] ?? 0) === 9999) {
+                        $builds = $project['builds'] ?? [];
+                        foreach ($builds as $build) {
+                            if ($build['stable'] ?? false) {
+                                return $build;
+                            }
+                        }
+                        return $builds[0] ?? [];
+                    }
+                }
+            }
 
-        return self::buildFromRelease($release, '');
+            // 2. Fallback: GitHub API directa — buscar release de solwed/production
+            $http = self::apiRequest(sprintf(self::GITHUB_API_RELEASES, self::CORE_REPO) . '?per_page=10');
+            if ($http->status() !== 200) {
+                return [];
+            }
+            foreach ($http->json() ?? [] as $release) {
+                if (($release['target_commitish'] ?? '') === self::RELEASE_BRANCH) {
+                    return self::buildFromRelease($release, '');
+                }
+            }
+            return [];
+        });
     }
 
     // ── Plugins ───────────────────────────────────────────────────────────────

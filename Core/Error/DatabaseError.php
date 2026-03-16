@@ -38,7 +38,7 @@ class DatabaseError extends ErrorController
             . '<p class="mb-0">' . Tools::trans('database-error-server') . '</p>'
             . '</div>'
             . '<div class="card-footer">'
-            . '<a href="https://facturascripts.com/publicaciones/error-al-conectar-a-la-base-de-datos" class="btn btn-secondary" target="_blank" rel="nofollow">'
+            . '<a href="https://solwed.es/ayuda/error-base-de-datos" class="btn btn-secondary" target="_blank" rel="nofollow">'
             . Tools::trans('read-more')
             . '</a>'
             . '</div>'

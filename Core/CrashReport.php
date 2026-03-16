@@ -71,7 +71,7 @@ final class CrashReport
         $errorMessage = self::formatErrorMessage($message);
         $errorFile = str_replace(FS_FOLDER, '', $file);
         $errorHash = md5($code . $errorFile . $line . $errorMessage);
-        $reportUrl = 'https://facturascripts.com/errores/' . $errorHash;
+        $reportUrl = 'https://solwed.es/errores/' . $errorHash;
         $reportQr = 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=' . urlencode($reportUrl);
 
         return [

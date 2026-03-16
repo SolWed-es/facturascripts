@@ -45,7 +45,7 @@ class MindClient
         }
 
         try {
-            Http::postJson($url . '/api/v1/fs/events', [
+            Http::postJson($url . '/api/fs/events', [
                 'event' => $event,
                 'installation' => Tools::config('db_name', ''),
                 'data' => $data,

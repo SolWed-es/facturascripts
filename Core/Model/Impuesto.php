@@ -55,6 +55,12 @@ class Impuesto extends ModelClass
     public $codsubcuentarep;
 
     /**
+     * Código de la subcuenta de IVA repercutido intracomunitario.
+     * @var string
+     */
+    public $codsubcuentarepintra;
+
+    /**
      * Código de la subcuenta de recargo de equivalencia para el IVA repercutido.
      * @var string
      */
@@ -65,6 +71,12 @@ class Impuesto extends ModelClass
      * @var string
      */
     public $codsubcuentasop;
+
+    /**
+     * Código de la subcuenta de IVA soportado intracomunitario.
+     * @var string
+     */
+    public $codsubcuentasopintra;
 
     /**
      * Código de la subcuenta de recargo de equivalencia para el IVA soportado.
@@ -171,8 +183,10 @@ class Impuesto extends ModelClass
         }
 
         $this->codsubcuentarep = empty($this->codsubcuentarep) ? null : $this->codsubcuentarep;
+        $this->codsubcuentarepintra = empty($this->codsubcuentarepintra) ? null : $this->codsubcuentarepintra;
         $this->codsubcuentarepre = empty($this->codsubcuentarepre) ? null : $this->codsubcuentarepre;
         $this->codsubcuentasop = empty($this->codsubcuentasop) ? null : $this->codsubcuentasop;
+        $this->codsubcuentasopintra = empty($this->codsubcuentasopintra) ? null : $this->codsubcuentasopintra;
         $this->codsubcuentasopre = empty($this->codsubcuentasopre) ? null : $this->codsubcuentasopre;
         $this->descripcion = Tools::noHtml($this->descripcion);
 
