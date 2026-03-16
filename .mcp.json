@@ -7,6 +7,10 @@
     "docker": {
       "command": "npx",
       "args": ["-y", "@modelcontextprotocol/server-docker"]
+    },
+    "playwright": {
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp@latest"]
     }
   }
 }
