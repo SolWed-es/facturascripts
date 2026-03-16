@@ -237,6 +237,9 @@ class AdminPlugins extends Controller
 
         // plugins de Forja (upstream) — los que no están ya en demo ni instalados
         foreach (Forja::plugins() as $item) {
+            if (!is_array($item) || empty($item['name'])) {
+                continue;
+            }
             // si ya está en demo (tiene botón directo), saltamos
             if (isset($demoMap[$item['name']])) {
                 continue;

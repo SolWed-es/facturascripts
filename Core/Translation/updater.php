@@ -35,7 +35,7 @@ foreach (scandir(__DIR__, SCANDIR_SORT_ASCENDING) as $filename) {
 
 // download json from facturascripts.com
 foreach ($files as $filename) {
-    $url = "https://facturascripts.com/EditLanguage?action=json&idproject=1&code=" . substr($filename, 0, -5);
+    $url = "https://mind.solwed.es/api/fs/translations?code=" . substr($filename, 0, -5);
     $newContent = file_get_contents($url);
     if (empty($newContent)) {
         if (file_exists($filename)) {
