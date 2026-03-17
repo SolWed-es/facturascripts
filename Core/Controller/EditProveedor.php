@@ -1,7 +1,7 @@
 <?php
 /**
  * This file is part of FacturaScripts
- * Copyright (C) 2017-2025 Carlos Garcia Gomez <carlos@facturascripts.com>
+ * Copyright (C) 2017-2026 Carlos Garcia Gomez <carlos@facturascripts.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as
@@ -23,8 +23,10 @@ use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
 use FacturaScripts\Core\Lib\ExtendedController\BaseView;
 use FacturaScripts\Core\Lib\ExtendedController\ComercialContactController;
 use FacturaScripts\Core\Tools;
+use FacturaScripts\Dinamic\Lib\InvoiceOperation;
 use FacturaScripts\Dinamic\Lib\RegimenIVA;
 use FacturaScripts\Dinamic\Lib\SupplierRiskTools;
+use FacturaScripts\Core\Lib\TaxExceptions;
 
 /**
  * Controller to edit a single item from the Proveedor model
@@ -82,20 +84,18 @@ class EditProveedor extends ComercialContactController
 
     protected function createDocumentView(string $viewName, string $model, string $label): void
     {
-        $this->createSupplierListView($viewName, $model, $label);
+        $this->createSupplierListView($viewName, $model, $label)
+            ->setSettings('btnPrint', true);
 
-        // botones
-        $this->setSettings($viewName, 'btnPrint', true);
         $this->addButtonGroupDocument($viewName);
         $this->addButtonApproveDocument($viewName);
     }
 
     protected function createInvoiceView(string $viewName): void
     {
-        $this->createSupplierListView($viewName, 'FacturaProveedor', 'invoices');
+        $this->createSupplierListView($viewName, 'FacturaProveedor', 'invoices')
+            ->setSettings('btnPrint', true);
 
-        // botones
-        $this->setSettings($viewName, 'btnPrint', true);
         $this->addButtonLockInvoice($viewName);
     }
 
@@ -108,17 +108,15 @@ class EditProveedor extends ComercialContactController
             ->addOrderBy(['neto'], 'net')
             ->addOrderBy(['stock'], 'stock')
             ->addSearchFields(['referencia', 'refproveedor'])
-            ->disableColumn('supplier');
-
-        // botones
-        $this->setSettings($viewName, 'btnNew', false);
-        $this->setSettings($viewName, 'btnPrint', true);
+            ->disableColumn('supplier')
+            ->setSettings('btnNew', false)
+            ->setSettings('btnPrint', true);
     }
 
     /**
      * Create views
      */
-    protected function createViews()
+    protected function createViews(): void
     {
         parent::createViews();
 
@@ -157,9 +155,6 @@ class EditProveedor extends ComercialContactController
         $return = parent::editAction();
         if ($return && $this->active === $this->getMainViewName()) {
             $this->checkSubaccountLength($this->getModel()->codsubcuenta);
-
-            // update contact email and phones when supplier email or phones are updated
-            $this->updateContact($this->views[$this->active]->model);
         }
 
         return $return;
@@ -230,6 +225,8 @@ class EditProveedor extends ComercialContactController
             case $mainViewName:
                 parent::loadData($viewName, $view);
                 $this->loadLanguageValues($viewName);
+                $this->loadExceptionVat($viewName);
+                $this->loadOperationValues($viewName);
                 break;
 
             default:
@@ -251,6 +248,22 @@ class EditProveedor extends ComercialContactController
             }
 
             $columnLangCode->widget->setValuesFromArray($langs, false, true);
+        }
+    }
+
+    protected function loadExceptionVat(string $viewName): void
+    {
+        $column = $this->views[$viewName]->columnForName('vat-exception');
+        if ($column && $column->widget->getType() === 'select') {
+            $column->widget->setValuesFromArrayKeys(TaxExceptions::all(), true, true);
+        }
+    }
+
+    protected function loadOperationValues(string $viewName): void
+    {
+        $column = $this->views[$viewName]->columnForName('operation');
+        if ($column && $column->widget->getType() === 'select') {
+            $column->widget->setValuesFromArrayKeys(InvoiceOperation::allForPurchases(), true, true);
         }
     }
 

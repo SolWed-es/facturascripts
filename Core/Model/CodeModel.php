@@ -20,7 +20,6 @@
 namespace FacturaScripts\Core\Model;
 
 use FacturaScripts\Core\Base\DataBase;
-use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
 use FacturaScripts\Core\Cache;
 use FacturaScripts\Core\Tools;
 use FacturaScripts\Core\Where;
@@ -73,6 +72,12 @@ class CodeModel
      */
     public static function all(string $tableName, string $fieldCode, string $fieldDescription, bool $addEmpty = true, array $where = []): array
     {
+        // validar nombre de tabla para prevenir SQL injection
+        if (false === self::isValidTableName($tableName)) {
+            Tools::log()->error('invalid-table-name: ' . $tableName);
+            return $addEmpty ? [new static(['code' => null, 'description' => '------'])] : [];
+        }
+
         // validar nombres de campos para prevenir SQL injection
         if (false === self::isValidFieldName($fieldCode)) {
             Tools::log()->error('invalid-field-name: ' . $fieldCode);
@@ -169,7 +174,7 @@ class CodeModel
     {
         $field = empty($fieldCode) ? $model::primaryColumn() : $fieldCode;
         $fields = $field . '|' . $model->primaryDescriptionColumn();
-        $where[] = new DataBaseWhere($fields, mb_strtolower($query, 'UTF8'), 'LIKE');
+        $where[] = Where::like($fields, mb_strtolower($query, 'UTF8'));
         return self::all($model::tableName(), $field, $model->primaryDescriptionColumn(), false, $where);
     }
 
@@ -198,8 +203,7 @@ class CodeModel
         $modelClass = self::MODEL_NAMESPACE . $tableName;
         if ($tableName && class_exists($modelClass)) {
             $model = new $modelClass();
-            $where = [new DataBaseWhere($fieldCode, $code)];
-            if ($model->loadFromCode('', $where)) {
+            if ($model->loadWhereEq($fieldCode, $code)) {
                 return new static(['code' => $model->{$fieldCode}, 'description' => $model->primaryDescription()]);
             }
 
@@ -244,12 +248,18 @@ class CodeModel
      * @param string $fieldCode
      * @param string $fieldDescription
      * @param string $query
-     * @param DataBaseWhere[] $where
+     * @param Where[] $where
      *
      * @return static[]
      */
     public static function search(string $tableName, string $fieldCode, string $fieldDescription, string $query, array $where = []): array
     {
+        // validar nombre de tabla para prevenir SQL injection
+        if (false === self::isValidTableName($tableName)) {
+            Tools::log()->error('invalid-table-name: ' . $tableName);
+            return [];
+        }
+
         // is a table or a model?
         $modelClass = self::MODEL_NAMESPACE . $tableName;
         if (class_exists($modelClass)) {
@@ -260,7 +270,7 @@ class CodeModel
         }
 
         $fields = $fieldCode . '|' . $fieldDescription;
-        $where[] = new DataBaseWhere($fields, mb_strtolower($query, 'UTF8'), 'LIKE');
+        $where[] = Where::like($fields, mb_strtolower($query, 'UTF8'));
         return self::all($tableName, $fieldCode, $fieldDescription, false, $where);
     }
 
@@ -270,28 +280,54 @@ class CodeModel
     }
 
     /**
-     * Valída que un nombre de campo sea seguro para usar en consultas SQL.
+     * Valida que un nombre de campo sea seguro para usar en consultas SQL.
      * Solo permite letras, números, guiones bajos y puntos (para campos con alias de tabla).
-     * También permite el uso de las funciones lower() y upper().
-     *
-     * @param string $fieldName
-     *
-     * @return bool
+     * También permite el uso de las funciones lower(), upper(), substring() y concat().
      */
     protected static function isValidFieldName(string $fieldName): bool
     {
-        // permite campos vacíos (se usan valores por defecto en algunos casos)
-        if (empty($fieldName)) {
+        // permite campos vacíos (valores por defecto)
+        if ($fieldName === '') {
             return true;
         }
 
-        // permite lower() y upper() con un campo válido dentro
-        if (preg_match('/^(lower|upper)\(([a-zA-Z0-9_\.]+)\)$/i', $fieldName, $matches)) {
+        // Identificador: campo o tabla.campo (sin espacios, sin comillas)
+        $fieldName = trim($fieldName);
+        $ident = '[a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)?';
+
+        // Campo directo
+        if (preg_match('/^' . $ident . '$/', $fieldName)) {
             return true;
         }
 
-        // permite letras, números, guiones bajos y puntos (para tabla.campo)
-        return preg_match('/^[a-zA-Z0-9_\.]+$/', $fieldName) === 1;
+        // lower(field) / upper(field)
+        if (preg_match('/^(lower|upper)\((' . $ident . ')\)$/i', $fieldName)) {
+            return true;
+        }
+
+        // substring(field, start, len) con números
+        if (preg_match('/^substring\((' . $ident . '),\s*(\d+)\s*,\s*(\d+)\s*\)$/i', $fieldName, $m)) {
+            $start = (int)$m[2];
+            $len = (int)$m[3];
+            return $start >= 1 && $len >= 1 && $len <= 1000;
+        }
+
+        // concat(arg1, arg2, ...) donde arg es un identificador o literal simple '...'(sin comillas internas o escapadas)
+        $arg = "(?:$ident|'[^']*')";
+        if (preg_match('/^concat\(\s*' . $arg . '(?:\s*,\s*' . $arg . ')+\s*\)$/i', $fieldName)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Valida que un nombre de tabla sea seguro para usar en consultas SQL.
+     * Solo permite letras, números y guiones bajos.
+     */
+    protected static function isValidTableName(string $tableName): bool
+    {
+        return preg_match('/^[a-zA-Z_][a-zA-Z0-9_]*$/', $tableName) === 1;
     }
 
     protected static function db(): DataBase

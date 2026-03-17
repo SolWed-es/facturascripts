@@ -72,6 +72,10 @@
             {% endif %}
             {{ _self.sectionNews(fsc) }}
         {% endblock %}
+        {% for includeView in getIncludeViews('Dashboard', 'sectionsAfter') %}
+            {% include includeView['path'] %}
+        {% endfor %}
+
     </div>
 {% endblock %}
 

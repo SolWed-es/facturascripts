@@ -124,6 +124,13 @@ class Impuesto extends ModelClass
         return parent::delete();
     }
 
+    public function getInputIntraTaxAccount(string $codejercicio): DinSubcuenta
+    {
+        return $this->codsubcuentasopintra ?
+            $this->getSubAccount($codejercicio, $this->codsubcuentasopintra, static::SPECIAL_TAX_SUPPORTED_ACCOUNT) :
+            $this->getInputTaxAccount($codejercicio);
+    }
+
     public function getInputSurchargeAccount(string $codejercicio): DinSubcuenta
     {
         // si tenemos una cuenta definida, la devolvemos
@@ -138,6 +145,13 @@ class Impuesto extends ModelClass
         return $this->codsubcuentasop ?
             $this->getSubAccount($codejercicio, $this->codsubcuentasop, static::SPECIAL_TAX_SUPPORTED_ACCOUNT) :
             $this->getSpecialSubAccount($codejercicio, static::SPECIAL_TAX_SUPPORTED_ACCOUNT);
+    }
+
+    public function getOutputIntraTaxAccount(string $codejercicio): DinSubcuenta
+    {
+        return $this->codsubcuentarepintra ?
+            $this->getSubAccount($codejercicio, $this->codsubcuentarepintra, static::SPECIAL_TAX_IMPACTED_ACCOUNT) :
+            $this->getOutputTaxAccount($codejercicio);
     }
 
     public function getOutputSurchargeAccount(string $codejercicio): DinSubcuenta
