@@ -57,7 +57,8 @@ test('Full app scan - buscar errores PHP', async ({ page }) => {
 
   for (const url of pages) {
     await page.goto(url);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(1000);
 
     const body = await page.textContent('body');
 
