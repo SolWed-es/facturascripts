@@ -70,6 +70,35 @@
 body {
   background-color: var(--background) !important;
   color: var(--foreground) !important;
+  font-size: 0.9375rem;
+  font-weight: 450;
+}
+
+/* Tipografía más grande y bold globalmente */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 700 !important;
+}
+
+.card-title, .card-header {
+  font-weight: 600 !important;
+}
+
+.table > thead > tr > th {
+  font-weight: 700 !important;
+  font-size: 0.8125rem;
+}
+
+.nav-link, .sidebar-label {
+  font-size: 0.9375rem;
+  font-weight: 500;
+}
+
+.btn {
+  font-weight: 600;
+}
+
+label, .form-label {
+  font-weight: 600;
 }
 
 /* Diagonal stripe background en dark mode (marca SOLWED) */
