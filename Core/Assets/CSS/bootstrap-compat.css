@@ -155,9 +155,9 @@
   padding: 0.5rem 0.75rem;
   font-size: 0.875rem;
   line-height: 1.5;
-  color: var(--bs-body-color);
-  background-color: oklch(98% 0 0);
-  border: 1px solid oklch(90% 0.005 207);
+  color: var(--foreground);
+  background-color: var(--background);
+  border: 1px solid var(--border);
   border-radius: 0.5rem;
   transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
   appearance: none;
@@ -203,8 +203,8 @@ textarea.form-control {
   height: 2.5rem;
   padding: 0.5rem 2.25rem 0.5rem 0.75rem;
   font-size: 0.875rem;
-  color: var(--bs-body-color);
-  background-color: oklch(98% 0 0);
+  color: var(--foreground);
+  background-color: var(--background);
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
   background-repeat: no-repeat;
   background-position: right 0.75rem center;
@@ -307,9 +307,9 @@ textarea.form-control {
   align-items: center;
   padding: 0.5rem 0.75rem;
   font-size: 0.875rem;
-  color: oklch(50% 0.008 207);
-  background-color: oklch(94% 0.003 207);
-  border: 1px solid oklch(90% 0.005 207);
+  color: var(--muted-foreground);
+  background-color: var(--muted);
+  border: 1px solid var(--border);
   border-radius: 0.5rem;
   white-space: nowrap;
 }
@@ -1574,4 +1574,75 @@ hr {
   white-space: nowrap;
   background-color: oklch(32.3% 0.010 207);
   transition: width 0.6s ease;
+}
+
+/* ============================================
+   DARK MODE overrides para bootstrap-compat
+   ============================================ */
+[data-theme="solwed-dark"] .form-control,
+[data-theme="solwed-dark"] .form-select {
+  background-color: oklch(35% 0.011 207) !important;
+  border-color: oklch(42% 0.012 207) !important;
+  color: #eee !important;
+}
+
+[data-theme="solwed-dark"] .form-control::placeholder {
+  color: #888 !important;
+}
+
+[data-theme="solwed-dark"] .form-select option {
+  background-color: oklch(35% 0.011 207);
+  color: #eee;
+}
+
+[data-theme="solwed-dark"] .input-group-text {
+  background-color: oklch(38% 0.011 207) !important;
+  border-color: oklch(42% 0.012 207) !important;
+  color: #bbb !important;
+}
+
+[data-theme="solwed-dark"] .form-control:disabled,
+[data-theme="solwed-dark"] .form-control[readonly],
+[data-theme="solwed-dark"] .form-select:disabled {
+  background-color: oklch(38% 0.011 207) !important;
+  color: #999 !important;
+}
+
+/* Select2 dark mode */
+[data-theme="solwed-dark"] .select2-container--bootstrap-5 .select2-selection {
+  background-color: oklch(35% 0.011 207) !important;
+  border-color: oklch(42% 0.012 207) !important;
+  color: #eee !important;
+}
+
+[data-theme="solwed-dark"] .select2-container--bootstrap-5 .select2-selection__rendered {
+  color: #eee !important;
+}
+
+[data-theme="solwed-dark"] .select2-container--bootstrap-5 .select2-selection__placeholder {
+  color: #888 !important;
+}
+
+[data-theme="solwed-dark"] .select2-dropdown {
+  background-color: oklch(35% 0.011 207) !important;
+  border-color: oklch(42% 0.012 207) !important;
+}
+
+[data-theme="solwed-dark"] .select2-results__option {
+  color: #eee !important;
+}
+
+[data-theme="solwed-dark"] .select2-results__option--highlighted {
+  background-color: oklch(90.9% 0.1944 106.8) !important;
+  color: #222 !important;
+}
+
+[data-theme="solwed-dark"] .select2-search__field {
+  background-color: oklch(32% 0.010 207) !important;
+  color: #eee !important;
+  border-color: oklch(42% 0.012 207) !important;
+}
+
+[data-theme="solwed-dark"] .select2-container--bootstrap-5 .select2-selection__arrow b {
+  border-color: #aaa transparent transparent transparent !important;
 }
