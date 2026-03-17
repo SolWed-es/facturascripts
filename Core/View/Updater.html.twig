@@ -40,7 +40,7 @@
                     <button class="btn btn-warning" type="button" data-bs-toggle="modal"
                             data-bs-target="#modalTelemetry">
                         <i data-lucide="badge-check" class="w-4 h-4 me-1 inline"></i>
-                        <span class="d-none d-md-inline-block">{{ trans('register-installation') }}</span>
+                        <span class="d-none d-md-inline-block">Conectar con SolWed Mind</span>
                     </button>
                 {% endif %}
             </div>
@@ -179,16 +179,16 @@
                         <input type="hidden" name="action" value="register"/>
                         <div class="modal-header">
                             <h5 class="modal-title">
-                                <i data-lucide="badge-check" class="w-5 h-5 me-1 inline"></i> {{ trans('register-installation') }}
+                                <i data-lucide="badge-check" class="w-5 h-5 me-1 inline"></i> Conectar con SolWed Mind
                             </h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal"
                                     aria-label="{{ trans('close') }}"></button>
                         </div>
                         <div class="modal-body">
-                            <p>{{ trans('register-installation-p') }}</p>
-                            <p>{{ trans('telemetry-data-to-send') }}</p>
+                            <p>Conecta tu instalación con SolWed Mind para recibir actualizaciones automáticas, soporte y acceso al Portal de plugins.</p>
+                            <p class="text-muted-foreground text-sm">Se enviarán datos básicos a mind.solwed.es: versión, país, plugins activos.</p>
                             <button type="submit" class="btn btn-primary btn-spin-action w-100">
-                                {{ trans('register-installation') }}
+                                Conectar con SolWed Mind
                             </button>
                         </div>
                     </form>

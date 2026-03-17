@@ -211,6 +211,7 @@ label, .form-label {
   background-color: #fff !important;
   color: #333 !important;
   border-color: oklch(88% 0.008 210) !important;
+  padding:40px;
 }
 
 .solwed-login-card,
@@ -265,7 +266,7 @@ label, .form-label {
 
 .solwed-login-card .btn-sm,
 [data-theme="solwed-dark"] .solwed-login-card .btn-sm {
-  color: #555 !important;
+  color: #fff !important;
   border-color: #ccc !important;
 }
 
