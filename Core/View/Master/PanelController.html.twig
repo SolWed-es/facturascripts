@@ -86,33 +86,31 @@
 {% block body %}
     {% set firstView = fsc.views | first %}
     <div class="container-fluid">
-        <div class="row g-2">
-            {# -- Panel izquierdo (pills) -- #}
-            {% if fsc.views | length > 1 %}
-                <div class="col-12 col-lg-auto mt-lg-2">
-                    <div class="nav nav-pills flex-row flex-lg-column overflow-x-auto solwed-panel-pills" id="mainTabs" role="tablist"
-                         style="white-space: nowrap;">
-                        {% for viewName, view in fsc.views %}
-                            {% set active = (viewName == fsc.active) ? ' active' : '' %}
-                            {% set disable = view.settings.active ? '' : ' disabled' %}
-                            <a class="nav-link{{ active }}{{ disable }} text-nowrap" id="{{ viewName }}-tab"
-                               data-bs-toggle="pill" href="#{{ viewName }}" role="tab"
-                               aria-controls="{{ viewName }}" aria-expanded="true">
-                                <i class="{{ view.icon }} fa-fw me-1 d-none d-lg-inline-block" aria-hidden="true"></i>
+        {# -- Tabs horizontales arriba -- #}
+        {% if fsc.views | length > 1 %}
+            <div class="nav-tabs-wrapper mb-2">
+                <ul class="nav nav-tabs solwed-panel-pills" id="mainTabs" role="tablist">
+                    {% for viewName, view in fsc.views %}
+                        {% set active = (viewName == fsc.active) ? ' active' : '' %}
+                        {% set disable = view.settings.active ? '' : ' disabled' %}
+                        <li class="nav-item">
+                            <a class="nav-link{{ active }}{{ disable }}" id="{{ viewName }}-tab"
+                               data-bs-toggle="tab" href="#{{ viewName }}" role="tab"
+                               aria-controls="{{ viewName }}">
+                                <i class="{{ view.icon }} fa-fw me-1 d-none d-sm-inline" aria-hidden="true"></i>
                                 <span>{{ view.title }}</span>
-                                {% if view.count > 1 %}
-                                    <span class="badge bg-secondary ms-1 mt-lg-1 mb-lg-1 float-lg-end">{{ view.count }}</span>
-                                {% elseif view.count == 1 and viewName != firstView.getViewName() %}
-                                    <span class="badge bg-secondary ms-1 mt-lg-1 mb-lg-1 float-lg-end">{{ view.count }}</span>
+                                {% if view.count > 0 %}
+                                    <span class="badge bg-secondary ms-1">{{ number(view.count, 0) }}</span>
                                 {% endif %}
                             </a>
-                        {% endfor %}
-                    </div>
-                </div>
-            {% endif %}
-            {# -- Panel derecho (contenido) -- #}
-            {% set rightPanelClass = (fsc.views | length > 1) ? 'col-12 col-lg' : 'col-12' %}
-            <div class="{{ rightPanelClass }}">
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+        <div class="row">
+            {# -- Contenido -- #}
+            <div class="col-12">
                 <div class="tab-content" id="mainTabsContent">
                     {% for viewName, view in fsc.views %}
                         {% set active = (viewName == fsc.active) ? ' show active' : '' %}
@@ -125,6 +123,7 @@
                 </div>
             </div>
         </div>
+    </div>
     </div>
 {% endblock %}
 

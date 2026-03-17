@@ -635,8 +635,10 @@ label {
 }
 
 [data-theme="solwed-dark"] .nav-tabs .nav-link.active,
-[data-theme="solwed-dark"] [role="tablist"] [role="tab"][aria-selected="true"] {
-  color: oklch(32.3% 0.010 207) !important;
+[data-theme="solwed-dark"] .nav-tabs .nav-link.active span,
+[data-theme="solwed-dark"] [role="tablist"] [role="tab"][aria-selected="true"],
+[data-theme="solwed-dark"] [role="tablist"] [role="tab"][aria-selected="true"] span {
+  color: #222 !important;
   background-color: oklch(90.9% 0.1944 106.8) !important;
   border-color: oklch(90.9% 0.1944 106.8) !important;
 }
