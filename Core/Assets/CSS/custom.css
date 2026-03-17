@@ -136,6 +136,49 @@ label, .form-label {
   color: oklch(95% 0.18 106.8) !important;
 }
 
+/* Login card — siempre fondo claro, incluso en dark mode */
+.solwed-login-card,
+[data-theme="solwed-dark"] .solwed-login-card {
+  background-color: #fff !important;
+  color: #333 !important;
+  border-color: oklch(88% 0.008 210) !important;
+}
+
+.solwed-login-card p,
+.solwed-login-card span,
+.solwed-login-card label,
+.solwed-login-card a,
+[data-theme="solwed-dark"] .solwed-login-card p,
+[data-theme="solwed-dark"] .solwed-login-card span,
+[data-theme="solwed-dark"] .solwed-login-card label,
+[data-theme="solwed-dark"] .solwed-login-card a {
+  color: #555 !important;
+}
+
+.solwed-login-card .form-control,
+[data-theme="solwed-dark"] .solwed-login-card .form-control {
+  background-color: #f8f9fa !important;
+  border-color: #dee2e6 !important;
+  color: #333 !important;
+}
+
+.solwed-login-card .input-group-text,
+[data-theme="solwed-dark"] .solwed-login-card .input-group-text {
+  background-color: #e9ecef !important;
+  border-color: #dee2e6 !important;
+  color: #666 !important;
+}
+
+.solwed-login-card .btn,
+[data-theme="solwed-dark"] .solwed-login-card .btn {
+  color: #fff !important;
+}
+
+.solwed-login-card .border-t,
+[data-theme="solwed-dark"] .solwed-login-card .border-t {
+  border-color: #eee !important;
+}
+
 /* Diagonal stripe background en dark mode (marca SOLWED) */
 [data-theme="solwed-dark"] body {
   background-image: repeating-linear-gradient(
