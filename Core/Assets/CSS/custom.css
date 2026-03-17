@@ -777,6 +777,15 @@ h1, h2, h3, h4, h5, h6 {
   background-color: var(--background) !important;
 }
 
+[data-theme="solwed-dark"] .bg-background {
+  background-color: oklch(32.3% 0.010 207) !important;
+}
+
+/* Card shadcn — ancho completo por defecto */
+.card-shadcn {
+  width: 100%;
+}
+
 /* ============================================
    Clickable rows
    ============================================ */
