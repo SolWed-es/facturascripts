@@ -101,6 +101,41 @@ label, .form-label {
   font-weight: 600;
 }
 
+/* Dark mode global: letras blancas, detalles amarillos SOLWED */
+[data-theme="solwed-dark"] {
+  --foreground: oklch(94% 0.003 207);
+  --muted-foreground: oklch(80% 0.005 207);
+}
+
+[data-theme="solwed-dark"] body,
+[data-theme="solwed-dark"] .text-foreground,
+[data-theme="solwed-dark"] p,
+[data-theme="solwed-dark"] span,
+[data-theme="solwed-dark"] label,
+[data-theme="solwed-dark"] td,
+[data-theme="solwed-dark"] th {
+  color: oklch(92% 0.003 207) !important;
+}
+
+[data-theme="solwed-dark"] h1,
+[data-theme="solwed-dark"] h2,
+[data-theme="solwed-dark"] h3,
+[data-theme="solwed-dark"] h4,
+[data-theme="solwed-dark"] h5,
+[data-theme="solwed-dark"] h6,
+[data-theme="solwed-dark"] strong,
+[data-theme="solwed-dark"] b {
+  color: #fff !important;
+}
+
+[data-theme="solwed-dark"] a {
+  color: oklch(90.9% 0.1944 106.8);
+}
+
+[data-theme="solwed-dark"] a:hover {
+  color: oklch(95% 0.18 106.8) !important;
+}
+
 /* Diagonal stripe background en dark mode (marca SOLWED) */
 [data-theme="solwed-dark"] body {
   background-image: repeating-linear-gradient(
@@ -172,9 +207,39 @@ label, .form-label {
 }
 
 .solwed-sidebar .nav-link.active {
-  color: var(--accent-content);
+  color: var(--accent-content) !important;
   background-color: var(--accent);
-  font-weight: 500;
+  font-weight: 600;
+}
+
+/* Dark mode: sidebar — letras blancas, detalles amarillos */
+[data-theme="solwed-dark"] .solwed-sidebar {
+  color: #fff;
+}
+
+[data-theme="solwed-dark"] .solwed-sidebar button,
+[data-theme="solwed-dark"] .solwed-sidebar a,
+[data-theme="solwed-dark"] .solwed-sidebar .sidebar-label,
+[data-theme="solwed-dark"] .solwed-sidebar span {
+  color: oklch(88% 0.005 207) !important;
+}
+
+[data-theme="solwed-dark"] .solwed-sidebar button:hover,
+[data-theme="solwed-dark"] .solwed-sidebar a:hover {
+  color: #fff !important;
+  background-color: oklch(42% 0.012 207) !important;
+}
+
+[data-theme="solwed-dark"] .solwed-sidebar a.bg-accent,
+[data-theme="solwed-dark"] .solwed-sidebar a.bg-accent span,
+[data-theme="solwed-dark"] .solwed-sidebar a.bg-accent .sidebar-label {
+  color: oklch(32.3% 0.010 207) !important;
+  background-color: oklch(90.9% 0.1944 106.8) !important;
+}
+
+[data-theme="solwed-dark"] .solwed-sidebar .sidebar-icon,
+[data-theme="solwed-dark"] .solwed-sidebar i {
+  opacity: 0.7;
 }
 
 /* ============================================
