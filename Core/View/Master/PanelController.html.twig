@@ -90,7 +90,7 @@
             {# -- Panel izquierdo (pills) -- #}
             {% if fsc.views | length > 1 %}
                 <div class="col-12 col-lg-auto mt-lg-2">
-                    <div class="nav nav-pills flex-row flex-lg-column overflow-x-auto" id="mainTabs" role="tablist"
+                    <div class="nav nav-pills flex-row flex-lg-column overflow-x-auto solwed-panel-pills" id="mainTabs" role="tablist"
                          style="white-space: nowrap;">
                         {% for viewName, view in fsc.views %}
                             {% set active = (viewName == fsc.active) ? ' active' : '' %}

@@ -532,6 +532,22 @@ label {
   fill: #ddd !important;
 }
 
+/* Panel pills (EditContacto, etc.) — forzar contraste en dark mode */
+[data-theme="solwed-dark"] .solwed-panel-pills .nav-link:not(.active) {
+  color: #fff !important;
+  opacity: 0.85;
+}
+
+[data-theme="solwed-dark"] .solwed-panel-pills .nav-link:not(.active) span,
+[data-theme="solwed-dark"] .solwed-panel-pills .nav-link:not(.active) i {
+  color: #fff !important;
+}
+
+[data-theme="solwed-dark"] .solwed-panel-pills .nav-link:not(.active):hover {
+  opacity: 1;
+  background-color: oklch(42% 0.012 207);
+}
+
 [data-theme="solwed-dark"] .nav-pills .nav-link:hover {
   color: #fff !important;
   background-color: oklch(42% 0.012 207);
