@@ -1,22 +1,4 @@
-{#
-/**
- * This file is part of FacturaScripts
- * Copyright (C) 2017-2025 Carlos Garcia Gomez <carlos@facturascripts.com>
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this program. If not, see http://www.gnu.org/licenses/.
- */
-#}
+{# SolwedShadcn — ListController: vista de listados con estilo shadcn #}
 {% extends "Master/MenuBghTemplate.html.twig" %}
 
 {% block bodyHeaderOptions %}
@@ -26,7 +8,7 @@
     <div class="container-fluid mb-3 d-print-none">
         <div class="row">
             <div class="col-md-7">
-                {# -- Page data for small devices -- #}
+                {# Breadcrumb móvil #}
                 <nav aria-label="breadcrumb">
                     <ol class="breadcrumb d-md-none">
                         <li class="breadcrumb-item">
@@ -40,55 +22,58 @@
                         <li class="breadcrumb-item active" aria-current="page">{{ fsc.title }}</li>
                     </ol>
                 </nav>
-                <div class="btn-group">
-                    <a class="btn btn-sm btn-secondary" href="{{ fsc.url() }}"
-                       title="{{ trans('refresh') }}">
-                        <i class="fa-solid fa-redo" aria-hidden="true"></i>
-                    </a>
-                    {% if pageData.name == fsc.user.homepage %}
-                        <a class="btn btn-sm btn-secondary active" href="{{ fsc.url() }}?defaultPage=FALSE"
-                           title="{{ trans('marked-as-homepage') }}">
-                            <i class="fa-solid fa-bookmark" aria-hidden="true"></i>
-                        </a>
-                    {% else %}
-                        <a class="btn btn-sm btn-secondary" href="{{ fsc.url() }}?defaultPage=TRUE"
-                           title="{{ trans('mark-as-homepage') }}">
-                            <i class="fa-regular fa-bookmark" aria-hidden="true"></i>
-                        </a>
-                    {% endif %}
-                </div>
-                {# -- Options button -- #}
-                {% if firstView.settings.btnOptions %}
+                <div class="flex items-center gap-2 flex-wrap">
                     <div class="btn-group">
-                        <div class="dropdown">
-                            <button class="btn btn-sm btn-secondary dropdown-toggle" type="button"
-                                    data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <i class="fa-solid fa-wrench fa-fw me-1" aria-hidden="true"></i> {{ trans('options') }}
-                            </button>
-                            <div class="dropdown-menu">
-                                <h6 class="dropdown-header">{{ trans('options-button-header') }}</h6>
-                                {% for viewName, view in fsc.views %}
-                                    <a class="dropdown-item"
-                                       href="EditPageOption?code={{ viewName }}&url={{ view.model.url() | url_encode }}">
-                                        <i class="{{ view.icon }} fa-fw me-1" aria-hidden="true"></i> {{ view.title }}
-                                        {% if view.settings.customized %}
-                                            <i class="fa-solid fa-user-pen ms-2" title="{{ trans('personalized') }}"></i>
-                                        {% endif %}
-                                    </a>
-                                {% endfor %}
+                        <a class="btn btn-sm btn-secondary" href="{{ fsc.url() }}"
+                           title="{{ trans('refresh') }}">
+                            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+                        </a>
+                        {% if pageData.name == fsc.user.homepage %}
+                            <a class="btn btn-sm btn-secondary active" href="{{ fsc.url() }}?defaultPage=FALSE"
+                               title="{{ trans('marked-as-homepage') }}">
+                                <i data-lucide="bookmark" class="w-3.5 h-3.5 fill-current"></i>
+                            </a>
+                        {% else %}
+                            <a class="btn btn-sm btn-secondary" href="{{ fsc.url() }}?defaultPage=TRUE"
+                               title="{{ trans('mark-as-homepage') }}">
+                                <i data-lucide="bookmark" class="w-3.5 h-3.5"></i>
+                            </a>
+                        {% endif %}
+                    </div>
+                    {# Botón opciones #}
+                    {% if firstView.settings.btnOptions %}
+                        <div class="btn-group">
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-secondary dropdown-toggle" type="button"
+                                        data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    <i data-lucide="settings" class="w-3.5 h-3.5 me-1"></i>
+                                    <span class="d-none d-lg-inline">{{ trans('options') }}</span>
+                                </button>
+                                <div class="dropdown-menu">
+                                    <h6 class="dropdown-header">{{ trans('options-button-header') }}</h6>
+                                    {% for viewName, view in fsc.views %}
+                                        <a class="dropdown-item"
+                                           href="EditPageOption?code={{ viewName }}&url={{ view.model.url() | url_encode }}">
+                                            <i class="{{ view.icon }} fa-fw me-1" aria-hidden="true"></i> {{ view.title }}
+                                            {% if view.settings.customized %}
+                                                <i class="fa-solid fa-user-pen ms-2" title="{{ trans('personalized') }}"></i>
+                                            {% endif %}
+                                        </a>
+                                    {% endfor %}
+                                </div>
                             </div>
                         </div>
-                    </div>
-                {% endif %}
+                    {% endif %}
+                </div>
             </div>
             <div class="col-md-5 text-end">
                 <h1 class="h4 mb-0 d-none d-md-inline-block">
-                    {{ fsc.title }}<i class="{{ pageData.icon }} ms-3" aria-hidden="true"></i>
+                    {{ fsc.title }}<i class="{{ pageData.icon }} ms-3 opacity-60" aria-hidden="true"></i>
                 </h1>
             </div>
         </div>
     </div>
-    {# -- Tabs -- #}
+    {# Tabs #}
     <div class="nav-tabs-wrapper d-print-none">
         <ul class="nav nav-tabs nav-tabs-scroll" id="mainTabs" role="tablist">
             {% for viewName, view in fsc.views %}
@@ -114,7 +99,6 @@
 
 {% block body %}
     {{ parent() }}
-    {# -- Tab content -- #}
     <div class="tab-content pt-3" id="mainTabsContent">
         {% for viewName, view in fsc.views %}
             {% set active = (viewName == fsc.active) ? ' show active' : '' %}
@@ -129,7 +113,6 @@
 {% block css %}
     {{ parent() }}
     <style>
-        /* Scroll horizontal para pestañas en móviles */
         @media (max-width: 767px) {
             .nav-tabs-wrapper {
                 overflow-x: auto;
@@ -137,50 +120,17 @@
                 -webkit-overflow-scrolling: touch;
                 margin-bottom: -1px;
             }
-
             .nav-tabs-scroll {
                 flex-wrap: nowrap;
                 white-space: nowrap;
-                border-bottom: 1px solid #dee2e6;
                 min-width: min-content;
             }
-
-            .nav-tabs-scroll .nav-item {
-                flex-shrink: 0;
-            }
-
-            .nav-tabs-scroll .nav-link {
-                white-space: nowrap;
-            }
-
-            /* Indicador visual de scroll */
-            .nav-tabs-wrapper::-webkit-scrollbar {
-                height: 4px;
-            }
-
-            .nav-tabs-wrapper::-webkit-scrollbar-track {
-                background: #f1f1f1;
-            }
-
-            .nav-tabs-wrapper::-webkit-scrollbar-thumb {
-                background: #888;
-                border-radius: 2px;
-            }
-
-            .nav-tabs-wrapper::-webkit-scrollbar-thumb:hover {
-                background: #555;
-            }
+            .nav-tabs-scroll .nav-item { flex-shrink: 0; }
+            .nav-tabs-scroll .nav-link { white-space: nowrap; }
         }
-
-        /* En pantallas grandes, comportamiento normal */
         @media (min-width: 768px) {
-            .nav-tabs-wrapper {
-                overflow: visible;
-            }
-
-            .nav-tabs-scroll {
-                flex-wrap: wrap;
-            }
+            .nav-tabs-wrapper { overflow: visible; }
+            .nav-tabs-scroll { flex-wrap: wrap; }
         }
     </style>
 {% endblock %}
@@ -189,7 +139,6 @@
     {{ parent() }}
     <script>
         $(document).ready(function () {
-            // Función para desplazar la pestaña activa a la vista
             function scrollActiveTabIntoView() {
                 if (window.innerWidth <= 767) {
                     var activeTab = $('.nav-tabs-scroll .nav-link.active');
@@ -199,22 +148,16 @@
                         var tabWidth = activeTab.parent().outerWidth();
                         var wrapperWidth = wrapper.width();
                         var scrollLeft = wrapper.scrollLeft();
-
-                        // Centrar la pestaña activa si es posible
                         var targetScroll = tabLeft + scrollLeft - (wrapperWidth / 2) + (tabWidth / 2);
                         wrapper.animate({ scrollLeft: targetScroll }, 300);
                     }
                 }
             }
-
             if (document.location.hash) {
                 $(".nav-tabs a[href=\\" + document.location.hash + "]").tab('show');
             }
-
-            // Desplazar la pestaña activa al cargar la página
             scrollActiveTabIntoView();
-
-            if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) == false) {
+            if (!/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
                 $("input[name='query']:visible").focus();
             }
             $('.nav-tabs a').click(function (e) {
@@ -224,10 +167,8 @@
                 $('html,body').scrollTop(scrollmem);
             });
             $('a[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
-                // Desplazar la pestaña activa cuando se cambia de pestaña
                 scrollActiveTabIntoView();
-
-                if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) == false) {
+                if (!/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
                     $("input[name='query']:visible").focus();
                 }
             });

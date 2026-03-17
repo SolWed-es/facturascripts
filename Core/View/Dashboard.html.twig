@@ -1,157 +1,166 @@
-{#
-/**
- * This file is part of FacturaScripts
- * Copyright (C) 2017-2024 Carlos Garcia Gomez <carlos@facturascripts.com>
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this program. If not, see http://www.gnu.org/licenses/.
- */
-#}
+{# SolwedShadcn — Dashboard con estilo shadcn (inspirado en StatCard.tsx de solwed-app) #}
 {% extends "Master/MenuBghTemplate.html.twig" %}
 {% import 'Macro/Utils.html.twig' as Utils %}
 
 {% block body %}
-    <div class="bg-light pt-4 pb-5">
-        <div class="container">
-            <div class="row">
-                <div class="col">
-                    <h1 class="h4">
-                        {% if fsc.getPageData().name == fsc.user.homepage %}
-                            <a class="btn btn-sm btn-secondary align-bottom active"
-                               href="{{ fsc.url() }}?defaultPage=FALSE" title="{{ trans('marked-as-homepage') }}">
-                                <i class="fa-solid fa-bookmark" aria-hidden="true"></i>
-                            </a>
-                        {% else %}
-                            <a class="btn btn-sm btn-secondary align-bottom" href="{{ fsc.url() }}?defaultPage=TRUE"
-                               title="{{ trans('mark-as-homepage') }}">
-                                <i class="fa-regular fa-bookmark" aria-hidden="true"></i>
-                            </a>
-                        {% endif %}
-                        <span class="ms-2">{{ fsc.title }}</span>
-                    </h1>
-                </div>
-            </div>
+    <div class="px-4 pt-4 pb-8">
+        {# Header del dashboard #}
+        <div class="flex items-center justify-between mb-6">
+            <h1 class="text-lg font-heading font-semibold flex items-center gap-2">
+                {% if fsc.getPageData().name == fsc.user.homepage %}
+                    <a class="btn btn-sm btn-secondary active"
+                       href="{{ fsc.url() }}?defaultPage=FALSE" title="{{ trans('marked-as-homepage') }}">
+                        <i data-lucide="bookmark" class="w-4 h-4 fill-current"></i>
+                    </a>
+                {% else %}
+                    <a class="btn btn-sm btn-secondary"
+                       href="{{ fsc.url() }}?defaultPage=TRUE" title="{{ trans('mark-as-homepage') }}">
+                        <i data-lucide="bookmark" class="w-4 h-4"></i>
+                    </a>
+                {% endif %}
+                <span>{{ fsc.title }}</span>
+            </h1>
         </div>
-    </div>
-    <div class="container" style="margin-top: -40px;">
+
+        {# Links rápidos #}
         {% block sectionLinks %}
-            <div class="row">
-                <div class="col">
-                    {{ _self.sectionLinks(fsc) }}
+            {{ _self.sectionLinks(fsc) }}
+        {% endblock %}
+
+        {# Avisos #}
+        {% if fsc.showBackupWarning() %}
+            <div class="card-shadcn border-l-4 border-l-warning mb-4">
+                <div class="p-4">
+                    <div class="flex items-start gap-3">
+                        <i data-lucide="hard-drive" class="w-6 h-6 text-warning flex-shrink-0 mt-0.5"></i>
+                        <div>
+                            <h3 class="font-semibold mb-1">{{ trans('dashboard-backup') }}</h3>
+                            <p class="text-sm text-muted-foreground mb-2">{{ trans('dashboard-backup-p') }}</p>
+                            <ul class="text-sm text-muted-foreground list-disc ml-4 mb-3">
+                                <li>{{ trans('dasboard-backup-li1') }}</li>
+                                <li>{{ trans('dasboard-backup-li2') }}</li>
+                                <li>{{ trans('dasboard-backup-li3') }}</li>
+                            </ul>
+                            <a href="https://solwed.es/ayuda/backup" target="_blank" rel="nofollow"
+                               class="btn btn-sm btn-warning">Backup</a>
+                        </div>
+                    </div>
                 </div>
             </div>
-        {% endblock %}
-        {% if fsc.updated == false %}
-            <div class="mb-3">
+        {% elseif fsc.updated == false %}
+            <div class="mb-4">
                 {{ Utils.updateInstall() }}
             </div>
+        {% elseif fsc.registered == false %}
+            <div class="mb-4">
+                {{ Utils.registerInstall() }}
+            </div>
         {% endif %}
+
+        {# Stats #}
         {% block sectionStats %}
             {{ _self.sectionStats(fsc) }}
         {% endblock %}
+
+        {# Secciones #}
         {% block sections %}
-            <div class="row">
-                <div class="col">
-                    {% if 'receipts' in fsc.sections %}
-                        {{ _self.sectionReceipts(fsc) }}
-                    {% endif %}
-                    {% if 'low-stock' in fsc.sections %}
-                        {{ _self.sectionLowStock(fsc) }}
-                    {% endif %}
-                </div>
-            </div>
+            {% if 'receipts' in fsc.sections %}
+                {{ _self.sectionReceipts(fsc) }}
+            {% endif %}
+            {% if 'low-stock' in fsc.sections %}
+                {{ _self.sectionLowStock(fsc) }}
+            {% endif %}
+            {{ _self.sectionNews(fsc) }}
         {% endblock %}
     </div>
 {% endblock %}
 
-{% macro drawStatsBox(fsc, group, color, ismoney) %}
-    <div class="card shadow mb-3">
-        <div class="card-body p-2 text-white {{ color }}">
-            <h2 class="h5 text-center mb-0">
-                {{ trans(group) }}
-            </h2>
-        </div>
-        <div class="table-responsive">
-            <table class="table mb-0">
+{% macro drawStatsBox(fsc, group, iconName, colorClass) %}
+    <div class="card-shadcn">
+        <div class="p-4">
+            <div class="flex items-center justify-between mb-3">
+                <h3 class="text-sm font-medium text-muted-foreground">{{ trans(group) }}</h3>
+                <div class="inline-flex items-center justify-center w-8 h-8 rounded-md {{ colorClass }}">
+                    <i data-lucide="{{ iconName }}" class="w-4 h-4"></i>
+                </div>
+            </div>
+            <div class="space-y-1">
                 {% for key, value in fsc.stats[group] %}
-                    <tr>
-                        <td>{{ trans(key) }}</td>
-                        {% set color = value < 0 ? ' text-danger' : '' %}
-                        {% if ismoney %}
-                            <td class="text-end{{ color }}">{{ money(value) }}</td>
-                        {% else %}
-                            <td class="text-end">{{ value }}</td>
-                        {% endif %}
-                    </tr>
+                    <div class="flex items-center justify-between text-sm">
+                        <span class="text-muted-foreground">{{ trans(key) }}</span>
+                        {% set textColor = value < 0 ? 'text-destructive' : '' %}
+                        <span class="font-medium {{ textColor }}">{{ money(value) }}</span>
+                    </div>
                 {% endfor %}
-            </table>
+            </div>
+        </div>
+    </div>
+{% endmacro %}
+
+{% macro drawStatsBoxCount(fsc, group, iconName, colorClass) %}
+    <div class="card-shadcn">
+        <div class="p-4">
+            <div class="flex items-center justify-between mb-3">
+                <h3 class="text-sm font-medium text-muted-foreground">{{ trans(group) }}</h3>
+                <div class="inline-flex items-center justify-center w-8 h-8 rounded-md {{ colorClass }}">
+                    <i data-lucide="{{ iconName }}" class="w-4 h-4"></i>
+                </div>
+            </div>
+            <div class="space-y-1">
+                {% for key, value in fsc.stats[group] %}
+                    <div class="flex items-center justify-between text-sm">
+                        <span class="text-muted-foreground">{{ trans(key) }}</span>
+                        <span class="font-medium">{{ value }}</span>
+                    </div>
+                {% endfor %}
+            </div>
         </div>
     </div>
 {% endmacro %}
 
 {% macro sectionLinks(fsc) %}
-    <div class="card shadow mb-3">
-        <div class="ps-3 pt-1 pe-3 pb-3">
-            <div class="row">
-                <div class="col-md">
-                    <h2 class="h4 mt-3 mb-1">
-                        <i class="fa-solid fa-plus fa-fw"></i> {{ trans('create') }}
-                    </h2>
-                    <ul class="mb-1">
+    <div class="card-shadcn mb-6">
+        <div class="p-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                    <h3 class="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
+                        <i data-lucide="plus-circle" class="w-4 h-4"></i> {{ trans('create') }}
+                    </h3>
+                    <ul class="space-y-1">
                         {% for link, label in fsc.createLinks %}
                             <li>
-                                <a href="{{ link }}">{{ trans(label) }}</a>
+                                <a href="{{ link }}" class="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                                    {{ trans(label) }}
+                                </a>
                             </li>
                         {% endfor %}
                     </ul>
                 </div>
                 {% if fsc.openLinks %}
-                    <div class="col-md">
-                        <h2 class="h4 mt-3 mb-1">
-                            <i class="fa-solid fa-folder-open fa-fw"></i> {{ trans('open') }}
-                        </h2>
-                        <ul class="mb-1">
+                    <div>
+                        <h3 class="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
+                            <i data-lucide="folder-open" class="w-4 h-4"></i> {{ trans('open') }}
+                        </h3>
+                        <ul class="space-y-1">
                             {% for link in fsc.openLinks %}
-                                <li>
-                                    {{ trans(link.type) }}
-                                    <a href="{{ link.url }}">{{ link.name }}</a>
-                                    <span class="text-muted">{{ link.date }}</span>
+                                <li class="text-sm">
+                                    <span class="text-muted-foreground">{{ trans(link.type) }}</span>
+                                    <a href="{{ link.url }}" class="text-foreground hover:underline">{{ link.name }}</a>
+                                    <span class="text-muted-foreground text-xs">{{ link.date }}</span>
                                 </li>
                             {% endfor %}
                         </ul>
                     </div>
                 {% endif %}
-                <div class="col-md">
-                    <h2 class="h4 mt-3 mb-1">
-                        <i class="fa-solid fa-question-circle fa-fw"></i> {{ trans('help') }}
-                    </h2>
-                    <ul class="mb-1">
-                        <li>
-                            <a href="https://solwed.es/docs/configuracion" rel="nofollow"
-                               target="_blank">Configuración</a>
-                        </li>
-                        <li>
-                            <a href="https://solwed.es/docs/primeros-pasos" rel="nofollow"
-                               target="_blank">Primeros pasos</a>
-                        </li>
-                        <li>
-                            <a href="https://solwed.es/docs/problemas-frecuentes" rel="nofollow"
-                               target="_blank">Problemas frecuentes</a>
-                        </li>
-                        <li>
-                            <a href="https://solwed.es/contacto" rel="nofollow" target="_blank">Soporte
-                                <i class="fa-regular fa-comment-dots"></i></a>
-                        </li>
+                <div>
+                    <h3 class="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
+                        <i data-lucide="circle-help" class="w-4 h-4"></i> {{ trans('help') }}
+                    </h3>
+                    <ul class="space-y-1">
+                        <li><a href="https://solwed.es/ayuda/configuracion" rel="nofollow" target="_blank" class="text-sm text-muted-foreground hover:text-foreground transition-colors">Configuración</a></li>
+                        <li><a href="https://solwed.es/ayuda/primeros-pasos" rel="nofollow" target="_blank" class="text-sm text-muted-foreground hover:text-foreground transition-colors">Primeros pasos</a></li>
+                        <li><a href="https://solwed.es/ayuda/problemas-frecuentes" rel="nofollow" target="_blank" class="text-sm text-muted-foreground hover:text-foreground transition-colors">Problemas frecuentes</a></li>
+                        <li><a href="https://solwed.es/contacto" rel="nofollow" target="_blank" class="text-sm text-muted-foreground hover:text-foreground transition-colors">Soporte</a></li>
                     </ul>
                 </div>
             </div>
@@ -159,12 +168,54 @@
     </div>
 {% endmacro %}
 
+{% macro sectionStats(fsc) %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        {{ _self.drawStatsBox(fsc, 'purchases', 'shopping-cart', 'bg-destructive/10 text-destructive') }}
+        {{ _self.drawStatsBox(fsc, 'sales', 'trending-up', 'bg-success/10 text-success') }}
+        {{ _self.drawStatsBox(fsc, 'taxes', 'receipt', 'bg-warning/10 text-warning') }}
+        {{ _self.drawStatsBoxCount(fsc, 'new-customers', 'users', 'bg-info/10 text-info') }}
+    </div>
+{% endmacro %}
+
+{% macro sectionReceipts(fsc) %}
+    <div class="card-shadcn mb-4">
+        <div class="p-4 flex items-center justify-between">
+            <h3 class="font-semibold flex items-center gap-2">
+                <i data-lucide="banknote" class="w-5 h-5"></i> {{ trans('receipts') }}
+            </h3>
+            <span class="badge-shadcn bg-destructive/10 text-destructive border-destructive/20">{{ trans('unpaid') }}</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0">
+                <thead>
+                <tr>
+                    <th>{{ trans('customer') }}</th>
+                    <th>{{ trans('observations') }}</th>
+                    <th class="text-end">{{ trans('amount') }}</th>
+                    <th class="text-end">{{ trans('expiration') }}</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for receipt in fsc.receipts %}
+                    <tr class="clickableRow" data-href="{{ receipt.url() }}">
+                        <td>{{ receipt.getSubject().nombre | raw }}</td>
+                        <td>{{ receipt.observaciones | raw }}</td>
+                        <td class="text-end text-nowrap">{{ money(receipt.importe) }}</td>
+                        <td class="text-end text-nowrap">{{ receipt.vencimiento }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endmacro %}
+
 {% macro sectionLowStock(fsc) %}
-    <div class="card shadow mb-3">
-        <div class="p-3">
-            <h2 class="h4 mb-0">
-                <i class="fa-solid fa-pallet fa-fw"></i> {{ trans('minimum-stock') }}
-            </h2>
+    <div class="card-shadcn mb-4">
+        <div class="p-4">
+            <h3 class="font-semibold flex items-center gap-2">
+                <i data-lucide="package" class="w-5 h-5"></i> {{ trans('minimum-stock') }}
+            </h3>
         </div>
         <div class="table-responsive">
             <table class="table table-sm table-hover mb-0">
@@ -191,53 +242,16 @@
     </div>
 {% endmacro %}
 
-{% macro sectionReceipts(fsc) %}
-    <div class="card shadow mb-3">
-        <div class="p-3">
-            <span class="float-end badge bg-danger">{{ trans('unpaid') }}</span>
-            <h2 class="h4 mb-0">
-                <i class="fa-solid fa-dollar-sign fa-fw"></i>
-                {{ trans('receipts') }}
-            </h2>
+{% macro sectionNews(fsc) %}
+    {% for news in fsc.news %}
+        <div class="card-shadcn mb-4">
+            <div class="p-3 border-b border-border flex items-center justify-between">
+                <a href="{{ news.url }}" target="_blank" class="text-sm font-medium hover:underline">{{ news.title | raw }}</a>
+                <span class="text-xs text-muted-foreground">{{ news.fecha }}</span>
+            </div>
+            <div class="p-4">
+                <div class="text-sm text-muted-foreground">{{ news.body | raw }}</div>
+            </div>
         </div>
-        <div class="table-responsive">
-            <table class="table table-sm table-hover mb-0">
-                <thead>
-                <tr>
-                    <th>{{ trans('customer') }}</th>
-                    <th>{{ trans('observations') }}</th>
-                    <th class="text-end">{{ trans('amount') }}</th>
-                    <th class="text-end">{{ trans('expiration') }}</th>
-                </tr>
-                </thead>
-                <tbody>
-                {% for receipt in fsc.receipts %}
-                    <tr class="clickableRow table-danger" data-href="{{ receipt.url() }}">
-                        <td>{{ receipt.getSubject().nombre | raw }}</td>
-                        <td>{{ receipt.observaciones | raw }}</td>
-                        <td class="text-end text-nowrap">{{ money(receipt.importe) }}</td>
-                        <td class="text-end text-nowrap">{{ receipt.vencimiento }}</td>
-                    </tr>
-                {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-{% endmacro %}
-
-{% macro sectionStats(fsc) %}
-    <div class="row">
-        <div class="col-sm-6 col-lg-3">
-            {{ _self.drawStatsBox(fsc, 'purchases', 'bg-danger', true) }}
-        </div>
-        <div class="col-sm-6 col-lg-3">
-            {{ _self.drawStatsBox(fsc, 'sales', 'bg-success', true) }}
-        </div>
-        <div class="col-sm-6 col-lg-3">
-            {{ _self.drawStatsBox(fsc, 'taxes', 'bg-warning', true) }}
-        </div>
-        <div class="col-sm-6 col-lg-3">
-            {{ _self.drawStatsBox(fsc, 'new-customers', 'bg-info', false) }}
-        </div>
-    </div>
+    {% endfor %}
 {% endmacro %}

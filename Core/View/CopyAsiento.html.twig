@@ -1,24 +1,25 @@
+{# SolwedShadcn — Copiar asiento contable #}
 {% extends 'Master/MenuBgTemplate.html.twig' %}
 
 {% block body %}
     <div class="container-fluid">
         <div class="row">
             <div class="col">
-                <h1 class="h3">
-                    <i class="fa-solid fa-cut me-2"></i> {{ fsc.title }}
+                <h1 class="h3 font-heading font-semibold flex items-center gap-2 mb-2">
+                    <i data-lucide="copy" class="w-6 h-6"></i> {{ fsc.title }}
                 </h1>
-                <p>{{ trans('copy-p') }}</p>
+                <p class="text-muted-foreground">{{ trans('copy-p') }}</p>
                 <form method="post" onsubmit="animateSpinner('add')">
                     {{ formToken() }}
                     <input type="hidden" name="action" value="save"/>
                     <input type="hidden" name="code" value="{{ fsc.modelCode }}"/>
                     <input type="hidden" name="model" value="{{ fsc.modelClass }}"/>
-                    <div class="card shadow mb-4">
-                        <div class="card-body">
+                    <div class="card-shadcn mb-4">
+                        <div class="p-3">
                             <div class="row g-2">
                                 {% if fsc.empresa.count() > 1 %}
                                     <div class="col-sm-6 col-md-2">
-                                        {{ trans('company') }}
+                                        <span class="text-sm font-medium">{{ trans('company') }}</span>
                                         <div class="mb-3">
                                             <select name="idempresa" class="form-select" required>
                                                 {% for item in fsc.codeModel.all('empresas','idempresa','nombrecorto',false) %}
@@ -35,21 +36,21 @@
                                     </div>
                                 {% endif %}
                                 <div class="col-sm-6 col-md-2">
-                                    {{ trans('date') }}
+                                    <span class="text-sm font-medium">{{ trans('date') }}</span>
                                     <div class="mb-3">
                                         <input type="date" name="fecha" value="{{ "now" | date('Y-m-d') }}"
                                                class="form-control" required/>
                                     </div>
                                 </div>
                                 <div class="col-sm-6 col-md">
-                                    {{ trans('concept') }}
+                                    <span class="text-sm font-medium">{{ trans('concept') }}</span>
                                     <div class="mb-3">
                                         <input type="text" name="concepto" value="{{ fsc.model.concepto }}"
                                                class="form-control" required/>
                                     </div>
                                 </div>
                                 <div class="col-sm-6 col-md-2">
-                                    {{ trans('daily') }}
+                                    <span class="text-sm font-medium">{{ trans('daily') }}</span>
                                     <div class="mb-3">
                                         <select name="iddiario" class="form-select">
                                             {% for item in fsc.codeModel.all('diarios','iddiario','descripcion') %}
@@ -65,7 +66,7 @@
                                     </div>
                                 </div>
                                 <div class="col-sm-6 col-md-2">
-                                    {{ trans('channel') }}
+                                    <span class="text-sm font-medium">{{ trans('channel') }}</span>
                                     <div class="mb-3">
                                         <input type="number" name="canal" value="{{ fsc.model.canal }}"
                                                class="form-control"/>
@@ -97,18 +98,14 @@
                                 </tbody>
                             </table>
                         </div>
-                        <div class="card-footer">
-                            <div class="row">
-                                <div class="col">
-                                    <a href="{{ asset(fsc.model.url()) }}" class="btn btn-spin-action btn-secondary">
-                                        <i class="fa-solid fa-arrow-left me-1"></i> {{ trans('back') }}
-                                    </a>
-                                </div>
-                                <div class="col-auto">
-                                    <button type="submit" class="btn btn-spin-action btn-primary">
-                                        <i class="fa-solid fa-save me-1"></i> {{ trans('save') }}
-                                    </button>
-                                </div>
+                        <div class="border-t border-border p-3">
+                            <div class="flex items-center justify-between">
+                                <a href="{{ asset(fsc.model.url()) }}" class="btn btn-spin-action btn-secondary">
+                                    <i data-lucide="arrow-left" class="w-4 h-4 me-1"></i> {{ trans('back') }}
+                                </a>
+                                <button type="submit" class="btn btn-spin-action btn-primary">
+                                    <i data-lucide="save" class="w-4 h-4 me-1"></i> {{ trans('save') }}
+                                </button>
                             </div>
                         </div>
                     </div>

@@ -1,55 +1,47 @@
-{#
-    /**
-     * This file is part of FacturaScripts
-     * Copyright (C) 2017-2025 Carlos Garcia Gomez <carlos@facturascripts.com>
-     *
-     * This program is free software: you can redistribute it and/or modify
-     * it under the terms of the GNU Lesser General Public License as
-     * published by the Free Software Foundation, either version 3 of the
-     * License, or (at your option) any later version.
-     *
-     * This program is distributed in the hope that it will be useful,
-     * but WITHOUT ANY WARRANTY; without even the implied warranty of
-     * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-     * GNU Lesser General Public License for more details.
-     *
-     * You should have received a copy of the GNU Lesser General Public License
-     * along with this program. If not, see http://www.gnu.org/licenses/.
-     *
-     */
-#}
+{# SolwedShadcn — MicroTemplate: layout mínimo para login/errores #}
+{% import 'Macro/GoogleTagManager.html.twig' as GoogleTagManager %}
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml" lang="{{ constant('FS_LANG') | slice(0, 2) }}" xml:lang="{{ constant('FS_LANG') | slice(0, 2) }}" >
+<html xmlns="http://www.w3.org/1999/xhtml" lang="{{ constant('FS_LANG') | slice(0, 2) }}"
+      xml:lang="{{ constant('FS_LANG') | slice(0, 2) }}">
     <head>
+        {{ GoogleTagManager.head() }}
         {% block meta %}
-            <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+            <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
             <title>{{ fsc.title }}</title>
-            <meta name="description" content="{{ trans('meta-description') }}" />
-            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-            <meta name="generator" content="FacturaScripts" />
-            <meta name="robots" content="noindex" />
+            <meta name="description" content="{{ trans('meta-description') }}"/>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+            <meta name="generator" content="FacturaScripts"/>
+            <meta name="robots" content="noindex"/>
+            <link rel="manifest" href="{{ asset('manifest.json') }}"/>
+            <meta name="theme-color" content="#2E3536"/>
+            <meta name="apple-mobile-web-app-capable" content="yes"/>
+            <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
         {% endblock %}
         {% block icons %}
-            <link rel="shortcut icon" href="{{ asset('Dinamic/Assets/Images/favicon.ico') }}" />
-            <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('Dinamic/Assets/Images/apple-icon-180x180.png') }}" />
+            <link rel="shortcut icon" href="{{ asset('Dinamic/Assets/Images/favicon.ico') }}"/>
+            <link rel="apple-touch-icon" sizes="180x180"
+                  href="{{ asset('Dinamic/Assets/Images/apple-icon-180x180.png') }}"/>
         {% endblock %}
+        <link rel="preconnect" href="https://fonts.googleapis.com"/>
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Orbitron:wght@400;500;600;700&display=swap"
+              rel="stylesheet"/>
         {% block css %}
-            <link rel="stylesheet" href="{{ asset('node_modules/bootstrap/dist/css/bootstrap.min.css') }}?v=5" />
+            <link rel="stylesheet" href="{{ asset('Dinamic/Assets/CSS/tailwind-output.css') }}?v={{ 'now' | date('ymd') }}"/>
+            <link rel="stylesheet" href="{{ asset('Dinamic/Assets/CSS/bootstrap-compat.css') }}?v={{ 'now' | date('ymd') }}"/>
             <link rel="stylesheet" href="{{ asset('node_modules/@fortawesome/fontawesome-free/css/all.min.css') }}?v=6"/>
-            <style>
-                .btn-link {
-                    text-decoration: none;
-                }
-            </style>
+            <link rel="stylesheet" href="{{ asset('Dinamic/Assets/CSS/custom.css') }}?v={{ 'now' | date('ymd') }}"/>
         {% endblock %}
+        <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
         {# Adds custom CSS assets #}
         {% for css in assetManager.get('css') %}
-            <link rel="stylesheet" href="{{ css }}" />
+            <link rel="stylesheet" href="{{ css }}"/>
         {% endfor %}
         {% block javascripts %}
+            <script src="{{ asset('Dinamic/Assets/JS/ThemeToggle.js') }}?v={{ 'now' | date('ymd') }}"></script>
             <script src="{{ asset('node_modules/jquery/dist/jquery.min.js') }}"></script>
             <script src="{{ asset('node_modules/bootstrap/dist/js/bootstrap.bundle.min.js') }}?v=5"></script>
-            <script src="{{ asset('node_modules/@fortawesome/fontawesome-free/js/all.min.js') }}?v=6"></script>
+            {# FA JS no necesario — ya se carga FA CSS para iconos de widgets Core #}
         {% endblock %}
         {# Adds custom JS assets #}
         {% for js in assetManager.get('js') %}
@@ -60,11 +52,12 @@
         {% endif %}
     </head>
     {% block fullBody %}
-        <body>
+        <body class="bg-background text-foreground font-sans antialiased">
+            {{ GoogleTagManager.body() }}
             {% block messages %}
                 {% include 'Macro/Toasts.html.twig' %}
                 {% from 'Macro/Utils.html.twig' import message as showMessage %}
-                <div class="px-2 pt-2">
+                <div class="px-4 pt-3">
                     {{ showMessage(log, ['error', 'critical'], 'danger') }}
                     {{ showMessage(log, ['warning'], 'warning') }}
                     {{ showMessage(log, ['notice'], 'success') }}
@@ -76,6 +69,7 @@
             {% if debugBarRender %}
                 {{ debugBarRender.render() | raw }}
             {% endif %}
+            <script>lucide.createIcons();</script>
             <!-- execution time: {{ executionTime() }} s -->
         </body>
     {% endblock %}

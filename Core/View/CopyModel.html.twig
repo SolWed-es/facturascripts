@@ -1,27 +1,28 @@
+{# SolwedShadcn — Copiar documento #}
 {% extends 'Master/MenuBgTemplate.html.twig' %}
 
 {% block body %}
     <div class="container-fluid">
         <div class="row">
             <div class="col">
-                <h1 class="h3">
-                    <i class="fa-solid fa-cut me-2"></i> {{ fsc.title }}
+                <h1 class="h3 font-heading font-semibold flex items-center gap-2 mb-2">
+                    <i data-lucide="copy" class="w-6 h-6"></i> {{ fsc.title }}
                 </h1>
-                <p>{{ trans('copy-p') }}</p>
+                <p class="text-muted-foreground">{{ trans('copy-p') }}</p>
                 <form method="post" onsubmit="animateSpinner('add')">
                     {{ formToken() }}
                     <input type="hidden" name="action" value="save"/>
                     <input type="hidden" name="code" value="{{ fsc.modelCode }}"/>
                     <input type="hidden" name="model" value="{{ fsc.modelClass }}"/>
-                    <div class="card shadow mb-4">
-                        <div class="card-body">
+                    <div class="card-shadcn mb-4">
+                        <div class="p-3">
                             <div class="row g-2">
                                 {% if fsc.model.codcliente %}
                                     <div class="col-sm-6 col-md">
                                         <div class="mb-3">
                                             <div class="input-group">
                                                 <span class="input-group-text">
-                                                    <i class="fa-solid fa-search"></i>
+                                                    <i data-lucide="search" class="w-4 h-4"></i>
                                                 </span>
                                                 <input type="hidden" id="codclienteAutocomplete" name="codcliente"
                                                        value="{{ fsc.model.codcliente }}"/>
@@ -39,7 +40,7 @@
                                         <div class="mb-3">
                                             <div class="input-group">
                                                 <span class="input-group-text">
-                                                    <i class="fa-solid fa-search"></i>
+                                                    <i data-lucide="search" class="w-4 h-4"></i>
                                                 </span>
                                                 <input type="hidden" id="codproveedorAutocomplete" name="codproveedor"
                                                        value="{{ fsc.model.codproveedor }}"/>
@@ -70,7 +71,7 @@
                                         <div class="mb-3">
                                             <div class="input-group">
                                                 <span class="input-group-text">
-                                                    <i class="fa-solid fa-hashtag"></i>
+                                                    <i data-lucide="hash" class="w-4 h-4"></i>
                                                 </span>
                                                 <input type="text" name="numero2" class="form-control"
                                                        placeholder="{{ trans('number2') }}"/>
@@ -82,7 +83,7 @@
                                         <div class="mb-3">
                                             <div class="input-group">
                                                 <span class="input-group-text">
-                                                    <i class="fa-solid fa-hashtag"></i>
+                                                    <i data-lucide="hash" class="w-4 h-4"></i>
                                                 </span>
                                                 <input type="text" name="numproveedor" class="form-control"
                                                        placeholder="{{ trans('numsupplier') }}"/>
@@ -95,17 +96,13 @@
                                 {% if fsc.empresa.count() > 1 %}
                                     <div class="col-sm-6 col-md">
                                         <div class="mb-3">
-                                            {{ trans('company') }}
+                                            <span class="text-sm font-medium">{{ trans('company') }}</span>
                                             <select name="idempresa" id="idempresa" class="form-select" required>
                                                 {% for item in fsc.codeModel.all('empresas', 'idempresa', 'nombrecorto', false) %}
                                                     {% if item.code == fsc.model.idempresa %}
-                                                        <option value="{{ item.code }}" selected>
-                                                            {{ item.description }}
-                                                        </option>
+                                                        <option value="{{ item.code }}" selected>{{ item.description }}</option>
                                                     {% else %}
-                                                        <option value="{{ item.code }}">
-                                                            {{ item.description }}
-                                                        </option>
+                                                        <option value="{{ item.code }}">{{ item.description }}</option>
                                                     {% endif %}
                                                 {% endfor %}
                                             </select>
@@ -114,17 +111,13 @@
                                 {% endif %}
                                 <div class="col-sm-6 col-md">
                                     <div class="mb-3">
-                                        {{ trans('warehouse') }}
+                                        <span class="text-sm font-medium">{{ trans('warehouse') }}</span>
                                         <select name="codalmacen" id="codalmacen" class="form-select" required>
                                             {% for item in fsc.warehousesList %}
                                                 {% if item.code == fsc.model.codalmacen %}
-                                                    <option value="{{ item.code }}" data-idempresa="{{ item.idempresa }}" selected>
-                                                        {{ item.description }}
-                                                    </option>
+                                                    <option value="{{ item.code }}" data-idempresa="{{ item.idempresa }}" selected>{{ item.description }}</option>
                                                 {% else %}
-                                                    <option value="{{ item.code }}" data-idempresa="{{ item.idempresa }}">
-                                                        {{ item.description }}
-                                                    </option>
+                                                    <option value="{{ item.code }}" data-idempresa="{{ item.idempresa }}">{{ item.description }}</option>
                                                 {% endif %}
                                             {% endfor %}
                                         </select>
@@ -132,17 +125,13 @@
                                 </div>
                                 <div class="col-sm-6 col-md">
                                     <div class="mb-3">
-                                        {{ trans('serie') }}
+                                        <span class="text-sm font-medium">{{ trans('serie') }}</span>
                                         <select name="codserie" id="codserie" class="form-select" required>
                                             {% for item in fsc.codeModel.all('series', 'codserie', 'descripcion', false) %}
                                                 {% if item.code == fsc.model.codserie %}
-                                                    <option value="{{ item.code }}" selected>
-                                                        {{ item.description }}
-                                                    </option>
+                                                    <option value="{{ item.code }}" selected>{{ item.description }}</option>
                                                 {% else %}
-                                                    <option value="{{ item.code }}">
-                                                        {{ item.description }}
-                                                    </option>
+                                                    <option value="{{ item.code }}">{{ item.description }}</option>
                                                 {% endif %}
                                             {% endfor %}
                                         </select>
@@ -150,17 +139,13 @@
                                 </div>
                                 <div class="col-sm-6 col-md">
                                     <div class="mb-3">
-                                        {{ trans('payment-method') }}
+                                        <span class="text-sm font-medium">{{ trans('payment-method') }}</span>
                                         <select name="codpago" id="codpago" class="form-select" required>
                                             {% for item in fsc.paymentMethodsList %}
                                                 {% if item.code == fsc.model.codpago %}
-                                                    <option value="{{ item.code }}" data-idempresa="{{ item.idempresa }}" selected>
-                                                        {{ item.description }}
-                                                    </option>
+                                                    <option value="{{ item.code }}" data-idempresa="{{ item.idempresa }}" selected>{{ item.description }}</option>
                                                 {% else %}
-                                                    <option value="{{ item.code }}" data-idempresa="{{ item.idempresa }}">
-                                                        {{ item.description }}
-                                                    </option>
+                                                    <option value="{{ item.code }}" data-idempresa="{{ item.idempresa }}">{{ item.description }}</option>
                                                 {% endif %}
                                             {% endfor %}
                                         </select>
@@ -168,11 +153,11 @@
                                 </div>
                                 <div class="col-sm-6 col-md">
                                     <div class="mb-3">
-                                        {{ trans('global-dto') }}
+                                        <span class="text-sm font-medium">{{ trans('global-dto') }}</span>
                                         <div class="input-group">
                                             <span class="input-group-text">
-                                                    <i class="fa-solid fa-percentage"></i>
-                                                </span>
+                                                <i data-lucide="percent" class="w-4 h-4"></i>
+                                            </span>
                                             <input type="number" max="100" min="0" step="any" name="dtopor1"
                                                    class="form-control" value="{{ fsc.model.dtopor1 }}"/>
                                         </div>
@@ -180,11 +165,11 @@
                                 </div>
                                 <div class="col-sm-6 col-md">
                                     <div class="mb-3">
-                                        {{ trans('global-dto-2') }}
+                                        <span class="text-sm font-medium">{{ trans('global-dto-2') }}</span>
                                         <div class="input-group">
                                             <span class="input-group-text">
-                                                    <i class="fa-solid fa-percentage"></i>
-                                                </span>
+                                                <i data-lucide="percent" class="w-4 h-4"></i>
+                                            </span>
                                             <input type="number" max="100" min="0" step="any" name="dtopor2"
                                                    class="form-control" value="{{ fsc.model.dtopor2 }}"/>
                                         </div>
@@ -218,22 +203,18 @@
                                 </tbody>
                             </table>
                         </div>
-                        <div class="card-body">
-                            {{ trans('observations') }}
+                        <div class="p-3">
+                            <span class="text-sm font-medium">{{ trans('observations') }}</span>
                             <textarea name="observaciones" class="form-control">{{ fsc.model.observaciones }}</textarea>
                         </div>
-                        <div class="card-footer">
-                            <div class="row">
-                                <div class="col">
-                                    <a href="{{ asset(fsc.model.url()) }}" class="btn btn-spin-action btn-secondary">
-                                        <i class="fa-solid fa-arrow-left me-1"></i> {{ trans('back') }}
-                                    </a>
-                                </div>
-                                <div class="col-auto">
-                                    <button type="submit" class="btn btn-spin-action btn-primary">
-                                        <i class="fa-solid fa-save me-1"></i> {{ trans('save') }}
-                                    </button>
-                                </div>
+                        <div class="border-t border-border p-3">
+                            <div class="flex items-center justify-between">
+                                <a href="{{ asset(fsc.model.url()) }}" class="btn btn-spin-action btn-secondary">
+                                    <i data-lucide="arrow-left" class="w-4 h-4 me-1"></i> {{ trans('back') }}
+                                </a>
+                                <button type="submit" class="btn btn-spin-action btn-primary">
+                                    <i data-lucide="save" class="w-4 h-4 me-1"></i> {{ trans('save') }}
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -263,78 +244,50 @@
         }
 
         function updateSelectsByCompany(idempresa) {
-            if (!idempresa) {
-                return;
-            }
-
-            // Convertir idempresa a número para comparación consistente
+            if (!idempresa) return;
             var empresaNum = parseInt(idempresa);
 
-            // Actualizar almacenes
             var selectedAlmacen = $("#codalmacen").val();
             var almacenValido = false;
-
             $("#codalmacen option").each(function() {
                 var optionEmpresa = $(this).data("idempresa");
-
-                // Si no tiene empresa asignada o coincide con la empresa seleccionada
                 if (optionEmpresa === undefined || optionEmpresa === null || optionEmpresa === "" || parseInt(optionEmpresa) === empresaNum) {
                     $(this).prop("disabled", false).show();
-                    if ($(this).val() === selectedAlmacen) {
-                        almacenValido = true;
-                    }
+                    if ($(this).val() === selectedAlmacen) almacenValido = true;
                 } else {
                     $(this).prop("disabled", true).hide();
                 }
             });
-
-            // Si el almacén seleccionado no es válido, seleccionar el primero disponible
             if (!almacenValido) {
                 var firstValidAlmacen = $("#codalmacen option:not(:disabled):first").val();
-                if (firstValidAlmacen) {
-                    $("#codalmacen").val(firstValidAlmacen);
-                }
+                if (firstValidAlmacen) $("#codalmacen").val(firstValidAlmacen);
             }
 
-            // Actualizar formas de pago
             var selectedPago = $("#codpago").val();
             var pagoValido = false;
-
             $("#codpago option").each(function() {
                 var optionEmpresa = $(this).data("idempresa");
-
-                // Si no tiene empresa asignada o coincide con la empresa seleccionada
                 if (optionEmpresa === undefined || optionEmpresa === null || optionEmpresa === "" || parseInt(optionEmpresa) === empresaNum) {
                     $(this).prop("disabled", false).show();
-                    if ($(this).val() === selectedPago) {
-                        pagoValido = true;
-                    }
+                    if ($(this).val() === selectedPago) pagoValido = true;
                 } else {
                     $(this).prop("disabled", true).hide();
                 }
             });
-
-            // Si la forma de pago seleccionada no es válida, seleccionar la primera disponible
             if (!pagoValido) {
                 var firstValidPago = $("#codpago option:not(:disabled):first").val();
-                if (firstValidPago) {
-                    $("#codpago").val(firstValidPago);
-                }
+                if (firstValidPago) $("#codpago").val(firstValidPago);
             }
         }
 
         $(document).ready(function () {
-            // Evento para cuando cambia la empresa
             $("#idempresa").on("change", function() {
                 updateSelectsByCompany($(this).val());
             });
-
-            // Inicializar los selectores con la empresa actual al cargar la página
             var currentEmpresa = $("#idempresa").val();
             if (currentEmpresa) {
                 updateSelectsByCompany(currentEmpresa);
             } else {
-                // Si no hay selector de empresa (solo hay una), usar la empresa del modelo
                 {% if fsc.model.idempresa %}
                 updateSelectsByCompany({{ fsc.model.idempresa }});
                 {% endif %}

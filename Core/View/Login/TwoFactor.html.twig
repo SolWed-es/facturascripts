@@ -1,71 +1,84 @@
+{# SolwedShadcn — Verificación 2FA (estilo shadcn card centrada) #}
 {% extends "Master/MicroTemplate.html.twig" %}
 
 {% block body %}
     {{ parent() }}
-    <div class="container">
-        <div class="row justify-content-md-center">
-            <div class="col-md-6">
-                <form action="{{ asset('login') }}" method="post" class="form">
-                    {{ formToken() }}
-                    <input type="hidden" name="action" value="two-factor-validation">
-                    <input type="hidden" name="fsNick" value="{{ fsc.two_factor_user }}">
-                    <div class="card mt-4">
-                        <a href="{{ asset('login') }}">
-                            {% set idfile = settings('default','idloginimage', 0) %}
-                            {{ _self.loadLogo(idfile) }}
-                        </a>
-                        <div class="card-body">
-                            <p class="card-text text-center">{{ trans('two-factor-code') }}</p>
-                            <div class="mb-3">
-                                <input type="text" name="fsTwoFactorCode" class="form-control" maxlength="50"
-                                       placeholder="{{ trans('code') }}" required autocomplete="off"
-                                       autofocus/>
+    <div class="min-h-screen flex items-center justify-center px-4 py-12 bg-muted/30">
+        <div class="w-full max-w-md">
+            <form action="{{ asset('login') }}" method="post">
+                {{ formToken() }}
+                <input type="hidden" name="action" value="two-factor-validation">
+                <input type="hidden" name="fsNick" value="{{ fsc.two_factor_user }}">
+
+                <div class="card-shadcn overflow-hidden">
+                    {# Logo #}
+                    <a href="{{ asset('login') }}" class="block">
+                        {% set idfile = settings('default','idloginimage', 0) %}
+                        {{ _self.loadLogo(idfile) }}
+                    </a>
+
+                    <div class="p-6 space-y-4">
+                        {# Icono y texto #}
+                        <div class="text-center">
+                            <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-info/10 mb-3">
+                                <i data-lucide="shield-check" class="w-6 h-6 text-info"></i>
                             </div>
-                            <button type="submit" class="btn w-100 btn-primary mb-4">
-                                {{ trans('verify') }}
-                            </button>
+                            <p class="text-muted-foreground text-sm">{{ trans('two-factor-code') }}</p>
                         </div>
-                        <div class="card-footer text-center">
-                            <p>
-                                FacturaScripts es un software libre de contabilidad, facturación y CRM.
-                                No dude en consultar la web oficial o las cuentas de facebook, twitter o youtube.
-                            </p>
-                            <a href="https://facturascripts.com" rel="nofollow" class="btn btn-secondary">
-                                <i class="fa-solid fa-question-circle me-1"></i> facturascripts.com
+
+                        {# Código 2FA #}
+                        <div>
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i data-lucide="key-round" class="w-4 h-4"></i>
+                                </span>
+                                <input type="text" name="fsTwoFactorCode" class="form-control" maxlength="50"
+                                       placeholder="{{ trans('code') }}" required autocomplete="off" autofocus/>
+                            </div>
+                        </div>
+
+                        {# Botón verificar #}
+                        <button type="submit"
+                                class="w-full inline-flex items-center justify-center rounded-md text-sm font-medium
+                                       bg-foreground text-background hover:bg-foreground/90 h-11 px-4 transition-colors">
+                            <i data-lucide="check-circle" class="w-4 h-4 me-2"></i>
+                            {{ trans('verify') }}
+                        </button>
+                    </div>
+
+                    {# Footer #}
+                    <div class="border-t border-border px-6 py-4 text-center">
+                        <p class="text-xs text-muted-foreground mb-3">
+                            Software de contabilidad y facturación para tu empresa.
+                        </p>
+                        <div class="flex items-center justify-center gap-2">
+                            <a href="https://solwed.es" rel="nofollow" target="_blank"
+                               class="btn btn-sm btn-secondary">
+                                solwed.es
                             </a>
-                            <a href="https://www.facebook.com/facturascripts/" rel="nofollow" class="btn btn-outline-primary"
-                               title="facebook"> <i class="fa-brands fa-facebook"></i>
+                            <a href="https://www.instagram.com/solwed.es/" rel="nofollow" target="_blank"
+                               class="btn btn-sm btn-outline-secondary" title="Instagram">
+                                <i class="fa-brands fa-instagram"></i>
                             </a>
-                            <a href="https://twitter.com/facturascripts" rel="nofollow" class="btn btn-outline-info"
-                               title="twitter"> <i class="fa-brands fa-twitter"></i>
-                            </a>
-                            <a href="https://www.youtube.com/channel/UCtsptMQYpW2wJZkvak6NYng" rel="nofollow"
-                               class="btn btn-outline-danger" title="youtube"> <i class="fa-brands fa-youtube"></i>
+                            <a href="https://www.linkedin.com/company/solwed/" rel="nofollow" target="_blank"
+                               class="btn btn-sm btn-outline-secondary" title="LinkedIn">
+                                <i class="fa-brands fa-linkedin-in"></i>
                             </a>
                         </div>
                     </div>
-                </form>
-            </div>
+                </div>
+            </form>
         </div>
     </div>
 {% endblock %}
 
-{% block css %}
-    {{ parent() }}
-    <style>
-        body {
-            background-color: #333A40;
-        }
-    </style>
-{% endblock %}
-
 {% macro loadLogo(idfile) %}
-    {% set url = 'Dinamic/Assets/Images/horizontal-logo.png' %}
+    {% set url = 'Dinamic/Assets/Images/logo-dark.png' %}
     {% if idfile > 0 %}
         {% set attached = attachedFile(idfile) %}
         {% if attached.filename is not empty %}
             {% set url = attached.url('download-permanent') %}
         {% endif %}
     {% endif %}
-    <img class="card-img-top" src="{{ asset(url) }}" alt="FacturaScripts"/>
+    <img class="w-full" src="{{ asset(url) }}" alt="SOLWED"/>
 {% endmacro loadLogo %}

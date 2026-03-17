@@ -1,4 +1,5 @@
-<div id="messages-toasts" style="z-index: 9999; position: fixed; bottom: 2%; left: 50%; transform: translateX(-50%);"></div>
+{# SolwedShadcn — Sistema de notificaciones toast (estilo shadcn) #}
+<div id="messages-toasts" style="z-index: 9999; position: fixed; bottom: 1rem; right: 1rem; display: flex; flex-direction: column; gap: 0.5rem; max-width: 24rem;"></div>
 
 <script>
     function setToast(message, style = 'info', title = '', time = 10000) {
@@ -13,7 +14,7 @@
             case 'completed':
                 styleHeader = 'bg-success text-white';
                 styleBorder = 'border border-success';
-                icon = '<i class="fa-solid fa-check-circle me-1"></i>';
+                icon = '<i data-lucide="check-circle" class="w-4 h-4 me-1 inline"></i>';
                 title = title !== '' ? title : '{{ trans('completed') }}';
                 break;
 
@@ -24,14 +25,14 @@
                 live = 'assertive';
                 styleHeader = 'bg-danger text-white';
                 styleBorder = 'border border-danger';
-                icon = '<i class="fa-solid fa-times-circle me-1"></i>';
+                icon = '<i data-lucide="x-circle" class="w-4 h-4 me-1 inline"></i>';
                 title = title !== '' ? title : '{{ trans('common-error') }}';
                 break;
 
             case 'info':
                 styleHeader = 'bg-info text-white';
                 styleBorder = 'border border-info';
-                icon = '<i class="fa-solid fa-info-circle me-1"></i>';
+                icon = '<i data-lucide="info" class="w-4 h-4 me-1 inline"></i>';
                 title = title !== '' ? title : '{{ trans('info') }}';
                 break;
 
@@ -46,14 +47,14 @@
             case 'success':
                 styleHeader = 'bg-success text-white';
                 styleBorder = 'border border-success';
-                icon = '<i class="fa-solid fa-check-circle me-1"></i>';
+                icon = '<i data-lucide="check-circle" class="w-4 h-4 me-1 inline"></i>';
                 title = title !== '' ? title : '{{ trans('success') }}';
                 break;
 
             case 'warning':
                 styleHeader = 'bg-warning';
                 styleBorder = 'border border-warning';
-                icon = '<i class="fa-solid fa-exclamation-circle me-1"></i>';
+                icon = '<i data-lucide="alert-circle" class="w-4 h-4 me-1 inline"></i>';
                 title = title !== '' ? title : '{{ trans('warning') }}';
                 break;
         }
@@ -62,7 +63,7 @@
             styleHeader += ' border-bottom-0';
         }
 
-        let html = '<div class="toast toast-' + style + ' ' + styleBorder + '" style="margin: 15px auto 0 auto;" role="' + role + '" aria-live="' + live + '" aria-atomic="true" ' + delay + '>'
+        let html = '<div class="toast toast-' + style + ' ' + styleBorder + '" role="' + role + '" aria-live="' + live + '" aria-atomic="true" ' + delay + '>'
             + '<div class="toast-header ' + styleHeader + '">'
             + '<strong class="me-auto">' + icon + title + '</strong>'
             + '<button type="button" class="ms-4 btn btn-close ' + styleHeader + '" data-bs-dismiss="toast" aria-label="{{ trans('close') }}">'
@@ -76,13 +77,18 @@
 
             html += '</div>';
 
-        // eliminamos los toast con la clase hide
+        // Eliminar toasts ocultos
         $('#messages-toasts .toast.hide').remove();
 
-        // agregamos el toast al div
+        // Agregar nuevo toast
         $('#messages-toasts').append(html);
 
-        // mostramos los toast
+        // Mostrar toasts
         $('#messages-toasts .toast').toast('show');
+
+        // Inicializar iconos Lucide en los nuevos toasts
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
     }
 </script>

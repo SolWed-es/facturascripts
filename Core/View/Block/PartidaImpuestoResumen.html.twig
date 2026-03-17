@@ -1,3 +1,4 @@
+{# SolwedShadcn — Resumen partida impuestos #}
 <style>
     .item-data {
         display: flex;
@@ -8,16 +9,22 @@
 </style>
 
 <div class="item-data text-success">
-    <h4><i class="fa-solid fa-sign-out-alt me-2"></i>{{ trans('sales') }}</h4>
-    <h4>{{ money(fsc.sales) }}</h4>
+    <h4 class="font-heading font-semibold flex items-center gap-2">
+        <i data-lucide="trending-up" class="w-5 h-5"></i>{{ trans('sales') }}
+    </h4>
+    <h4 class="font-heading font-semibold">{{ money(fsc.sales) }}</h4>
 </div>
 
 <div class="item-data text-warning">
-    <h4><i class="fa-solid fa-sign-in-alt me-2"></i>{{ trans('purchases') }}</h4>
-    <h4>{{ money(fsc.purchases) }}</h4>
+    <h4 class="font-heading font-semibold flex items-center gap-2">
+        <i data-lucide="trending-down" class="w-5 h-5"></i>{{ trans('purchases') }}
+    </h4>
+    <h4 class="font-heading font-semibold">{{ money(fsc.purchases) }}</h4>
 </div>
 
 <div class="item-data text-primary">
-    <h4><i class="fa-solid fa-list-alt me-2"></i>{{ trans('result') }}</h4>
-    <h4>{{ money(fsc.total) }}</h4>
+    <h4 class="font-heading font-semibold flex items-center gap-2">
+        <i data-lucide="list" class="w-5 h-5"></i>{{ trans('result') }}
+    </h4>
+    <h4 class="font-heading font-semibold">{{ money(fsc.total) }}</h4>
 </div>

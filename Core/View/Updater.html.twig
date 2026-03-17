@@ -1,23 +1,6 @@
-{#
-/**
- * This file is part of FacturaScripts
- * Copyright (C) 2017-2025 Carlos Garcia Gomez <carlos@facturascripts.com>
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this program. If not, see http://www.gnu.org/licenses/.
- */
-#}
+{# SolwedShadcn — Actualizador #}
 {% extends "Master/MenuTemplate.html.twig" %}
+{% import 'Macro/Utils.html.twig' as Utils %}
 {% from 'Macro/Utils.html.twig' import messageCompat as showMessage %}
 
 {% block messages %}
@@ -40,25 +23,38 @@
             <div class="col-sm-6">
                 <div class="btn-group">
                     <a href="{{ asset('AdminPlugins') }}" class="btn btn-secondary">
-                        <i class="fa-solid fa-arrow-left fa-fw" aria-hidden="true"></i>
+                        <i data-lucide="arrow-left" class="w-4 h-4 me-1"></i>
                         <span class="d-none d-md-inline-block">{{ trans('plugins') }} </span>
                     </a>
                     <a href="{{ fsc.url() }}" class="btn btn-secondary" title="{{ trans('refresh') }}">
-                        <i class="fa-solid fa-redo" aria-hidden="true"></i>
+                        <i data-lucide="refresh-cw" class="w-4 h-4"></i>
                     </a>
                 </div>
+                {% if fsc.telemetryManager.ready() %}
+                    <button class="btn btn-secondary" type="button" data-bs-toggle="modal"
+                            data-bs-target="#modalTelemetry">
+                        <i data-lucide="badge-check" class="w-4 h-4 me-1 inline"></i>
+                        <span class="d-none d-md-inline-block">{{ trans('manage-installation') }} </span>
+                    </button>
+                {% else %}
+                    <button class="btn btn-warning" type="button" data-bs-toggle="modal"
+                            data-bs-target="#modalTelemetry">
+                        <i data-lucide="badge-check" class="w-4 h-4 me-1 inline"></i>
+                        <span class="d-none d-md-inline-block">{{ trans('register-installation') }}</span>
+                    </button>
+                {% endif %}
             </div>
             <div class="col-sm-6 text-end">
-                <h1 class="h3">
+                <h1 class="h3 font-heading font-semibold">
                     {{ trans('updater') }}
                     <small class="text-info">{{ fsc.getCoreVersion() }}</small>
-                    <i class="fa-solid fa-cloud-download-alt" aria-hidden="true"></i>
+                    <i data-lucide="cloud-download" class="w-7 h-7 inline"></i>
                 </h1>
             </div>
         </div>
         <div class="row">
             <div class="col-sm">
-                <div class="card shadow-sm mb-4">
+                <div class="card-shadcn mb-4">
                     <div class="table-responsive">
                         <table class="table table-hover mb-0">
                             <thead>
@@ -80,32 +76,30 @@
                                             <a href="{{ fsc.url() }}?action=update&item={{ item.id }}"
                                                class="btn btn-spin-action btn-sm btn-success"
                                                onclick="animateSpinner('add')">
-                                                <i class="fa-solid fa-rocket fa-fw fa-bounce me-1"
-                                                   aria-hidden="true"></i>{{ trans('update') }}
+                                                <i data-lucide="rocket" class="w-3.5 h-3.5 me-1 inline"></i>{{ trans('update') }}
                                             </a>
                                             <a href="{{ fsc.url() }}?action=cancel&item={{ item.id }}"
                                                class="btn btn-spin-action btn-sm btn-warning"
                                                onclick="animateSpinner('add')">
-                                                <i class="fa-solid fa-times fa-fw me-1"
-                                                   aria-hidden="true"></i>{{ trans('cancel') }}
+                                                <i data-lucide="x" class="w-3.5 h-3.5 me-1 inline"></i>{{ trans('cancel') }}
                                             </a>
                                         {% elseif item.name == 'CORE' and fsc.coreUpdateWarnings %}
                                             <button type="button" class="btn btn-spin-action btn-warning"
                                                     data-bs-toggle="modal"
                                                     data-bs-target="#coreWarningModal">
-                                                <i class="fa-solid fa-download fa-fw me-1" aria-hidden="true"></i>{{ trans('download') }}
+                                                <i data-lucide="download" class="w-3.5 h-3.5 me-1 inline"></i>{{ trans('download') }}
                                             </button>
                                         {% elseif item.stable %}
                                             <a href="{{ fsc.url() }}?action=download&item={{ item.id }}"
                                                class="btn btn-spin-action btn-sm btn-secondary"
                                                onclick="animateSpinner('add')">
-                                                <i class="fa-solid fa-download fa-fw me-1" aria-hidden="true"></i>{{ trans('download') }}
+                                                <i data-lucide="download" class="w-3.5 h-3.5 me-1 inline"></i>{{ trans('download') }}
                                             </a>
                                         {% else %}
                                             <a href="{{ fsc.url() }}?action=download&item={{ item.id }}"
                                                class="btn btn-spin-action btn-sm btn-secondary"
                                                onclick="animateSpinner('add')">
-                                                <i class="fa-solid fa-flask-vial fa-fw me-1" aria-hidden="true"></i>{{ trans('beta') }}
+                                                <i data-lucide="flask-conical" class="w-3.5 h-3.5 me-1 inline"></i>{{ trans('beta') }}
                                             </a>
                                         {% endif %}
                                     </td>
@@ -113,7 +107,7 @@
                             {% else %}
                                 <tr class="table-success">
                                     <td colspan="3">
-                                        <p class="p-2 mb-0">✅ {{ trans('no-updates-now') }}</p>
+                                        <p class="p-2 mb-0">{{ trans('no-updates-now') }}</p>
                                     </td>
                                 </tr>
                             {% endfor %}
@@ -122,16 +116,16 @@
                     </div>
                 </div>
                 {% if settings('default', 'enableupdatesbeta', false) %}
-                    <hr/>
-                    <div class="card shadow-sm mt-4 mb-4">
-                        <div class="card-body">
-                            <h5>
-                                <i class="fa-solid fa-flask-vial text-danger me-2" aria-hidden="true"></i>
+                    <hr class="border-border"/>
+                    <div class="card-shadcn mt-4 mb-4">
+                        <div class="p-4">
+                            <h5 class="font-semibold flex items-center gap-2">
+                                <i data-lucide="flask-conical" class="w-5 h-5 text-danger"></i>
                                 {{ trans('updates-beta-warning') }}
                             </h5>
-                            <p class="card-text">{{ trans('updates-beta-warning-p') }}</p>
+                            <p class="text-muted-foreground">{{ trans('updates-beta-warning-p') }}</p>
                         </div>
-                        <div class="card-footer p-2">
+                        <div class="border-t border-border p-2">
                             <form method="post">
                                 {{ formToken() }}
                                 <input type="hidden" name="action" value="disable-beta"/>
@@ -141,6 +135,63 @@
                             </form>
                         </div>
                     </div>
+                {% elseif fsc.telemetryManager.ready() == false %}
+                    <hr class="border-border"/>
+                    <div class="mt-4 mb-3">
+                        {{ Utils.registerInstall(false) }}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="modalTelemetry" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                {% if fsc.telemetryManager.ready() %}
+                    <div class="modal-header">
+                        <h5 class="modal-title flex items-center gap-2">
+                            <i data-lucide="badge-check" class="w-5 h-5"></i>
+                            {{ trans('registered-installation', {'%number%': fsc.telemetryManager.id()}) }}
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                aria-label="{{ trans('close') }}"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>{{ trans('registered-installation-p') }}</p>
+                        <p>{{ trans('telemetry-data-to-send') }}</p>
+                        <a class="btn btn-primary float-start" href="{{ fsc.url() }}?action=claim-install"
+                           target="_blank">
+                            <i data-lucide="settings" class="w-4 h-4 me-1 inline"></i>
+                            {{ trans('manage') }}
+                        </a>
+                        <form action="{{ fsc.url() }}" method="post" onsubmit="animateSpinner('add')">
+                            {{ formToken() }}
+                            <input type="hidden" name="action" value="unlink"/>
+                            <button type="submit" class="btn btn-danger btn-spin-action float-end">
+                                <i data-lucide="unlink" class="w-4 h-4 me-1 inline"></i>
+                                {{ trans('unlink') }}
+                            </button>
+                        </form>
+                    </div>
+                {% else %}
+                    <form action="{{ fsc.url() }}" method="post" onsubmit="animateSpinner('add')">
+                        {{ formToken() }}
+                        <input type="hidden" name="action" value="register"/>
+                        <div class="modal-header">
+                            <h5 class="modal-title">
+                                <i data-lucide="badge-check" class="w-5 h-5 me-1 inline"></i> {{ trans('register-installation') }}
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                    aria-label="{{ trans('close') }}"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p>{{ trans('register-installation-p') }}</p>
+                            <p>{{ trans('telemetry-data-to-send') }}</p>
+                            <button type="submit" class="btn btn-primary btn-spin-action w-100">
+                                {{ trans('register-installation') }}
+                            </button>
+                        </div>
+                    </form>
                 {% endif %}
             </div>
         </div>
@@ -151,7 +202,7 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">
-                            <i class="fa-solid fa-exclamation-triangle me-1" aria-hidden="true"></i>
+                            <i data-lucide="alert-triangle" class="w-5 h-5 me-1 inline"></i>
                             {{ trans('core-update-warning') }}
                         </h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -170,7 +221,7 @@
                                     <a href="{{ fsc.url() }}?action=download&item={{ item.id }}&disable={{ fsc.coreUpdateWarnings | keys | join(',') }}"
                                        class="btn btn-spin-action btn-warning"
                                        onclick="animateSpinner('add')">
-                                        <i class="fa-solid fa-download fa-fw me-1" aria-hidden="true"></i>{{ trans('download') }}
+                                        <i data-lucide="download" class="w-3.5 h-3.5 me-1 inline"></i>{{ trans('download') }}
                                     </a>
                                     <button type="button"
                                             class="btn btn-spin-action btn-warning dropdown-toggle dropdown-toggle-split"
@@ -181,7 +232,7 @@
                                         <a href="{{ fsc.url() }}?action=download&item={{ item.id }}"
                                            class="btn btn-warning"
                                            onclick="animateSpinner('add')">
-                                            <i class="fa-solid fa-download fa-fw me-1" aria-hidden="true"></i>{{ trans('do-not-disable-plugins') }}
+                                            <i data-lucide="download" class="w-3.5 h-3.5 me-1 inline"></i>{{ trans('do-not-disable-plugins') }}
                                         </a>
                                     </div>
                                 </div>

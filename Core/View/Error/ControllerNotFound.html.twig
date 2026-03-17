@@ -1,20 +1,19 @@
+{# SolwedShadcn — Controller no encontrado #}
 {% extends "Master/MicroTemplate.html.twig" %}
 
 {% block body %}
-    <div class="container">
-        <div class="row">
-            <div class="col-sm-12">
-                <br/><br/>
-                <div class="jumbotron">
-                    <h1>
-                        <i class="fa-solid fa-bug fa-fw" aria-hidden="true"></i>
-                        {{ trans('controller-not-found') }}:
-                    </h1>
-                    <hr class="my-4">
-                    <b>{{ controllerName }}</b>
-                    <br/><br/>
-                    <a href="{{ asset('Wizard') }}" class="btn btn-warning">
-                        <i class="fa-solid fa-wrench fa-fw" aria-hidden="true"></i> {{ trans('wizard') }}
+    {{ parent() }}
+    <div class="flex items-center justify-center min-h-[60vh] px-4">
+        <div class="card-shadcn max-w-lg w-full">
+            <div class="p-8 text-center">
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-warning/10 mb-4">
+                    <i data-lucide="bug" class="w-8 h-8 text-warning"></i>
+                </div>
+                <h1 class="text-xl font-heading font-semibold mb-2">{{ trans('controller-not-found') }}</h1>
+                <p class="text-muted-foreground text-sm mb-1 font-medium">{{ controllerName }}</p>
+                <div class="mt-6">
+                    <a href="{{ asset('Wizard') }}" class="btn btn-warning btn-sm">
+                        <i data-lucide="wrench" class="w-4 h-4 me-1"></i> {{ trans('wizard') }}
                     </a>
                 </div>
             </div>

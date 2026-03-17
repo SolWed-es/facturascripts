@@ -1,59 +1,59 @@
 {#
-    /**
-     * This file is part of FacturaScripts
-     * Copyright (C) 2017-2025 Carlos Garcia Gomez <carlos@facturascripts.com>
-     *
-     * This program is free software: you can redistribute it and/or modify
-     * it under the terms of the GNU Lesser General Public License as
-     * published by the Free Software Foundation, either version 3 of the
-     * License, or (at your option) any later version.
-     *
-     * This program is distributed in the hope that it will be useful,
-     * but WITHOUT ANY WARRANTY; without even the implied warranty of
-     * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-     * GNU Lesser General Public License for more details.
-     *
-     * You should have received a copy of the GNU Lesser General Public License
-     * along with this program. If not, see <http://www.gnu.org/licenses/>.
-     */
+/**
+ * SolwedShadcn — Macro sidebar menu
+ * Renderiza el menú recursivo en el sidebar con estilo shadcn
+ */
 #}
 
 {% macro showMenu(menuItem, parent = '') %}
     {% import _self as macros %}
-    {% set active = menuItem.active ? ' active' : '' %}
-    {% set menuId = parent ? parent ~ menuItem.name : 'menu_' ~ menuItem.name %}
+    {% set active = menuItem.active ? true : false %}
+    {% set menuId = parent is empty ? 'menu_' ~ menuItem.name : parent ~ '_' ~ menuItem.name %}
 
-    {% if not parent %}
-        {# Main level menu/submenu #}
-        <li id="{{ menuId | lower }}" class="fs-menu-item nav-item dropdown">
-            <a class="nav-link dropdown-toggle{{ active }}" href="#" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                {% set title = menuItem.title %}
-                <span class="d-md-none">{{ title | slice(0, 2) }}</span>
-                <span class="d-none d-md-inline-block">{{ title }}</span>
-            </a>
-            <ul class="dropdown-menu" aria-labelledby="{{ menuId }}">
-    {% else %}
-        {# Child level submenu #}
-        <li id="{{ menuId | lower }}" class="fs-menu-item dropdown-submenu">
-            <a class="dropdown-item{{ active }}" href="#">
-                <i class="fa-solid fa-folder-open fa-fw me-1" aria-hidden="true"></i> {{ menuItem.title }}
-            </a>
-            <ul class="dropdown-menu" aria-labelledby="{{ menuId }}">
-    {% endif %}
-
-    {% for item in menuItem.menu %}
-        {% set extraClass = item.active ? ' active' : '' %}
-        {% set childId = menuId ~ '_' ~ item.name %}
-
-        {% if item.menu is empty %}
-            <li id="{{ childId | lower }}" class="fs-menu-item">
-                <a class="dropdown-item{{ extraClass }}" href="{{ item.url }}">
-                    <i class="{{ item.icon }} fa-fw me-1" aria-hidden="true"></i> {{ item.title }}
+    {% if parent is empty %}
+        {# Nivel principal: grupo con subitems #}
+        <div class="mb-1">
+            {% if menuItem.menu is not empty %}
+                <button type="button"
+                        class="w-full flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium transition-colors
+                               {{ active ? 'text-foreground' : 'text-foreground/70 hover:text-foreground hover:bg-muted' }}"
+                        onclick="toggleSubmenu('{{ menuId }}')" data-menu-id="{{ menuId }}">
+                    <span class="flex items-center gap-3">
+                        <i data-lucide="folder" class="w-4 h-4 opacity-60 sidebar-icon"></i>
+                        <span class="sidebar-label">{{ menuItem.title }}</span>
+                    </span>
+                    <i data-lucide="chevron-right" class="w-4 h-4 opacity-40 transition-transform duration-200 sidebar-label" id="chevron-{{ menuId }}"></i>
+                </button>
+                <div id="submenu-{{ menuId }}" class="ml-4 mt-0.5 space-y-0.5 overflow-hidden transition-all duration-200{{ active ? '' : ' hidden' }}">
+                    {% for item in menuItem.menu %}
+                        {% if item.menu is empty %}
+                            <a href="{{ item.url }}"
+                               class="flex items-center gap-3 rounded-lg px-3 py-1.5 text-sm transition-colors
+                                      {{ item.active ? 'bg-accent text-accent-content font-medium shadow-sm' : 'text-foreground/60 hover:text-foreground hover:bg-muted' }}">
+                                <i class="{{ item.icon }} w-4 text-center opacity-60" aria-hidden="true"></i>
+                                <span class="sidebar-label">{{ item.title }}</span>
+                            </a>
+                        {% else %}
+                            {{ macros.showMenu(item, menuId) }}
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            {% else %}
+                <a href="{{ menuItem.url }}"
+                   class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors
+                          {{ active ? 'bg-accent text-accent-content shadow-sm' : 'text-foreground/70 hover:text-foreground hover:bg-muted' }}">
+                    <i data-lucide="file" class="w-4 h-4 opacity-60 sidebar-icon"></i>
+                    <span class="sidebar-label">{{ menuItem.title }}</span>
                 </a>
-            </li>
-        {% else %}
-            {{ macros.showMenu(item, menuId) }}
-        {% endif %}
-    {% endfor %}
-    </ul>
+            {% endif %}
+        </div>
+    {% else %}
+        {# Subnivel: item anidado #}
+        <a href="{{ menuItem.url }}"
+           class="flex items-center gap-3 rounded-lg px-3 py-1.5 text-sm transition-colors
+                  {{ menuItem.active ? 'bg-accent text-accent-content font-medium shadow-sm' : 'text-foreground/60 hover:text-foreground hover:bg-muted' }}">
+            <i class="{{ menuItem.icon|default('fa-solid fa-circle-dot') }} w-4 text-center opacity-60" aria-hidden="true"></i>
+            <span class="sidebar-label">{{ menuItem.title }}</span>
+        </a>
+    {% endif %}
 {% endmacro %}

@@ -1,22 +1,4 @@
-{#
-/**
- * This file is part of FacturaScripts
- * Copyright (C) 2017-2025 Carlos Garcia Gomez <carlos@facturascripts.com>
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this program. If not, see http://www.gnu.org/licenses/.
- */
-#}
+{# SolwedShadcn — Wizard paso 3 (procesando) #}
 {% extends "Master/MicroTemplate.html.twig" %}
 
 {% block messages %}
@@ -36,19 +18,19 @@
 
 {% block body %}
     <div class="container" style="margin-top: -100px;">
-        <div class="card shadow mb-5">
-            <div class="card-body">
-                <h1 class="h3">
-                    <i class="fa-solid fa-wand-magic-sparkles me-2"></i> {{ trans('wizard') }}
-                    <a href="{{ fsc.url() }}" class="btn btn-sm btn-outline-secondary float-end"
+        <div class="card-shadcn mb-5">
+            <div class="p-4">
+                <h1 class="h3 font-heading font-semibold flex items-center gap-2">
+                    <i data-lucide="wand-sparkles" class="w-6 h-6"></i> {{ trans('wizard') }}
+                    <a href="{{ fsc.url() }}" class="btn btn-sm btn-outline-secondary ms-auto"
                        title="{{ trans('refresh') }}">
-                        <i class="fa-solid fa-redo" aria-hidden="true"></i>
+                        <i data-lucide="refresh-cw" class="w-4 h-4"></i>
                     </a>
                 </h1>
-                <p>{{ trans('wizard-p') }}</p>
-                <hr/>
+                <p class="text-muted-foreground">{{ trans('wizard-p') }}</p>
+                <hr class="border-border"/>
                 <div class="text-center pt-5 pb-5 mt-5 mb-5">
-                    <i class="fa-solid fa-circle-notch fa-5x fa-spin"></i>
+                    <i data-lucide="loader-2" class="w-16 h-16 animate-spin text-muted-foreground mx-auto"></i>
                 </div>
             </div>
         </div>

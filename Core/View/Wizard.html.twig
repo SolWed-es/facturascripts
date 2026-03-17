@@ -1,22 +1,4 @@
-{#
-/**
- * This file is part of FacturaScripts
- * Copyright (C) 2017-2025 Carlos Garcia Gomez <carlos@facturascripts.com>
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this program. If not, see http://www.gnu.org/licenses/.
- */
-#}
+{# SolwedShadcn — Wizard paso 1 (empresa) #}
 {% extends "Master/MicroTemplate.html.twig" %}
 
 {% block messages %}
@@ -33,7 +15,6 @@
 {% endblock %}
 
 {% block body %}
-    <!-- Macros Template Imports -->
     {% import 'Macro/Forms.html.twig' as forms %}
     {% set ciudad = fsc.empresa ? fsc.empresa.ciudad : '' %}
     {% set codpais = fsc.empresa ? fsc.empresa.codpais : settings('default', 'codpais', 'ESP') %}
@@ -43,17 +24,17 @@
         <form method="post" class="form" id="formWizard">
             {{ formToken() }}
             <input type="hidden" name="action" value="step1"/>
-            <div class="card shadow mb-5">
-                <div class="card-body">
-                    <h1 class="h3">
-                        <i class="fa-solid fa-wand-magic-sparkles me-2"></i> {{ trans('wizard') }}
-                        <a href="{{ fsc.url() }}" class="btn btn-sm btn-outline-secondary float-end"
+            <div class="card-shadcn mb-5">
+                <div class="p-4">
+                    <h1 class="h3 font-heading font-semibold flex items-center gap-2">
+                        <i data-lucide="wand-sparkles" class="w-6 h-6"></i> {{ trans('wizard') }}
+                        <a href="{{ fsc.url() }}" class="btn btn-sm btn-outline-secondary ms-auto"
                            title="{{ trans('refresh') }}">
-                            <i class="fa-solid fa-redo" aria-hidden="true"></i>
+                            <i data-lucide="refresh-cw" class="w-4 h-4"></i>
                         </a>
                     </h1>
-                    <p>{{ trans('wizard-p') }}</p>
-                    <hr/>
+                    <p class="text-muted-foreground">{{ trans('wizard-p') }}</p>
+                    <hr class="border-border"/>
                     <div class="row gx-2">
                         <div class="col-lg-3 col-md-6">
                             <div class="mb-3">
@@ -63,7 +44,7 @@
                         </div>
                         <div class="col-lg-3 col-md-6">
                             <div class="mb-3">
-                                <label class="mb-1">{{ trans('type') }}</label>
+                                <label class="text-sm font-medium mb-1">{{ trans('type') }}</label>
                                 <select name="personafisica" class="form-select">
                                     {% if fsc.empresa.personafisica %}
                                         <option value="1" selected>{{ trans('is-person') }}</option>
@@ -153,8 +134,8 @@
                         <div class="row gx-2">
                             <div class="col mt-3">
                                 <div class="alert alert-warning" role="alert">
-                                    <h4 class="alert-heading">
-                                        <i class="fa-solid fa-exclamation-triangle me-2" aria-hidden="true"></i>
+                                    <h4 class="alert-heading font-semibold flex items-center gap-2">
+                                        <i data-lucide="alert-triangle" class="w-5 h-5"></i>
                                         {{ trans('you-should-change-passwd') }}
                                     </h4>
                                     <p class="mb-0">
@@ -183,9 +164,9 @@
                         </div>
                     {% endif %}
                 </div>
-                <div class="card-footer text-end">
+                <div class="border-t border-border p-3 text-end">
                     <button type="submit" class="btn btn-primary" id="btnWizard">
-                        <i class="fa-solid fa-arrow-right fa-beat me-1"></i> {{ trans('continue') }}
+                        <i data-lucide="arrow-right" class="w-4 h-4 me-1"></i> {{ trans('continue') }}
                     </button>
                 </div>
             </div>

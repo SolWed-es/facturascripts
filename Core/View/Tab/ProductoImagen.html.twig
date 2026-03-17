@@ -1,22 +1,6 @@
 {#
 /**
- * This file is part of FacturaScripts
- * Copyright (C) 2022-2025 Carlos Garcia Gomez <carlos@facturascripts.com>
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this program. If not, see http://www.gnu.org/licenses/.
- *
- * @author Jose Antonio Cuello Principal <yopli2000@gmail.com>
+ * SolwedShadcn — Imágenes de producto
  */
 #}
 {% set firstView = fsc.views | first %}
@@ -33,11 +17,11 @@
                 <input type="hidden" name="action" value="add-image"/>
                 <input type="hidden" name="activetab" value="{{ currentView.getViewName() }}"/>
                 <input type="hidden" name="idproducto" value="{{ product.primaryColumnValue() }}">
-                <div class="card border-success shadow mb-3">
-                    <div class="card-body p-3">
+                <div class="card-shadcn border-success mb-3">
+                    <div class="p-3">
                         <div class="row g-2">
                             <div class="col-sm-2">
-                                {{ trans('variant') }}
+                                <span class="text-sm font-medium">{{ trans('variant') }}</span>
                                 <select name="referencia" class="form-select mb-2">
                                     <option value="">{{ trans('all-variants') }}</option>
                                     <option value="">------</option>
@@ -47,17 +31,17 @@
                                 </select>
                             </div>
                             <div class="col">
-                                {{ trans('images') }}
+                                <span class="text-sm font-medium">{{ trans('images') }}</span>
                                 <input type="file" name="newfiles[]" class="form-control" multiple=""
                                        accept="image/png, image/jpeg, image/gif" required/>
-                                <p class="text-muted mb-2">
+                                <p class="text-sm text-muted-foreground mb-2">
                                     {{ trans('help-server-accepts-filesize', {'%size%': currentView.model.getMaxFileUpload()}) }}
                                 </p>
                             </div>
                             <div class="col-auto">
                                 <br/>
                                 <button type="submit" class="btn btn-success mb-2">
-                                    <i class="fa-solid fa-save fa-fw" aria-hidden="true"></i> {{ trans('add') }}
+                                    <i data-lucide="save" class="w-4 h-4 me-1"></i> {{ trans('add') }}
                                 </button>
                             </div>
                         </div>
@@ -71,11 +55,11 @@
         {% for counter, image in currentView.cursor %}
             <div class="col mb-4 images-item" data-image-id="{{ image.id }}">
                 {% set border = image.referencia ? '' : 'border-primary' %}
-                <div class="card {{ border }} shadow">
-                    <img src="{{ asset(image.url('download')) }}" class="card-img-top"
+                <div class="card-shadcn {{ border }}">
+                    <img src="{{ asset(image.url('download')) }}" class="w-full rounded-t-lg"
                          alt="{{ image.referencia }}" loading="lazy">
-                    <div class="card-body"></div>
-                    <div class="card-footer">
+                    <div class="p-2"></div>
+                    <div class="border-t border-border p-2">
                         {% set formName = currentView.getViewName() ~ (counter + 1) %}
                         <form id="{{ 'form' ~ formName }}" action="{{ product.url() }}" method="post"
                               enctype="multipart/form-data" onsubmit="animateSpinner('add')">
@@ -84,13 +68,11 @@
                             <input type="hidden" name="activetab" value="{{ currentView.getViewName() }}"/>
                             <input type="hidden" name="idproducto" value="{{ image.idproducto }}"/>
                             <input type="hidden" name="idimage" value="{{ image.id }}"/>
-                            <div class="row align-items-center">
-                                <div class="col text-muted">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-muted-foreground">
                                     {{ image.referencia ? image.referencia : trans('all-variants') }}
-                                </div>
-                                <div class="col-auto">
-                                    {{ _self.buttonDelete(formName) }}
-                                </div>
+                                </span>
+                                {{ _self.buttonDelete(formName) }}
                             </div>
                         </form>
                     </div>
@@ -110,6 +92,6 @@
     {% set confirm = trans('confirm') %}
     <button type="button" class="btn btn-sm btn-outline-danger p-1"
             onclick="confirmAction('{{ formName }}','delete-image','{{ label }}','{{ text }}','{{ cancel }}','{{ confirm }}');">
-        <i class="fa-solid fa-trash-alt fa-fw" aria-hidden="true"></i>
+        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
     </button>
 {% endmacro %}

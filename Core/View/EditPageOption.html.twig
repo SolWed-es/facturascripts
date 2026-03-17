@@ -1,22 +1,4 @@
-{#
-/**
- * This file is part of FacturaScripts
- * Copyright (C) 2017-2023 Carlos Garcia Gomez <carlos@facturascripts.com>
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this program. If not, see http://www.gnu.org/licenses/.
- */
-#}
+{# SolwedShadcn — Opciones de página (columnas) #}
 {% extends "Master/MenuBgTemplate.html.twig" %}
 {% from 'Macro/Forms.html.twig' import simpleSelect as simpleSelect %}
 
@@ -27,16 +9,16 @@
         <div class="row">
             <div class="col-4 d-print-none">
                 <a href="{{ fsc.backPage }}" class="btn btn-sm btn-secondary">
-                    <i class="fa-solid fa-arrow-left fa-fw" aria-hidden="true"></i>
+                    <i data-lucide="arrow-left" class="w-4 h-4 me-1"></i>
                     <span class="d-none d-md-inline-block">{{ trans('back') }}</span>
                 </a>
                 <a href="{{ fsc.url() ~ '?code=' ~ fsc.selectedViewName }}" class="btn btn-sm btn-secondary"
                    title="{{ trans('refresh') }}">
-                    <i class="fa-solid fa-redo" aria-hidden="true"></i>
+                    <i data-lucide="refresh-cw" class="w-4 h-4"></i>
                 </a>
             </div>
             <div class="col text-end">
-                <h1 class="h4">
+                <h1 class="h4 font-heading font-semibold">
                     {{ fsc.title }} <i class="{{ fsc.getPageData()['icon'] }}" aria-hidden="true"></i>
                 </h1>
             </div>
@@ -49,21 +31,21 @@
     <div class="container-fluid">
         <div class="row">
             <div class="col">
-                <div class="card shadow">
-                    <div class="card-header">
-                        <span class="text-info">{{ fsc.selectedViewName }}</span>
+                <div class="card-shadcn">
+                    <div class="p-3 border-b border-border">
+                        <span class="text-info font-medium">{{ fsc.selectedViewName }}</span>
                     </div>
-                    <div class="card-body">
+                    <div class="p-3">
                         <form method="post">
                             <input type="hidden" name="code" value="{{ fsc.selectedViewName }}"/>
                             <div class="row">
                                 <div class="col">
-                                    <p>{{ trans('page-option-info') }}</p>
+                                    <p class="text-muted-foreground">{{ trans('page-option-info') }}</p>
                                 </div>
                                 <div class="col-3">
                                     <div class="input-group mb-3">
                                         <span class="input-group-text">
-                                                <i class="fa-solid fa-users"></i>
+                                                <i data-lucide="users" class="w-4 h-4"></i>
                                             </span>
                                         {% set userList = {'': trans('all')} | merge(fsc.getUserList()) %}
                                         {{ simpleSelect(
@@ -106,23 +88,23 @@
                                 </tbody>
                             </table>
                         </div>
-                        <div class="card-footer">
+                        <div class="border-t border-border p-3">
                             <div class="row">
                                 {% if fsc.model.exists() %}
                                     <div class="col">
                                         <button class="btn btn-spin-action btn-sm btn btn-danger" type="button"
                                                 onclick="deleteOptions();">
-                                            <i class="fa-solid fa-trash-alt fa-fw" aria-hidden="true"></i>
+                                            <i data-lucide="trash-2" class="w-4 h-4 me-1"></i>
                                             {{ trans('delete') }}
                                         </button>
                                     </div>
                                 {% endif %}
                                 <div class="col text-end">
                                     <button class="btn btn-spin-action btn-sm btn btn-secondary" type="reset">
-                                        <i class="fa-solid fa-undo fa-fw" aria-hidden="true"></i> {{ trans('undo') }}
+                                        <i data-lucide="undo-2" class="w-4 h-4 me-1"></i> {{ trans('undo') }}
                                     </button>
                                     <button class="btn btn-spin-action btn-sm btn-primary" type="submit">
-                                        <i class="fa-solid fa-save fa-fw" aria-hidden="true"></i> {{ trans('save') }}
+                                        <i data-lucide="save" class="w-4 h-4 me-1"></i> {{ trans('save') }}
                                     </button>
                                 </div>
                             </div>
@@ -157,27 +139,18 @@
     </div>
 {% endblock %}
 
-{% block css %}
-    {{ parent() }}
-    <style>
-        body {
-            background-color: #FAFBFC;
-        }
-    </style>
-{% endblock %}
-
 {% block javascripts %}
     {{ parent() }}
     <script>
         function deleteOptions() {
             const deleteModal = new bootstrap.Modal(document.getElementById('deleteOptionsModal'));
-            
+
             document.getElementById('confirmDeleteOptionsBtn').onclick = function() {
                 animateSpinner('add');
                 document.main_form.action.value = 'delete';
                 document.main_form.submit();
             };
-            
+
             deleteModal.show();
         }
     </script>
