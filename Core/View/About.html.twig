@@ -1,11 +1,8 @@
+{# SolwedShadcn — Acerca de #}
 {% extends "Master/MenuBghTemplate.html.twig" %}
 
 {% block bodyHeaderOptions %}
-    <br/>
-    <br/>
-    <br/>
-    <br/>
-    <br/>
+    <br/><br/><br/><br/><br/>
 {% endblock %}
 
 {% block body %}
@@ -17,15 +14,15 @@
                 {% endfor %}
 
                 {% block software %}
-                    <div class="card shadow mb-4">
-                        <div class="card-body">
-                            <h3>
-                                <i class="fa-solid fa-code me-2"></i> {{ trans('software') }}
+                    <div class="card-shadcn mb-4">
+                        <div class="p-4">
+                            <h3 class="font-heading font-semibold flex items-center gap-2 mb-3">
+                                <i data-lucide="code-2" class="w-6 h-6"></i> {{ trans('software') }}
                             </h3>
-                            <hr>
+                            <hr class="border-border mb-3"/>
                             <div class="row align-items-center">
                                 <div class="col-md">
-                                    <h5 class="mb-3">FacturaScripts</h5>
+                                    <h5 class="font-semibold mb-3">FacturaScripts</h5>
                                     <p class="mb-1">
                                         <strong>{{ trans('version') }}:</strong> {{ fsc.data.core_version }}
                                     </p>
@@ -34,7 +31,7 @@
                                     </p>
                                     <p class="mb-1">
                                         <strong>{{ trans('website') }}:</strong>
-                                        <a href="https://facturascripts.com" target="_blank" rel="nofollow">facturascripts.com</a>
+                                        <a href="https://solwed.es" target="_blank" rel="nofollow">solwed.es</a>
                                     </p>
                                     <p class="mb-0">
                                         <strong>{{ trans('installation') }}:</strong>
@@ -46,8 +43,8 @@
                                     </p>
                                 </div>
                                 <div class="col-md-auto">
-                                    <img src="{{ asset('Core/Assets/Images/horizontal-logo.png') }}" alt="FacturaScripts"
-                                         class="img-fluid" style="max-height: 80px;">
+                                    <img src="{{ asset('Dinamic/Assets/Images/logo-dark.png') }}" alt="SOLWED"
+                                         class="img-fluid max-h-20">
                                 </div>
                             </div>
                         </div>
@@ -55,70 +52,70 @@
                 {% endblock %}
 
                 {% block limits %}
-                    <div class="card shadow mb-4">
-                        <div class="card-body">
-                            <h3>
-                                <i class="fa-solid fa-chart-line me-2"></i> {{ trans('limits') }}
+                    <div class="card-shadcn mb-4">
+                        <div class="p-4">
+                            <h3 class="font-heading font-semibold flex items-center gap-2 mb-3">
+                                <i data-lucide="bar-chart-3" class="w-6 h-6"></i> {{ trans('limits') }}
                             </h3>
-                            <hr>
+                            <hr class="border-border mb-3"/>
                             <div class="row">
                                 <div class="col-lg-2 col-md-4 col-sm-6">
                                     <div class="text-center p-2">
-                                        <i class="fa-solid fa-hard-drive fa-2x text-dark mb-2"></i>
-                                        <h6 class="mb-1">{{ trans('app-storage') }}</h6>
-                                        <p class="mb-0">
+                                        <i data-lucide="hard-drive" class="w-8 h-8 text-foreground mb-2 mx-auto"></i>
+                                        <h6 class="font-semibold mb-1">{{ trans('app-storage') }}</h6>
+                                        <p class="mb-0 text-sm">
                                             {% set storageUsed = fsc.data.storage_used is defined ? fsc.data.storage_used : 0 %}
                                             {% set storageLimit = fsc.data.storage_limit is defined ? fsc.data.storage_limit : 0 %}
                                             <strong>{{ bytes(storageUsed) }}</strong>
-                                            / {% if storageLimit %}{{ bytes(storageLimit) }}{% else %}∞{% endif %}
+                                            / {% if storageLimit %}{{ bytes(storageLimit) }}{% else %}&infin;{% endif %}
                                         </p>
                                     </div>
                                 </div>
                                 <div class="col-lg-2 col-md-4 col-sm-6">
                                     <div class="text-center p-2">
-                                        <i class="fa-solid fa-users fa-2x text-primary mb-2"></i>
-                                        <h6 class="mb-1">{{ trans('users') }}</h6>
-                                        <p class="mb-0">
+                                        <i data-lucide="users" class="w-8 h-8 text-info mb-2 mx-auto"></i>
+                                        <h6 class="font-semibold mb-1">{{ trans('users') }}</h6>
+                                        <p class="mb-0 text-sm">
                                             {% set userCount = fsc.data.limits.users is defined ? fsc.data.limits.users : 0 %}
                                             {% set userLimit = config('user_limit') %}
                                             <strong>{{ userCount }}</strong>
-                                            / {% if userLimit %}{{ userLimit }}{% else %}∞{% endif %}
+                                            / {% if userLimit %}{{ userLimit }}{% else %}&infin;{% endif %}
                                         </p>
                                     </div>
                                 </div>
                                 <div class="col-lg-2 col-md-4 col-sm-6">
                                     <div class="text-center p-2">
-                                        <i class="fa-solid fa-box fa-2x text-success mb-2"></i>
-                                        <h6 class="mb-1">{{ trans('products') }}</h6>
-                                        <p class="mb-0">
+                                        <i data-lucide="box" class="w-8 h-8 text-success mb-2 mx-auto"></i>
+                                        <h6 class="font-semibold mb-1">{{ trans('products') }}</h6>
+                                        <p class="mb-0 text-sm">
                                             {% set productCount = fsc.data.limits.products is defined ? fsc.data.limits.products : 0 %}
                                             {% set productLimit = config('product_limit') %}
                                             <strong>{{ productCount }}</strong>
-                                            / {% if productLimit %}{{ productLimit }}{% else %}∞{% endif %}
+                                            / {% if productLimit %}{{ productLimit }}{% else %}&infin;{% endif %}
                                         </p>
                                     </div>
                                 </div>
                                 <div class="col-lg-2 col-md-4 col-sm-6">
                                     <div class="text-center p-2">
-                                        <i class="fa-solid fa-user-tie fa-2x text-info mb-2"></i>
-                                        <h6 class="mb-1">{{ trans('customers') }}</h6>
-                                        <p class="mb-0">
+                                        <i data-lucide="user-check" class="w-8 h-8 text-info mb-2 mx-auto"></i>
+                                        <h6 class="font-semibold mb-1">{{ trans('customers') }}</h6>
+                                        <p class="mb-0 text-sm">
                                             {% set customerCount = fsc.data.limits.customers is defined ? fsc.data.limits.customers : 0 %}
                                             {% set customerLimit = config('customer_limit') %}
                                             <strong>{{ customerCount }}</strong>
-                                            / {% if customerLimit %}{{ customerLimit }}{% else %}∞{% endif %}
+                                            / {% if customerLimit %}{{ customerLimit }}{% else %}&infin;{% endif %}
                                         </p>
                                     </div>
                                 </div>
                                 <div class="col-lg-2 col-md-4 col-sm-6">
                                     <div class="text-center p-2">
-                                        <i class="fa-solid fa-file-invoice fa-2x text-warning mb-2"></i>
-                                        <h6 class="mb-1">{{ trans('invoices') }}</h6>
-                                        <p class="mb-0">
+                                        <i data-lucide="file-text" class="w-8 h-8 text-warning mb-2 mx-auto"></i>
+                                        <h6 class="font-semibold mb-1">{{ trans('invoices') }}</h6>
+                                        <p class="mb-0 text-sm">
                                             {% set invoiceCount = fsc.data.limits.invoices is defined ? fsc.data.limits.invoices : 0 %}
                                             {% set invoiceLimit = config('invoice_limit') %}
                                             <strong>{{ invoiceCount }}</strong>
-                                            / {% if invoiceLimit %}{{ invoiceLimit }}{% else %}∞{% endif %}
+                                            / {% if invoiceLimit %}{{ invoiceLimit }}{% else %}&infin;{% endif %}
                                         </p>
                                     </div>
                                 </div>
@@ -128,29 +125,23 @@
                 {% endblock %}
 
                 {% block storage %}
-                    <div class="card shadow mb-4">
-                        <div class="card-body">
-                            <h3>
-                                <i class="fa-solid fa-hard-drive me-2"></i> {{ trans('app-storage') }}
+                    <div class="card-shadcn mb-4">
+                        <div class="p-4">
+                            <h3 class="font-heading font-semibold flex items-center gap-2 mb-3">
+                                <i data-lucide="hard-drive" class="w-6 h-6"></i> {{ trans('app-storage') }}
                             </h3>
-                            <hr>
+                            <hr class="border-border mb-3"/>
                             <div class="row">
                                 {% for dataStorare in fsc.data.storage_details %}
                                     <div class="col-lg-2 col-md-4 col-sm-6">
                                         <div class="text-center p-2">
                                             {% if dataStorare.name == 'files' %}
-                                                <i class="fa-regular fa-file fa-2x mb-2"></i>
-                                                <h6 class="mb-1">{{ dataStorare.name }}</h6>
-                                                <p class="mb-0">
-                                                    <strong>{{ dataStorare.human_size }}</strong>
-                                                </p>
+                                                <i data-lucide="file" class="w-8 h-8 text-muted-foreground mb-2 mx-auto"></i>
                                             {% else %}
-                                                <i class="fa-regular fa-folder fa-2x mb-2"></i>
-                                                <h6 class="mb-1">{{ dataStorare.name }}</h6>
-                                                <p class="mb-0">
-                                                    <strong>{{ dataStorare.human_size }}</strong>
-                                                </p>
+                                                <i data-lucide="folder" class="w-8 h-8 text-muted-foreground mb-2 mx-auto"></i>
                                             {% endif %}
+                                            <h6 class="font-semibold mb-1">{{ dataStorare.name }}</h6>
+                                            <p class="mb-0 text-sm"><strong>{{ dataStorare.human_size }}</strong></p>
                                         </div>
                                     </div>
                                 {% endfor %}
@@ -160,10 +151,10 @@
                 {% endblock %}
 
                 {% block plugins %}
-                    <div class="card shadow mb-4">
-                        <div class="card-body">
-                            <h3>
-                                <i class="fa-solid fa-plug me-2"></i> {{ trans('plugins') }}
+                    <div class="card-shadcn mb-4">
+                        <div class="p-4">
+                            <h3 class="font-heading font-semibold flex items-center gap-2">
+                                <i data-lucide="plug" class="w-6 h-6"></i> {{ trans('plugins') }}
                                 {% if fsc.data.plugins | length > 0 %}
                                     <span class="badge bg-secondary">{{ fsc.data.plugins | length }}</span>
                                 {% endif %}
@@ -188,7 +179,7 @@
                                         <tr class="{{ plugin.enabled ? 'table-success' : 'table-secondary' }}">
                                             <td>
                                                 <strong>{{ plugin.name }}</strong>
-                                                <small class="text-muted">v{{ plugin.version }}</small>
+                                                <small class="text-muted-foreground">v{{ plugin.version }}</small>
                                             </td>
                                             <td>{{ plugin.min_version }}</td>
                                             <td>{{ plugin.require | join(', ') }}</td>
@@ -208,8 +199,8 @@
                                 </table>
                             </div>
                         {% else %}
-                            <div class="card-body text-center text-muted">
-                                <i class="fa-solid fa-puzzle-piece fa-3x mb-3"></i>
+                            <div class="p-4 text-center text-muted-foreground">
+                                <i data-lucide="puzzle" class="w-10 h-10 mb-3 mx-auto"></i>
                                 <p class="mb-0">{{ trans('no-plugins-installed') }}</p>
                             </div>
                         {% endif %}
@@ -217,12 +208,12 @@
                 {% endblock %}
 
                 {% block server %}
-                    <div class="card shadow mb-4">
-                        <div class="card-body">
-                            <h3>
-                                <i class="fa-solid fa-server me-2"></i> {{ trans('server') }}
+                    <div class="card-shadcn mb-4">
+                        <div class="p-4">
+                            <h3 class="font-heading font-semibold flex items-center gap-2 mb-3">
+                                <i data-lucide="server" class="w-6 h-6"></i> {{ trans('server') }}
                             </h3>
-                            <hr>
+                            <hr class="border-border mb-3"/>
                             <div class="row">
                                 <div class="col-lg-6">
                                     <p class="mb-1">
@@ -230,7 +221,7 @@
                                     </p>
                                     <p class="mb-1">
                                         <strong>{{ trans('php-extensions') }}:</strong>
-                                        <small class="text-muted">{{ fsc.data.extensions | join(', ') }}</small>
+                                        <small class="text-muted-foreground">{{ fsc.data.extensions | join(', ') }}</small>
                                     </p>
                                 </div>
                                 <div class="col-lg-6">

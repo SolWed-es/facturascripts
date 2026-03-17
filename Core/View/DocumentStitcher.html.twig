@@ -1,22 +1,4 @@
-{#
-/**
- * This file is part of FacturaScripts
- * Copyright (C) 2017-2025 Carlos Garcia Gomez <carlos@facturascripts.com>
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this program. If not, see http://www.gnu.org/licenses/.
- */
-#}
+{# SolwedShadcn — Agrupar/dividir documentos #}
 {% extends "Master/MenuBgTemplate.html.twig" %}
 {% set pageData = fsc.getPageData() %}
 
@@ -28,10 +10,10 @@
         <div class="container-fluid">
             <div class="row">
                 <div class="col">
-                    <h1 class="h3">
-                        <i class="{{ pageData.icon }} me-2" aria-hidden="true"></i> {{ trans(pageData.title) }}
+                    <h1 class="h3 font-heading font-semibold flex items-center gap-2 mb-2">
+                        <i class="{{ pageData.icon }}" aria-hidden="true"></i> {{ trans(pageData.title) }}
                     </h1>
-                    <p>{{ trans('group-or-split-p') }}</p>
+                    <p class="text-muted-foreground">{{ trans('group-or-split-p') }}</p>
                 </div>
             </div>
             <div class="row g-2">
@@ -126,11 +108,11 @@
                         {{ formToken() }}
                         <input type="hidden" name="model" value="{{ fsc.modelName }}">
                         <input type="hidden" name="codes" value="{{ fsc.codes | join(',') }}">
-                        <div class="card border-success shadow mb-2">
-                            <div class="card-body p-2">
+                        <div class="card-shadcn border-success mb-2">
+                            <div class="p-2">
                                 <button class="btn btn-spin-action btn-sm btn-outline-success" type="button"
                                         data-bs-toggle="collapse" data-bs-target="#moreDocsCollapse" aria-expanded="false">
-                                    <i class="fa-solid fa-plus-square fa-fw" aria-hidden="true"></i>
+                                    <i data-lucide="plus-square" class="w-4 h-4 me-1"></i>
                                     {{ trans('more') }}
                                 </button>
                                 &nbsp; {{ trans('group-more-docs-p') }}
@@ -181,7 +163,7 @@
                                         </tbody>
                                     </table>
                                 </div>
-                                <div class="card-footer p-2">
+                                <div class="border-t border-border p-2">
                                     <button type="submit" class="btn btn-spin-action btn-success">
                                         {{ trans('add') }}
                                     </button>
@@ -243,12 +225,12 @@
 {% endblock %}
 
 {% macro documentCard(doc, fsc) %}
-    <div class="card shadow mb-3">
+    <div class="card-shadcn mb-3">
         <div class="p-2">
             <div class="row">
                 <div class="col-sm">
-                    <div class="h5 mb-1">
-                        <i class="fa-solid fa-file me-2" aria-hidden="true"></i> {{ trans(fsc.modelName) }}
+                    <div class="h5 font-semibold mb-1">
+                        <i data-lucide="file-text" class="w-5 h-5 me-1 inline"></i> {{ trans(fsc.modelName) }}
                         <a href="{{ doc.url() }}">{{ doc.codigo }}</a>
                         {% if doc.numero2 %}
                             {{ doc.numero2 }}
@@ -257,14 +239,14 @@
                         {% endif %}
                     </div>
                     {% if doc.observaciones %}
-                        <p class="mb-2">{{ doc.observaciones | raw }}</p>
+                        <p class="mb-2 text-muted-foreground">{{ doc.observaciones | raw }}</p>
                     {% endif %}
                 </div>
                 <div class="col-sm-3 text-end">
-                    <p class="small mb-0">
-                        <i class="fa-regular fa-calendar-alt fa-fw" aria-hidden="true"></i> {{ doc.fecha }}
+                    <p class="small mb-0 text-muted-foreground">
+                        <i data-lucide="calendar" class="w-3 h-3 inline"></i> {{ doc.fecha }}
                         &nbsp;
-                        <i class="fa-regular fa-clock fa-fw" aria-hidden="true"></i> {{ doc.hora }}
+                        <i data-lucide="clock" class="w-3 h-3 inline"></i> {{ doc.hora }}
                         <br/>
                         {{ trans('net') }}: {{ money(doc.neto) }}
                         &nbsp;

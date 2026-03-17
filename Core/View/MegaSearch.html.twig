@@ -1,22 +1,4 @@
-{#
-/**
- * This file is part of FacturaScripts
- * Copyright (C) 2017-2025 Carlos Garcia Gomez <carlos@facturascripts.com>
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this program. If not, see http://www.gnu.org/licenses/.
- */
-#}
+{# SolwedShadcn — Búsqueda global #}
 {% extends "Master/MenuBgTemplate.html.twig" %}
 
 {% block body %}
@@ -24,19 +6,19 @@
         <div class="row justify-content-center">
             <div class="col-sm-8 col-md-6 col-lg-5 col-xl-4">
                 <div class="text-center mb-4 {% if fsc.query == '' %}mt-4 mt-xl-5 pt-xl-5{% else %}mt-4{% endif %}">
-                    <h1 class="mb-2 {% if fsc.query != '' %}h3{% endif %}">
-                        <i class="fa-solid fa-search fa-fw text-primary"></i>
+                    <h1 class="mb-2 font-heading font-semibold {% if fsc.query != '' %}h3{% endif %}">
+                        <i data-lucide="search" class="w-7 h-7 text-info inline"></i>
                         {{ trans('mega-search') }}
                     </h1>
-                    <p class="text-muted">{{ trans('search-in-all-pages') }}</p>
+                    <p class="text-muted-foreground">{{ trans('search-in-all-pages') }}</p>
                 </div>
                 <form action="{{ fsc.url() }}" method="post" class="form" onsubmit="animateSpinner('add')">
                     <div class="mb-4">
-                        <div class="input-group input-group-lg shadow-sm">
+                        <div class="input-group input-group-lg">
                             <input type="text" name="query" value="{{ fsc.query }}" class="form-control"
                                    placeholder="{{ trans('search') }}..." autocomplete="off" autofocus/>
                             <button type="submit" class="btn btn-spin-action btn-primary">
-                                <i class="fa-solid fa-search" aria-hidden="true"></i>
+                                <i data-lucide="search" class="w-5 h-5"></i>
                             </button>
                         </div>
                     </div>
@@ -47,7 +29,7 @@
             <div class="row justify-content-center mt-3" id="no-data-msg">
                 <div class="col-sm-8 col-md-6 col-lg-5 col-xl-4">
                     <div class="alert alert-info text-center">
-                        <i class="fa-solid fa-info-circle fa-fw"></i>
+                        <i data-lucide="info" class="w-4 h-4 inline me-1"></i>
                         {{ trans('no-results-found') }}
                     </div>
                 </div>
@@ -73,7 +55,7 @@
                         {% set active = (loop.index == 1) ? ' show active' : '' %}
                         <div class="tab-pane fade{{ active }}" id="v-pills-{{ key }}" role="tabpanel"
                              aria-labelledby="v-pills-{{ key }}-tab">
-                            <div class="card shadow">
+                            <div class="card-shadcn">
                                 {{ _self.showSearchResults(result) }}
                             </div>
                         </div>
@@ -86,7 +68,7 @@
 
 {% macro showSearchResults(result) %}
     <div class="table-responsive">
-        <table class="table table-striped table-hover">
+        <table class="table table-hover">
             <thead>
             <tr>
                 {% for key, column in result.columns %}

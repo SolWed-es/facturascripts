@@ -1,3 +1,4 @@
+{# SolwedShadcn — Permisos de rol #}
 <style>
     /* Alineación vertical perfecta de checkboxes */
     .checkbox-center-aligned {
@@ -6,15 +7,15 @@
         justify-content: center;
         margin: 0;
         padding: 0;
-        min-height: 1.5rem; /* Altura mínima consistente */
+        min-height: 1.5rem;
     }
 
     .checkbox-center-aligned .form-check-input {
         margin: 0;
         float: none;
-        position: static; /* Evita desplazamientos por position relative */
+        position: static;
         vertical-align: middle;
-        flex-shrink: 0; /* Evita que el checkbox se encoja */
+        flex-shrink: 0;
     }
 
     .checkbox-center-aligned .form-check-label {
@@ -22,10 +23,9 @@
         padding: 0;
         display: inline-flex;
         align-items: center;
-        line-height: 1; /* Normaliza la altura de línea */
+        line-height: 1;
     }
 
-    /* Asegurar que las celdas tengan la misma altura y alineación */
     .table td.text-center,
     .table td.table-warning {
         vertical-align: middle;
@@ -33,9 +33,8 @@
         padding-bottom: 0.5rem;
     }
 
-    /* Resaltado de coincidencias de búsqueda */
     .search-highlight {
-        background-color: #ffeb3b;
+        background-color: oklch(90% 0.15 85);
         padding: 2px 4px;
         border-radius: 3px;
         transition: background-color 0.3s ease;
@@ -46,20 +45,16 @@
     {{ formToken() }}
     <input type="hidden" name="action" value="edit-rules"/>
     <input type="hidden" name="activetab" value="{{ fsc.getCurrentView().getViewName() }}"/>
-    <div class="card shadow">
-        <div class="card-body">
-            <div class="row align-items-center">
-                <div class="col">
-                    <h5 class="mb-0">
-                        <i class="fa-solid fa-user-lock me-2"></i>
-                        {{ trans('permissions-by-page') }}
-                    </h5>
-                </div>
-                <div class="col-auto">
-                    <button type="submit" class="btn btn-sm btn-outline-primary btn-spin-action">
-                        <i class="fa-solid fa-save fa-fw"></i> {{ trans('save') }}
-                    </button>
-                </div>
+    <div class="card-shadcn">
+        <div class="p-3">
+            <div class="flex items-center justify-between">
+                <h5 class="font-semibold flex items-center gap-2 mb-0">
+                    <i data-lucide="shield" class="w-5 h-5"></i>
+                    {{ trans('permissions-by-page') }}
+                </h5>
+                <button type="submit" class="btn btn-sm btn-outline-primary btn-spin-action">
+                    <i data-lucide="save" class="w-3.5 h-3.5 me-1"></i> {{ trans('save') }}
+                </button>
             </div>
         </div>
         <div class="table-responsive">
@@ -69,7 +64,7 @@
                     <th>
                         <div class="input-group">
                             <span class="input-group-text">
-                                <i class="fa-solid fa-search"></i>
+                                <i data-lucide="search" class="w-4 h-4"></i>
                             </span>
                             <input type="text" class="form-control" id="search-menu"
                                    placeholder="{{ trans('search') }}"/>
@@ -138,8 +133,8 @@
                         <tr class="table-secondary" id="tr{{ menu }}">
                             <td>
                                 <span style="cursor:pointer" onclick="toggleMenu('{{ menu }}')">
-                                    <i id="plus{{ menu }}" class="fa-regular fa-plus-square"></i>
-                                    <i id="minus{{ menu }}" class="fa-regular fa-minus-square d-none"></i>
+                                    <i data-lucide="plus" id="plus{{ menu }}" class="w-4 h-4 inline"></i>
+                                    <i data-lucide="minus" id="minus{{ menu }}" class="w-4 h-4 inline d-none"></i>
                                     <b>{{ trans('menu') }} {{ menu }}</b>
                                 </span>
                             </td>
@@ -217,7 +212,7 @@
                             {% if 'List' in pageName %}
                                 <span class="badge bg-info ms-1">{{ trans('list') }}</span>
                             {% endif %}
-                            <div class="small text-secondary">
+                            <div class="small text-muted-foreground">
                                 {{ trans('controller') }}: <span class="controller-name">{{ pageName }}</span>
                             </div>
                         </td>
@@ -239,7 +234,7 @@
                                        aria-label="{{ trans('only-owner-data') }} - {{ pageName }}"/>
                                 <label class="form-check-label"
                                        for="checkbox-large-onlyOwner-{{ pageName }}" aria-hidden="true">
-                                    <i class="fa-solid fa-lock text-secondary"></i>
+                                    <i data-lucide="lock" class="w-3 h-3 inline text-secondary"></i>
                                 </label>
                             </div>
                         </td>
@@ -290,18 +285,14 @@
                 </tbody>
             </table>
         </div>
-        <div class="card-footer">
-            <div class="row align-items-center">
-                <div class="col">
-                    <p class="mb-0">
-                        <i class="fa-solid fa-lock me-1"></i> {{ trans('only-owner-data-p') }}
-                    </p>
-                </div>
-                <div class="col-auto">
-                    <button type="submit" class="btn btn-primary btn-spin-action">
-                        <i class="fa-solid fa-save fa-fw"></i> {{ trans('save') }}
-                    </button>
-                </div>
+        <div class="border-t border-border p-3">
+            <div class="flex items-center justify-between">
+                <p class="text-sm text-muted-foreground mb-0">
+                    <i data-lucide="lock" class="w-4 h-4 inline me-1"></i> {{ trans('only-owner-data-p') }}
+                </p>
+                <button type="submit" class="btn btn-primary btn-spin-action">
+                    <i data-lucide="save" class="w-4 h-4 me-1"></i> {{ trans('save') }}
+                </button>
             </div>
         </div>
     </div>
@@ -369,7 +360,7 @@
                         });
                     }
                 }
-            }, 300); // 300 milisegundos de debounce
+            }, 300);
         });
 
         // Individuales

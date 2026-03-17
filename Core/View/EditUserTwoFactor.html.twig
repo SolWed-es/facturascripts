@@ -1,11 +1,8 @@
+{# SolwedShadcn — Configuración 2FA de usuario #}
 {% extends "Master/MenuBghTemplate.html.twig" %}
 
 {% block bodyHeaderOptions %}
-    <br/>
-    <br/>
-    <br/>
-    <br/>
-    <br/>
+    <br/><br/><br/><br/><br/>
 {% endblock %}
 
 {% block body %}
@@ -20,37 +17,37 @@
                     <input type="hidden" name="action" value="two-factor-verify"/>
                     <input type="hidden" name="two_factor_secret_key"
                            value="{{ user.two_factor_secret_key }}"/>
-                    <div class="card shadow">
-                        <div class="card-body">
-                            <h1 class="h2">
-                                <i class="fa-solid fa-shield-halved me-2" aria-hidden="true"></i>
+                    <div class="card-shadcn">
+                        <div class="p-4">
+                            <h1 class="h2 font-heading font-semibold flex items-center gap-2 mb-3">
+                                <i data-lucide="shield-check" class="w-7 h-7"></i>
                                 {{ trans('two-factor-auth') }}
                             </h1>
-                            <hr/>
+                            <hr class="border-border mb-4"/>
                             {% set twoFactorUrl = user.getTwoFactorUrl() %}
                             {% set twoFactorQr = user.getTwoFactorQR() %}
                             <div class="row d-flex align-items-center">
                                 <div class="col-md mb-3 text-center">
-                                    <img src="{{ twoFactorQr }}" alt="qr"/>
+                                    <img src="{{ twoFactorQr }}" alt="qr" class="rounded-lg"/>
                                     <div>
                                         <a href="{{ twoFactorUrl }}"
                                            class="btn btn-outline-warning mb-3">
-                                            <i class="fa-solid fa-link me-1"></i>
+                                            <i data-lucide="link" class="w-4 h-4 me-1"></i>
                                             {{ trans('setup-manually') }}
                                         </a>
                                     </div>
                                 </div>
                                 <div class="col-md mb-3">
                                     <div>
-                                        <p>{{ trans('two-factor-auth-p') }}</p>
+                                        <p class="text-muted-foreground">{{ trans('two-factor-auth-p') }}</p>
                                         <input type="text" class="form-control mb-3" name="two_factor_code"
                                                placeholder="{{ trans('code') }}" autofocus required/>
                                         <button class="btn btn-success w-100 mb-3" type="submit">
-                                            <i class="fa-solid fa-check me-1"></i>
+                                            <i data-lucide="check" class="w-4 h-4 me-1"></i>
                                             {{ trans('verify') }}
                                         </button>
                                         <a href="{{ user.url() }}" class="btn btn-outline-secondary w-100">
-                                            <i class="fa-solid fa-times me-1"></i>
+                                            <i data-lucide="x" class="w-4 h-4 me-1"></i>
                                             {{ trans('cancel') }}
                                         </a>
                                     </div>

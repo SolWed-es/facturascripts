@@ -1,0 +1,251 @@
+/*
+ * SolWed Design System — Tokens OKLCH + Base Styles
+ * Basado en solwed-app (Tailwind CSS tokens)
+ * Dark mode via [data-theme="solwed-dark"]
+ */
+
+/* ========================================
+   DESIGN TOKENS — LIGHT (default)
+   ======================================== */
+:root {
+    /* Colores principales */
+    --color-background: oklch(98% 0 0);
+    --color-foreground: oklch(32.3% 0.010 207);
+    --color-card: oklch(100% 0 0);
+    --color-card-foreground: oklch(32.3% 0.010 207);
+    --color-popover: oklch(100% 0 0);
+    --color-popover-foreground: oklch(32.3% 0.010 207);
+
+    /* Primary — Gris SOLWED #2E3536 */
+    --color-primary: oklch(32.3% 0.010 207);
+    --color-primary-foreground: oklch(100% 0 0);
+
+    /* Secondary */
+    --color-secondary: oklch(93% 0.005 207);
+    --color-secondary-foreground: oklch(32.3% 0.010 207);
+
+    /* Accent — Amarillo SOLWED #F1E802 */
+    --color-accent: oklch(90.9% 0.1944 106.8);
+    --color-accent-foreground: oklch(25% 0.010 207);
+
+    /* Muted */
+    --color-muted: oklch(93% 0.005 207);
+    --color-muted-foreground: oklch(50% 0.008 207);
+
+    /* Destructive */
+    --color-destructive: oklch(60% 0.2 25);
+    --color-destructive-foreground: oklch(100% 0 0);
+
+    /* Success */
+    --color-success: oklch(65% 0.17 145);
+    --color-success-foreground: oklch(100% 0 0);
+
+    /* Warning */
+    --color-warning: oklch(82% 0.15 85);
+    --color-warning-foreground: oklch(25% 0.010 207);
+
+    /* Info */
+    --color-info: oklch(62% 0.14 245);
+    --color-info-foreground: oklch(100% 0 0);
+
+    /* Bordes y anillos */
+    --color-border: oklch(87% 0.005 207);
+    --color-input: oklch(87% 0.005 207);
+    --color-ring: oklch(32.3% 0.010 207);
+
+    /* Sidebar / Navbar */
+    --color-sidebar: oklch(32.3% 0.010 207);
+    --color-sidebar-foreground: oklch(94% 0.003 207);
+    --color-sidebar-accent: oklch(90.9% 0.1944 106.8);
+
+    /* Radios */
+    --radius-sm: 0.375rem;
+    --radius-md: 0.5rem;
+    --radius-lg: 0.75rem;
+    --radius-xl: 1rem;
+
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 oklch(0% 0 0 / 0.05);
+    --shadow-md: 0 4px 6px -1px oklch(0% 0 0 / 0.07), 0 2px 4px -2px oklch(0% 0 0 / 0.05);
+    --shadow-lg: 0 10px 15px -3px oklch(0% 0 0 / 0.08), 0 4px 6px -4px oklch(0% 0 0 / 0.04);
+
+    /* Transiciones */
+    --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* Fuentes */
+    --font-heading: 'Orbitron', sans-serif;
+    --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+/* ========================================
+   DESIGN TOKENS — DARK
+   ======================================== */
+[data-theme="solwed-dark"] {
+    --color-background: oklch(18% 0.008 207);
+    --color-foreground: oklch(94% 0.003 207);
+    --color-card: oklch(22% 0.009 207);
+    --color-card-foreground: oklch(94% 0.003 207);
+    --color-popover: oklch(22% 0.009 207);
+    --color-popover-foreground: oklch(94% 0.003 207);
+
+    --color-primary: oklch(100% 0 0);
+    --color-primary-foreground: oklch(25% 0.010 207);
+
+    --color-secondary: oklch(28% 0.009 207);
+    --color-secondary-foreground: oklch(90% 0.004 207);
+
+    --color-accent: oklch(90.9% 0.1944 106.8);
+    --color-accent-foreground: oklch(25% 0.010 207);
+
+    --color-muted: oklch(28% 0.009 207);
+    --color-muted-foreground: oklch(60% 0.006 207);
+
+    --color-destructive: oklch(65% 0.22 25);
+    --color-destructive-foreground: oklch(100% 0 0);
+
+    --color-success: oklch(70% 0.17 145);
+    --color-success-foreground: oklch(100% 0 0);
+
+    --color-warning: oklch(85% 0.15 85);
+    --color-warning-foreground: oklch(25% 0.010 207);
+
+    --color-info: oklch(67% 0.14 245);
+    --color-info-foreground: oklch(100% 0 0);
+
+    --color-border: oklch(32% 0.010 207);
+    --color-input: oklch(32% 0.010 207);
+    --color-ring: oklch(70% 0.006 207);
+
+    --color-sidebar: oklch(15% 0.007 207);
+    --color-sidebar-foreground: oklch(90% 0.004 207);
+    --color-sidebar-accent: oklch(90.9% 0.1944 106.8);
+
+    --shadow-sm: 0 1px 2px 0 oklch(0% 0 0 / 0.15);
+    --shadow-md: 0 4px 6px -1px oklch(0% 0 0 / 0.2), 0 2px 4px -2px oklch(0% 0 0 / 0.15);
+    --shadow-lg: 0 10px 15px -3px oklch(0% 0 0 / 0.25), 0 4px 6px -4px oklch(0% 0 0 / 0.15);
+}
+
+/* ========================================
+   BASE STYLES
+   ======================================== */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html {
+    font-size: 16px;
+    -webkit-text-size-adjust: 100%;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+    margin: 0;
+    font-family: var(--font-body);
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: var(--color-foreground);
+    background-color: var(--color-background);
+    transition: color var(--transition-base), background-color var(--transition-base);
+}
+
+/* Headings */
+h1, h2 {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+}
+
+h3, h4, h5, h6 {
+    font-family: var(--font-body);
+    font-weight: 600;
+}
+
+h1 { font-size: 1.75rem; }
+h2 { font-size: 1.4rem; }
+h3 { font-size: 1.2rem; }
+h4 { font-size: 1.05rem; }
+h5 { font-size: 0.95rem; }
+h6 { font-size: 0.875rem; }
+
+/* Links */
+a {
+    color: var(--color-primary);
+    text-decoration: none;
+    transition: color var(--transition-fast);
+}
+
+a:hover {
+    color: var(--color-accent-foreground);
+}
+
+/* Selection */
+::selection {
+    background: var(--color-accent);
+    color: var(--color-accent-foreground);
+}
+
+/* Scrollbar — dark mode friendly */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--color-muted);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--color-muted-foreground);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--color-foreground);
+}
+
+/* Images */
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Code */
+code, pre {
+    font-family: var(--font-mono);
+    font-size: 0.85em;
+}
+
+pre {
+    background: var(--color-muted);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 1rem;
+    overflow-x: auto;
+}
+
+code {
+    background: var(--color-muted);
+    padding: 0.15em 0.4em;
+    border-radius: var(--radius-sm);
+}
+
+/* HR */
+hr {
+    border: 0;
+    border-top: 1px solid var(--color-border);
+    margin: 1rem 0;
+}
+
+/* Print */
+@media print {
+    body {
+        background: white !important;
+        color: black !important;
+    }
+}

@@ -1,22 +1,4 @@
-{#
-/**
- * This file is part of FacturaScripts
- * Copyright (C) 2018-2025 Carlos Garcia Gomez <carlos@facturascripts.com>
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this program. If not, see http://www.gnu.org/licenses/.
- */
-#}
+{# SolwedShadcn — Rectificativa de factura de proveedor #}
 {% set currentView = fsc.getCurrentView() %}
 {% set firstView = fsc.views | first %}
 
@@ -74,16 +56,18 @@
     <div class="container-fluid">
         <div class="row">
             <div class="col">
-                <div class="card border-warning shadow mb-4">
-                    <div class="card-header bg-warning">
-                        <i class="fa-solid fa-share me-1" aria-hidden="true"></i> {{ trans('new-refund') }}
+                <div class="card-shadcn border-l-4 border-l-warning mb-4">
+                    <div class="p-3 bg-warning/10 border-b border-border">
+                        <span class="font-semibold flex items-center gap-2">
+                            <i data-lucide="undo-2" class="w-4 h-4"></i> {{ trans('new-refund') }}
+                        </span>
                     </div>
-                    <div class="card-body">
-                        <p>{{ trans('rectified-invoice-p') }}</p>
+                    <div class="p-3">
+                        <p class="text-sm text-muted-foreground mb-3">{{ trans('rectified-invoice-p') }}</p>
                         <div class="row g-2 align-items-end">
                             <div class="col-sm-6 col-md-3 col-lg">
                                 <div class="mb-3">
-                                    {{ trans('serie') }}
+                                    <span class="text-sm font-medium">{{ trans('serie') }}</span>
                                     <select name="codserie" class="form-select">
                                         {% set series = fsc.series('R') %}
                                         {% if series is empty %}
@@ -103,20 +87,20 @@
                             </div>
                             <div class="col-sm-6 col-md-3 col-lg">
                                 <div class="mb-3">
-                                    {{ trans('date') }}
-                                    <input type="date" name="fecha" value="{{ task.end | date('Y-m-d') }}"
+                                    <span class="text-sm font-medium">{{ trans('date') }}</span>
+                                    <input type="date" name="fecha" value="{{ "now" | date('Y-m-d') }}"
                                            class="form-control" required>
                                 </div>
                             </div>
                             <div class="col-sm-6 col-md-3 col-lg">
                                 <div class="mb-3">
-                                    {{ trans('numsupplier') }}
+                                    <span class="text-sm font-medium">{{ trans('numsupplier') }}</span>
                                     <input type="text" name="numproveedor" class="form-control" maxlength="50">
                                 </div>
                             </div>
                             <div class="col-sm-6 col-md-3 col-lg">
                                 <div class="mb-3">
-                                    {{ trans('status') }}
+                                    <span class="text-sm font-medium">{{ trans('status') }}</span>
                                     <select name="idestado" class="form-select">
                                         {% for status in firstView.model.getAvailableStatus() %}
                                             {% if status.idestado is same as(22) %}
@@ -137,16 +121,16 @@
                                     <div class="dropdown">
                                         <button class="btn btn-secondary dropdown-toggle" type="button"
                                                 data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                            <i class="fa-solid fa-check-square me-1"></i>
+                                            <i data-lucide="check-square" class="w-4 h-4 me-1"></i>
                                             {{ trans('select') }}
                                         </button>
                                         <div class="dropdown-menu dropdown-menu-end">
                                             <a class="dropdown-item" href="#" onClick="return refundNone();">
-                                                <i class="fa-regular fa-square fa-fw me-1"></i>
+                                                <i data-lucide="square" class="w-3.5 h-3.5 me-1 inline"></i>
                                                 {{ trans('select-none') }}
                                             </a>
                                             <a class="dropdown-item" href="#" onClick="return refundAll();">
-                                                <i class="fa-solid fa-square fa-fw me-1"></i>
+                                                <i data-lucide="square-check" class="w-3.5 h-3.5 me-1 inline"></i>
                                                 {{ trans('select-all') }}
                                             </a>
                                         </div>
@@ -156,7 +140,7 @@
                             <div class="col-auto">
                                 <div class="btn-group mb-3">
                                     <button type="submit" class="btn btn-spin-action btn-warning">
-                                        <i class="fa-solid fa-save me-1" aria-hidden="true"></i>
+                                        <i data-lucide="save" class="w-4 h-4 me-1"></i>
                                         {{ trans('save') }}
                                     </button>
                                 </div>
@@ -208,7 +192,7 @@
                             </tbody>
                         </table>
                     </div>
-                    <div class="card-body">
+                    <div class="p-3">
                         <div class="mb-3">
                                 <textarea name="observaciones" class="form-control"
                                           placeholder="{{ trans('observations') }}"></textarea>

@@ -1,22 +1,4 @@
-{#
-/**
- * This file is part of FacturaScripts
- * Copyright (C) 2017-2025 Carlos Garcia Gomez <carlos@facturascripts.com>
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this program. If not, see http://www.gnu.org/licenses/.
- */
-#}
+{# SolwedShadcn — Enviar correo electrónico #}
 {% extends "Master/MenuBghTemplate.html.twig" %}
 
 {% block bodyHeaderOptions %}
@@ -33,10 +15,10 @@
                       onsubmit="animateSpinner('add')">
                     {{ formToken() }}
                     <input type="hidden" name="action" value="send"/>
-                    <div class="card shadow">
-                        <div class="card-body">
-                            <h1 class="h3 mb-3">
-                                <i class="fa-solid fa-envelope fa-fw" aria-hidden="true"></i> {{ trans('send-mail') }}
+                    <div class="card-shadcn">
+                        <div class="p-4">
+                            <h1 class="h3 font-heading font-semibold flex items-center gap-2 mb-3">
+                                <i data-lucide="mail" class="w-6 h-6"></i> {{ trans('send-mail') }}
                             </h1>
                             {% for includeView in getIncludeViews('SendMail', 'beforeFrom') %}
                                 {% include includeView['path'] %}
@@ -114,7 +96,7 @@
                                     {% include includeView['path'] %}
                                 {% endfor %}
                                 <div class="mb-3">
-                                    {{ trans('email-signature') }}
+                                    <span class="text-sm font-medium">{{ trans('email-signature') }}</span>
                                     <textarea rows="3" class="form-control"
                                               readonly tabindex="-1">{{ fsc.newMail.signature }}</textarea>
                                 </div>
@@ -124,7 +106,7 @@
                             {% endfor %}
                             {% for name in fsc.newMail.getAttachmentNames() %}
                                 <p>
-                                    <i class="fa-solid fa-paperclip fa-fw" aria-hidden="true"></i> {{ name }}
+                                    <i data-lucide="paperclip" class="w-4 h-4 me-1 inline"></i> {{ name }}
                                 </p>
                             {% endfor %}
                             <div id="email-attachments"></div>
@@ -146,7 +128,7 @@
                                 </div>
                                 <div class="col-sm-6 text-end">
                                     <button type="submit" class="btn btn-primary btn-spin-action">
-                                        <i class="fa-solid fa-envelope me-1" aria-hidden="true"></i> {{ trans('send') }}
+                                        <i data-lucide="send" class="w-4 h-4 me-1"></i> {{ trans('send') }}
                                     </button>
                                 </div>
                             </div>
@@ -171,14 +153,12 @@
     <script src="{{ asset('node_modules/jquery-ui-dist/jquery-ui.min.js') }}"></script>
     <script>
         function addAnotherInputFile(input) {
-            // si en el div de email-attachments el último input file está vacío, no añadimos otro
             let inputs = document.getElementById('email-attachments').getElementsByTagName('input');
             if (inputs.length > 0 && inputs[inputs.length - 1].value === '') {
                 clearInputFile();
                 return;
             }
 
-            // si el archivo subido es una carpeta, no lo añadimos y limpiamos el input
             if (input && input.target.files.length > 0 && input.target.files[0].type === '') {
                 input.target.value = '';
                 return;
@@ -200,10 +180,8 @@
         }
 
         function clearInputFile() {
-            // obtenemos todos los inputs file
             let inputs = document.getElementById('email-attachments').getElementsByTagName('input');
 
-            // eliminamos los inputs que estén vacíos, excepto el último
             for (let i = 0; i < inputs.length - 1; i++) {
                 if (inputs[i].value === '') {
                     inputs[i].parentNode.remove();
@@ -228,7 +206,6 @@
             }).autocomplete({
                 minLength: 0,
                 source: function (request, response) {
-                    // Avoid re-query the same
                     let term = request.term;
                     if (term in cacheQuery) {
                         response(cacheQuery[term]);
@@ -247,16 +224,12 @@
                     });
                 },
                 focus: function () {
-                    // Prevent value inserted on focus
                     return false;
                 },
                 select: function (event, ui) {
                     let terms = split(this.value);
-                    // Remove the current input
                     terms.pop();
-                    // Add the selected item
                     terms.push(ui.item.value);
-                    // Add placeholder to get the comma-and-space at the end
                     terms.push("");
                     this.value = terms.join(", ");
                     return false;

@@ -1,22 +1,8 @@
 {#
-/**
- * This file is part of FacturaScripts
- * Copyright (C) 2017-2025 Carlos Garcia Gomez <carlos@facturascripts.com>
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this program. If not, see http://www.gnu.org/licenses/.
- */
-#}
+ * SolwedShadcn — EditView: formulario de edición con estilo shadcn
+ * Mantiene clases Bootstrap para: modals, contenido PHP-generated (group.edit)
+ * Usa Tailwind/shadcn para: layout, botones propios, iconos Lucide, card
+ #}
 {% set currentView = fsc.getCurrentView() %}
 {% set action = currentView.model.exists() ? 'edit' : 'insert' %}
 {% set fieldCount = 0 %}
@@ -50,59 +36,52 @@
     <input type="hidden" name="action" value="{{ action }}"/>
     <input type="hidden" name="activetab" value="{{ currentView.getViewName() }}"/>
     <input type="hidden" name="code" value="{{ currentView.model.primaryColumnValue() }}"/>
-    <div class="{{ currentView.settings.card ? 'card shadow' : '' }}">
-        <div class="{{ currentView.settings.card ? 'card-body' : 'container-fluid' }}">
-            <div class="row">
-                <div class="col-12 text-end">
-                    {# -- Row statistics -- #}
-                    {% set row = currentView.getRow('statistics') %}
-                    {{ row.render(fsc) | raw }}
-                    {% if fieldCount > 30 and currentView.settings.btnSave %}
-                        <button class="btn btn-sm btn-primary" type="submit">
-                            <i class="fa-solid fa-save fa-fw" aria-hidden="true"></i>
-                            <span class="d-none d-sm-inline-block">{{ trans('save') }}</span>
-                        </button>
-                    {% endif %}
-                </div>
+    <div class="{{ currentView.settings.card ? 'card-shadcn' : '' }}">
+        <div class="{{ currentView.settings.card ? 'p-4' : 'container-fluid' }}">
+            {# -- Botón guardar superior (para formularios largos) + estadísticas -- #}
+            <div class="flex items-center justify-end mb-2">
+                {% set row = currentView.getRow('statistics') %}
+                {{ row.render(fsc) | raw }}
+                {% if fieldCount > 30 and currentView.settings.btnSave %}
+                    <button class="btn btn-sm btn-primary" type="submit">
+                        <i data-lucide="save" class="w-3.5 h-3.5 me-1"></i>
+                        <span class="d-none d-sm-inline-block">{{ trans('save') }}</span>
+                    </button>
+                {% endif %}
             </div>
+            {# -- Campos del formulario (generados por PHP) -- #}
             <div class="row">
                 {% for group in currentView.getColumns() %}
                     {{ group.edit(currentView.model) | raw }}
                 {% endfor %}
             </div>
         </div>
-        <div class="{{ currentView.settings.card ? 'card-footer p-2' : 'container-fluid' }}">
-            <div class="row g-2">
+        {# -- Barra de acciones inferior -- #}
+        <div class="{{ currentView.settings.card ? 'border-t border-border p-2' : 'container-fluid' }}">
+            <div class="flex items-center gap-2 flex-wrap">
                 {% if fsc.hasData and currentView.settings.btnDelete %}
-                    <div class="col-auto">
-                        <button type="button" class="btn btn-sm btn-danger"
-                                onclick="editViewDelete('{{ currentView.getViewName() }}');">
-                            <i class="fa-solid fa-trash-alt fa-fw" aria-hidden="true"></i>
-                            <span class="d-none d-sm-inline-block">{{ trans('delete') }}</span>
-                        </button>
-                    </div>
+                    <button type="button" class="btn btn-sm btn-danger"
+                            onclick="editViewDelete('{{ currentView.getViewName() }}');">
+                        <i data-lucide="trash-2" class="w-3.5 h-3.5 me-1"></i>
+                        <span class="d-none d-sm-inline-block">{{ trans('delete') }}</span>
+                    </button>
                 {% endif %}
-                {% set extraClass = fsc.hasData and currentView.settings.btnDelete ? 'text-center' : '' %}
-                <div class="col {{ extraClass }}">
+                <div class="flex-1 text-center">
                     {# -- Row actions -- #}
                     {% set row = currentView.getRow('actions') %}
                     {{ row.render(false, currentView.getViewName()) | raw }}
                 </div>
                 {% if currentView.settings.btnUndo %}
-                    <div class="col-auto">
-                        <button class="btn btn-sm btn-secondary" type="reset">
-                            <i class="fa-solid fa-undo fa-fw" aria-hidden="true"></i>
-                            <span class="d-none d-sm-inline-block">{{ trans('undo') }}</span>
-                        </button>
-                    </div>
+                    <button class="btn btn-sm btn-secondary" type="reset">
+                        <i data-lucide="undo-2" class="w-3.5 h-3.5 me-1"></i>
+                        <span class="d-none d-sm-inline-block">{{ trans('undo') }}</span>
+                    </button>
                 {% endif %}
                 {% if currentView.settings.btnSave %}
-                    <div class="col-auto">
-                        <button class="btn btn-sm btn-primary" type="submit">
-                            <i class="fa-solid fa-save fa-fw" aria-hidden="true"></i>
-                            <span class="d-none d-sm-inline-block">{{ trans('save') }}</span>
-                        </button>
-                    </div>
+                    <button class="btn btn-sm btn-primary" type="submit">
+                        <i data-lucide="save" class="w-3.5 h-3.5 me-1"></i>
+                        <span class="d-none d-sm-inline-block">{{ trans('save') }}</span>
+                    </button>
                 {% endif %}
             </div>
         </div>
@@ -122,14 +101,17 @@
     {{ group.modal(currentView.model, currentView.getViewName()) | raw }}
 {% endfor %}
 
-{# -- Delete Confirmation Modal -- #}
+{# -- Modal confirmar eliminación -- #}
 <div class="modal fade" id="deleteConfirmModal{{ currentView.getViewName() }}" tabindex="-1"
      aria-labelledby="deleteConfirmModalLabel{{ currentView.getViewName() }}" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title"
-                    id="deleteConfirmModalLabel{{ currentView.getViewName() }}">{{ trans('confirm-delete') }}</h5>
+                <h5 class="modal-title flex items-center gap-2"
+                    id="deleteConfirmModalLabel{{ currentView.getViewName() }}">
+                    <i data-lucide="alert-triangle" class="w-5 h-5 text-destructive"></i>
+                    {{ trans('confirm-delete') }}
+                </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -137,10 +119,10 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="fa-solid fa-times"></i> {{ trans('cancel') }}
+                    <i data-lucide="x" class="w-3.5 h-3.5 me-1"></i> {{ trans('cancel') }}
                 </button>
                 <button type="button" class="btn btn-danger" id="confirmDeleteBtn{{ currentView.getViewName() }}">
-                    <i class="fa-solid fa-check"></i> {{ trans('confirm') }}
+                    <i data-lucide="check" class="w-3.5 h-3.5 me-1"></i> {{ trans('confirm') }}
                 </button>
             </div>
         </div>

@@ -1,0 +1,23 @@
+{
+    "name": "ERP SOLWED",
+    "short_name": "SOLWED",
+    "description": "Software de contabilidad y facturación",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#2E3536",
+    "theme_color": "#2E3536",
+    "orientation": "any",
+    "categories": ["business", "finance"],
+    "icons": [
+        {
+            "src": "Dinamic/Assets/Images/favicon.ico",
+            "sizes": "48x48",
+            "type": "image/x-icon"
+        },
+        {
+            "src": "Dinamic/Assets/Images/apple-icon-180x180.png",
+            "sizes": "180x180",
+            "type": "image/png"
+        }
+    ]
+}

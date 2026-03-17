@@ -1,16 +1,15 @@
+{# SolwedShadcn — Acceso API #}
 <form action="" method="post" onsubmit="animateSpinner('add')">
     {{ formToken() }}
     <input type="hidden" name="action" value="edit-rules"/>
     <input type="hidden" name="activetab" value="{{ fsc.getCurrentView().getViewName() }}"/>
-    <div class="card shadow">
-        <div class="card-body">
-            <div class="row align-items-center">
-                <div class="col"></div>
-                <div class="col-auto">
-                    <button type="submit" class="btn btn-sm btn-outline-primary btn-spin-action">
-                        <i class="fa-solid fa-save fa-fw"></i> {{ trans('save') }}
-                    </button>
-                </div>
+    <div class="card-shadcn">
+        <div class="p-3">
+            <div class="flex items-center justify-between">
+                <div></div>
+                <button type="submit" class="btn btn-sm btn-outline-primary btn-spin-action">
+                    <i data-lucide="save" class="w-3.5 h-3.5 me-1"></i> {{ trans('save') }}
+                </button>
             </div>
         </div>
         <div class="table-responsive">
@@ -20,7 +19,7 @@
                     <th>
                         <div class="input-group">
                             <span class="input-group-text">
-                                <i class="fa-solid fa-search"></i>
+                                <i data-lucide="search" class="w-4 h-4"></i>
                             </span>
                             <input type="text" class="form-control" id="filter-resource"
                                    placeholder="{{ trans('search') }}"/>
@@ -118,9 +117,9 @@
                 </tbody>
             </table>
         </div>
-        <div class="card-body text-end">
+        <div class="border-t border-border p-3 text-end">
             <button type="submit" class="btn btn-primary btn-spin-action">
-                <i class="fa-solid fa-save fa-fw"></i> {{ trans('save') }}
+                <i data-lucide="save" class="w-4 h-4 me-1"></i> {{ trans('save') }}
             </button>
         </div>
     </div>

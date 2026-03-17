@@ -1,3 +1,4 @@
+{# SolwedShadcn — Archivos de documento #}
 {% set firstView = fsc.views | first %}
 {% set doc = firstView.model %}
 {% set currentView = fsc.getCurrentView() %}
@@ -11,10 +12,10 @@
                     {{ formToken() }}
                     <input type="hidden" name="activetab" value="{{ currentView.getViewName() }}"/>
                     <input type="hidden" name="action" value="add-file"/>
-                    <div class="card border-success shadow mb-3">
-                        <div class="card-body p-3">
-                            <h5 class="card-title">
-                                <i class="fa-solid fa-folder-plus fa-fw"></i> {{ trans('add') }}
+                    <div class="card-shadcn border-success mb-3">
+                        <div class="p-3">
+                            <h5 class="font-semibold mb-3 flex items-center gap-2">
+                                <i data-lucide="folder-plus" class="w-5 h-5"></i> {{ trans('add') }}
                             </h5>
                             <div class="mb-3">
                                 <textarea name="observations" class="form-control"
@@ -25,14 +26,14 @@
                             {% endfor %}
                             <div class="row align-items-end">
                                 <div class="col">
-                                    <p class="text-muted mb-2">
+                                    <p class="text-sm text-muted-foreground mb-2">
                                         {{ trans('help-server-accepts-filesize', {'%size%': currentView.model.getMaxFileUpload()}) }}
                                     </p>
                                     <input type="file" name="new-files[]" class="form-control" multiple required/>
                                 </div>
                                 <div class="col-auto">
                                     <button type="submit" class="btn btn-success">
-                                        <i class="fa-solid fa-save fa-fw" aria-hidden="true"></i> {{ trans('save') }}
+                                        <i data-lucide="save" class="w-4 h-4 me-1"></i> {{ trans('save') }}
                                     </button>
                                 </div>
                             </div>
@@ -52,10 +53,10 @@
                             <input type="hidden" name="activetab" value="{{ currentView.getViewName() }}"/>
                             <input type="hidden" name="id" value="{{ docfile.id }}"/>
                             <input type="hidden" name="action" value=""/>
-                            <div class="card shadow h-100">
+                            <div class="card-shadcn h-full">
                                 {% if file.isImage() %}
                                     <a href="{{ file.url('download-permanent') }}" target="_blank">
-                                        <img src="{{ file.url('download') }}" class="card-img-top"
+                                        <img src="{{ file.url('download') }}" class="w-full rounded-t-lg"
                                              alt="{{ file.filename }}" loading="lazy">
                                     </a>
                                 {% else %}
@@ -63,19 +64,19 @@
                                         <a href="{{ file.url('download-permanent') }}" target="_blank"
                                            class="btn w-100 btn-lg btn-secondary" aria-label="{{ trans('download') }} {{ file.filename }}">
                                             {% if file.isPdf() %}
-                                                <i class="fa-regular fa-file-pdf fa-fw" aria-hidden="true"></i>
+                                                <i data-lucide="file-text" class="w-5 h-5 me-1"></i>
                                             {% elseif file.isVideo() %}
-                                                <i class="fa-regular fa-file-video fa-fw" aria-hidden="true"></i>
+                                                <i data-lucide="video" class="w-5 h-5 me-1"></i>
                                             {% elseif file.isArchive() %}
-                                                <i class="fa-regular fa-file-archive fa-fw" aria-hidden="true"></i>
+                                                <i data-lucide="archive" class="w-5 h-5 me-1"></i>
                                             {% else %}
-                                                <i class="fa-regular fa-file fa-fw" aria-hidden="true"></i>
+                                                <i data-lucide="file" class="w-5 h-5 me-1"></i>
                                             {% endif %}
                                             <span class="text-break">{{ file.filename | raw }}</span>
                                         </a>
                                     </div>
                                 {% endif %}
-                                <div class="card-body p-3">
+                                <div class="p-3">
                                     <div class="mb-3">
                                         <label for="observations-{{ docfile.id }}" class="visually-hidden">{{ trans('observations') }}</label>
                                         <textarea name="observations" id="observations-{{ docfile.id }}" class="form-control"
@@ -84,29 +85,35 @@
                                     {% for includeView in getIncludeViews('DocFiles', 'formEditBody') %}
                                         {% include includeView['path'] %}
                                     {% endfor %}
-                                    <p class="card-text text-muted small">
+                                    <p class="text-muted-foreground text-xs flex items-center flex-wrap gap-x-3">
                                         {% if docfile.nick %}
-                                            <i class="fa-solid fa-user" aria-hidden="true"></i> {{ docfile.nick }}
+                                            <span class="inline-flex items-center gap-1">
+                                                <i data-lucide="user" class="w-3 h-3"></i> {{ docfile.nick }}
+                                            </span>
                                         {% endif %}
-                                        <i class="fa-solid fa-calendar-alt ms-3" aria-hidden="true"></i> {{ docfile.creationdate }}
-                                        <i class="fa-solid fa-hard-drive ms-3" aria-hidden="true"></i> {{ bytes(file.size) }}
+                                        <span class="inline-flex items-center gap-1">
+                                            <i data-lucide="calendar" class="w-3 h-3"></i> {{ docfile.creationdate }}
+                                        </span>
+                                        <span class="inline-flex items-center gap-1">
+                                            <i data-lucide="hard-drive" class="w-3 h-3"></i> {{ bytes(file.size) }}
+                                        </span>
                                     </p>
                                 </div>
-                                <div class="card-footer p-2" style="cursor: move;">
-                                    <div class="d-flex justify-content-between align-items-center">
+                                <div class="border-t border-border p-2">
+                                    <div class="flex items-center justify-between">
                                         {% if fsc.permissions.allowDelete %}
                                             <div class="dropdown">
                                                 <button class="btn btn-sm btn-outline-danger dropdown-toggle" type="button"
                                                         data-bs-toggle="dropdown" aria-expanded="false"
                                                         aria-label="{{ trans('delete-options') }}">
-                                                    <i class="fa-solid fa-trash-alt" aria-hidden="true"></i>
+                                                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
                                                 </button>
                                                 <ul class="dropdown-menu">
                                                     <li>
                                                         <button type="button"
                                                                 onclick="this.form.action.value='unlink-file';this.form.onsubmit();this.form.submit();"
                                                                 class="dropdown-item">
-                                                            <i class="fa-solid fa-unlink fa-fw" aria-hidden="true"></i> {{ trans('unlink-file') }}
+                                                            <i data-lucide="unlink" class="w-4 h-4 me-1"></i> {{ trans('unlink-file') }}
                                                         </button>
                                                     </li>
                                                     <li><hr class="dropdown-divider"></li>
@@ -114,7 +121,7 @@
                                                         <button type="button"
                                                                 onclick="if(confirm('{{ trans('confirm-delete') }}')) { this.form.action.value='delete-file';this.form.submit(); }"
                                                                 class="dropdown-item text-danger">
-                                                            <i class="fa-regular fa-trash-alt fa-fw" aria-hidden="true"></i> {{ trans('delete-file') }}
+                                                            <i data-lucide="trash-2" class="w-4 h-4 me-1"></i> {{ trans('delete-file') }}
                                                         </button>
                                                     </li>
                                                 </ul>
@@ -123,7 +130,7 @@
                                         {% if fsc.permissions.allowUpdate %}
                                             <button type="button" class="btn btn-sm btn-primary"
                                                     onclick="this.form.action.value='edit-file';this.form.onsubmit();this.form.submit();">
-                                                <i class="fa-solid fa-save fa-fw" aria-hidden="true"></i> {{ trans('save') }}
+                                                <i data-lucide="save" class="w-3.5 h-3.5 me-1"></i> {{ trans('save') }}
                                             </button>
                                         {% endif %}
                                     </div>
@@ -137,38 +144,3 @@
         </div>
     </div>
 </div>
-
-<script>
-    $(document).ready(function () {
-        $('#docs-container').sortable({
-            cursor: "move",
-            tolerance: "pointer",
-            opacity: 0.65,
-            stop: (event, ui) => {
-
-                const orden = Array.from(event.target.children).map(doc => doc.dataset.docId);
-
-                if (orden.length > 0) {
-
-                    const url = new URL(window.location.href);
-                    url.searchParams.append('action', 'sort-files');
-
-                    $.ajax({
-                        method: "POST",
-                        url,
-                        data: {orden},
-                        dataType: "json",
-                        success: function (data) {
-                            if (data.status !== 'ok') {
-                                alert(data.message);
-                            }
-                        },
-                        error: function (msg) {
-                            alert(msg.status + " " + msg.responseText);
-                        }
-                    });
-                }
-            },
-        });
-    });
-</script>

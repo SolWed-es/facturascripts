@@ -1,3 +1,4 @@
+{# SolwedShadcn — Documento de compra (HTML generado por PHP via renderPurchasesForm) #}
 {% set model = fsc.getCurrentView().model %}
 
 <style>
@@ -87,7 +88,7 @@
         data.append('multireqtoken', document.forms['purchasesForm']['multireqtoken'].value);
         data.append('selectedLine', document.forms['purchasesForm']['selectedLine'].value);
         data.append('data', formDataJsonString);
-        console.log(data);
+
 
         fetch('{{ fsc.url() }}', {
             method: 'POST',
@@ -185,7 +186,7 @@
             keyupInputName = event.target.name;
         }
 
-        console.log('waitNum: ' + waitNum);
+        // debug removed
         return purchasesFormAction(action, selectedLine)
     }
 
@@ -206,7 +207,7 @@
         data.append('multireqtoken', document.forms['purchasesForm']['multireqtoken'].value);
         data.append('selectedLine', document.forms['purchasesForm']['selectedLine'].value);
         data.append('data', formDataJsonString);
-        console.log(data);
+
 
         fetch('{{ fsc.url() }}', {
             method: 'POST',
@@ -218,7 +219,7 @@
             animateSpinner('remove', true);
             return Promise.reject(response);
         }).then(function (data) {
-            console.log(data);
+    
             if (Array.isArray(data.messages)) {
                 data.messages.forEach(item => alert(item.message));
             }

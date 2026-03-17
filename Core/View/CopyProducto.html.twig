@@ -1,24 +1,25 @@
+{# SolwedShadcn — Copiar producto #}
 {% extends 'Master/MenuBgTemplate.html.twig' %}
 
 {% block body %}
     <div class="container-fluid">
         <div class="row">
             <div class="col">
-                <h1 class="h3">
-                    <i class="fa-solid fa-cut me-2"></i> {{ fsc.title }}
+                <h1 class="h3 font-heading font-semibold flex items-center gap-2 mb-2">
+                    <i data-lucide="copy" class="w-6 h-6"></i> {{ fsc.title }}
                 </h1>
-                <p>{{ trans('copy-p') }}</p>
+                <p class="text-muted-foreground">{{ trans('copy-p') }}</p>
                 <form method="post" onsubmit="animateSpinner('add')">
                     {{ formToken() }}
                     <input type="hidden" name="action" value="save"/>
                     <input type="hidden" name="code" value="{{ fsc.modelCode }}"/>
                     <input type="hidden" name="model" value="{{ fsc.modelClass }}"/>
-                    <div class="card shadow mb-4">
-                        <div class="card-body">
+                    <div class="card-shadcn mb-4">
+                        <div class="p-3">
                             <div class="row g-2">
                                 <div class="col-sm">
                                     <div class="mb-3">
-                                        <label for="reference">{{ trans('reference') }}</label>
+                                        <label for="reference" class="text-sm font-medium">{{ trans('reference') }}</label>
                                         <input type="text" name="referencia" id="reference" class="form-control"
                                                placeholder="{{ trans('optional') }}" maxlength="30"/>
                                     </div>
@@ -27,7 +28,7 @@
                             <div class="row">
                                 <div class="col-sm">
                                     <div class="mb-3">
-                                        <label for="descripcion">{{ trans('description') }}</label>
+                                        <label for="descripcion" class="text-sm font-medium">{{ trans('description') }}</label>
                                         <textarea name="descripcion" id="descripcion" class="form-control" rows="3"
                                                   required>{{ trans('copy') }} {{ fsc.model.descripcion }}</textarea>
                                     </div>
@@ -61,18 +62,14 @@
                                 </tbody>
                             </table>
                         </div>
-                        <div class="card-footer">
-                            <div class="row">
-                                <div class="col">
-                                    <a href="{{ asset(fsc.model.url()) }}" class="btn btn-spin-action btn-secondary">
-                                        <i class="fa-solid fa-arrow-left me-1"></i> {{ trans('back') }}
-                                    </a>
-                                </div>
-                                <div class="col-auto">
-                                    <button type="submit" class="btn btn-spin-action btn-primary">
-                                        <i class="fa-solid fa-save me-1"></i> {{ trans('save') }}
-                                    </button>
-                                </div>
+                        <div class="border-t border-border p-3">
+                            <div class="flex items-center justify-between">
+                                <a href="{{ asset(fsc.model.url()) }}" class="btn btn-spin-action btn-secondary">
+                                    <i data-lucide="arrow-left" class="w-4 h-4 me-1"></i> {{ trans('back') }}
+                                </a>
+                                <button type="submit" class="btn btn-spin-action btn-primary">
+                                    <i data-lucide="save" class="w-4 h-4 me-1"></i> {{ trans('save') }}
+                                </button>
                             </div>
                         </div>
                     </div>
