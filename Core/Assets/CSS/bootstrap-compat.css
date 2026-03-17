@@ -1646,3 +1646,24 @@ hr {
 [data-theme="solwed-dark"] .select2-container--bootstrap-5 .select2-selection__arrow b {
   border-color: #aaa transparent transparent transparent !important;
 }
+
+/* Dark mode: flecha del select nativo en blanco */
+[data-theme="solwed-dark"] .form-select {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23cccccc' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
+}
+
+/* Dark mode: Select2 flecha visible */
+[data-theme="solwed-dark"] .select2-container--bootstrap-5 .select2-selection--single::after {
+  content: "▾";
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #ccc;
+  font-size: 1rem;
+  pointer-events: none;
+}
+
+[data-theme="solwed-dark"] .select2-container--bootstrap-5 .select2-selection--single {
+  position: relative;
+}
