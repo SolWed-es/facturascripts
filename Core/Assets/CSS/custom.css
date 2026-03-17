@@ -259,8 +259,9 @@ label, .form-label {
 
 .form-control:focus,
 .form-select:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 2px oklch(from var(--ring) l c h / 0.15);
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 3px oklch(90.9% 0.1944 106.8 / 0.25) !important;
+  outline: none;
 }
 
 .form-control::placeholder {
@@ -320,12 +321,12 @@ label {
 }
 
 .table-hover > tbody > tr:hover {
-  background-color: oklch(from var(--muted) l c h / 0.5);
-  --bs-table-hover-bg: oklch(from var(--muted) l c h / 0.5);
+  background-color: var(--muted) !important;
+  --bs-table-hover-bg: var(--muted);
 }
 
 .table-striped > tbody > tr:nth-of-type(odd) {
-  --bs-table-striped-bg: oklch(from var(--card) l c h / 0.4);
+  --bs-table-striped-bg: var(--muted);
 }
 
 /* Table row status colors — con left border indicador */
@@ -414,16 +415,19 @@ label {
 
 .nav-tabs .nav-link {
   color: var(--muted-foreground);
+  font-weight: 500;
 }
 
 .nav-tabs .nav-link:hover {
   color: var(--foreground);
+  background-color: var(--muted);
 }
 
 .nav-tabs .nav-link.active {
-  color: var(--foreground);
+  color: var(--foreground) !important;
   background-color: var(--card);
   border-color: var(--border) var(--border) var(--card);
+  font-weight: 600;
 }
 
 .nav-link {
@@ -432,6 +436,21 @@ label {
 
 .nav-link:hover {
   color: var(--foreground);
+}
+
+/* Dark mode: tabs inactivos más visibles */
+[data-theme="solwed-dark"] .nav-tabs .nav-link {
+  color: oklch(75% 0.005 207);
+}
+
+[data-theme="solwed-dark"] .nav-tabs .nav-link:hover {
+  color: oklch(94% 0.003 207);
+  background-color: oklch(38% 0.011 207);
+}
+
+[data-theme="solwed-dark"] .nav-tabs .nav-link.active {
+  color: oklch(94% 0.003 207) !important;
+  background-color: oklch(35.3% 0.011 207);
 }
 
 /* ============================================
@@ -573,13 +592,20 @@ h1, h2, h3, h4, h5, h6 {
 /* ============================================
    Clickable rows
    ============================================ */
-.clickableRow {
+.clickableRow, .clickableListRow {
   cursor: pointer;
-  transition: background-color 0.1s ease;
+  transition: background-color 0.15s ease;
 }
 
-.clickableRow:hover {
+.clickableRow:hover, .clickableListRow:hover {
   background-color: var(--muted) !important;
+}
+
+/* Dark mode: hover más visible con borde amarillo sutil */
+[data-theme="solwed-dark"] .clickableRow:hover,
+[data-theme="solwed-dark"] .clickableListRow:hover {
+  background-color: oklch(38.3% 0.011 207) !important;
+  box-shadow: inset 3px 0 0 oklch(90.9% 0.1944 106.8);
 }
 
 /* ============================================
