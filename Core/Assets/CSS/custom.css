@@ -144,15 +144,11 @@ label, .form-label {
   border-color: oklch(88% 0.008 210) !important;
 }
 
-.solwed-login-card p,
-.solwed-login-card span,
-.solwed-login-card label,
-.solwed-login-card a,
-[data-theme="solwed-dark"] .solwed-login-card p,
-[data-theme="solwed-dark"] .solwed-login-card span,
-[data-theme="solwed-dark"] .solwed-login-card label,
-[data-theme="solwed-dark"] .solwed-login-card a {
-  color: #555 !important;
+.solwed-login-card,
+.solwed-login-card *,
+[data-theme="solwed-dark"] .solwed-login-card,
+[data-theme="solwed-dark"] .solwed-login-card * {
+  color: #333 !important;
 }
 
 .solwed-login-card .form-control,
@@ -162,21 +158,46 @@ label, .form-label {
   color: #333 !important;
 }
 
+.solwed-login-card .form-control::placeholder {
+  color: #999 !important;
+}
+
 .solwed-login-card .input-group-text,
 [data-theme="solwed-dark"] .solwed-login-card .input-group-text {
   background-color: #e9ecef !important;
   border-color: #dee2e6 !important;
-  color: #666 !important;
+  color: #555 !important;
 }
 
-.solwed-login-card .btn,
-[data-theme="solwed-dark"] .solwed-login-card .btn {
+.solwed-login-card .input-group-text i,
+.solwed-login-card .input-group-text svg,
+[data-theme="solwed-dark"] .solwed-login-card .input-group-text i,
+[data-theme="solwed-dark"] .solwed-login-card .input-group-text svg {
+  color: #555 !important;
+}
+
+.solwed-login-card button[type="submit"],
+[data-theme="solwed-dark"] .solwed-login-card button[type="submit"] {
+  background-color: #333 !important;
+  color: #fff !important;
+}
+
+.solwed-login-card button[type="submit"] i,
+.solwed-login-card button[type="submit"] svg,
+[data-theme="solwed-dark"] .solwed-login-card button[type="submit"] i,
+[data-theme="solwed-dark"] .solwed-login-card button[type="submit"] svg {
   color: #fff !important;
 }
 
 .solwed-login-card .border-t,
 [data-theme="solwed-dark"] .solwed-login-card .border-t {
   border-color: #eee !important;
+}
+
+.solwed-login-card .btn-sm,
+[data-theme="solwed-dark"] .solwed-login-card .btn-sm {
+  color: #555 !important;
+  border-color: #ccc !important;
 }
 
 /* Diagonal stripe background en dark mode (marca SOLWED) */
