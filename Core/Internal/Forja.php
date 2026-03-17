@@ -80,8 +80,11 @@ final class Forja
     public static function getBuildsByName(string $pluginName): array
     {
         foreach (self::builds() as $project) {
+            if (!is_array($project) || empty($project['name'])) {
+                continue;
+            }
             if ($project['name'] == $pluginName) {
-                return $project['builds'];
+                return $project['builds'] ?? [];
             }
         }
 

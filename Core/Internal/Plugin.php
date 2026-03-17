@@ -166,6 +166,9 @@ final class Plugin
     {
         // buscamos el plugin en la lista pública de plugins
         foreach (Forja::plugins() as $item) {
+            if (!is_array($item) || empty($item['name'])) {
+                continue;
+            }
             if ($item['name'] === $this->name) {
                 return $item[$field] ?? $default;
             }
@@ -173,6 +176,9 @@ final class Plugin
 
         // no lo hemos encontrado en la lista de plugins, lo buscamos en la lista de builds
         foreach (Forja::builds() as $item) {
+            if (!is_array($item) || empty($item['name'])) {
+                continue;
+            }
             if ($item['name'] === $this->name) {
                 return $item[$field] ?? $default;
             }

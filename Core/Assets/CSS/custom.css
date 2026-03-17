@@ -503,19 +503,62 @@ label {
   color: var(--foreground);
 }
 
+/* Nav pills (PanelController lateral) — theme-aware */
+.nav-pills .nav-link {
+  color: var(--muted-foreground);
+  font-weight: 500;
+}
+
+.nav-pills .nav-link:hover {
+  color: var(--foreground);
+  background-color: var(--muted);
+}
+
+.nav-pills .nav-link.active {
+  color: var(--accent-content) !important;
+  background-color: var(--accent) !important;
+  font-weight: 600;
+}
+
+[data-theme="solwed-dark"] .nav-pills .nav-link,
+[data-theme="solwed-dark"] .nav-pills .nav-link span,
+[data-theme="solwed-dark"] .nav-pills .nav-link i,
+[data-theme="solwed-dark"] .nav-pills .nav-link svg,
+[data-theme="solwed-dark"] .nav.nav-pills a.nav-link,
+[data-theme="solwed-dark"] .nav.nav-pills a.nav-link span,
+[data-theme="solwed-dark"] [data-bs-toggle="pill"],
+[data-theme="solwed-dark"] [data-bs-toggle="pill"] span {
+  color: #ddd !important;
+  fill: #ddd !important;
+}
+
+[data-theme="solwed-dark"] .nav-pills .nav-link:hover {
+  color: #fff !important;
+  background-color: oklch(42% 0.012 207);
+}
+
+[data-theme="solwed-dark"] .nav-pills .nav-link.active {
+  color: oklch(32.3% 0.010 207) !important;
+  background-color: oklch(90.9% 0.1944 106.8) !important;
+}
+
 /* Dark mode: tabs inactivos más visibles */
-[data-theme="solwed-dark"] .nav-tabs .nav-link {
-  color: oklch(75% 0.005 207);
+[data-theme="solwed-dark"] .nav-tabs .nav-link,
+[data-theme="solwed-dark"] [role="tablist"] [role="tab"] {
+  color: oklch(82% 0.005 207) !important;
 }
 
-[data-theme="solwed-dark"] .nav-tabs .nav-link:hover {
-  color: oklch(94% 0.003 207);
-  background-color: oklch(38% 0.011 207);
+[data-theme="solwed-dark"] .nav-tabs .nav-link:hover,
+[data-theme="solwed-dark"] [role="tablist"] [role="tab"]:hover {
+  color: #fff !important;
+  background-color: oklch(40% 0.011 207);
 }
 
-[data-theme="solwed-dark"] .nav-tabs .nav-link.active {
-  color: oklch(94% 0.003 207) !important;
-  background-color: oklch(35.3% 0.011 207);
+[data-theme="solwed-dark"] .nav-tabs .nav-link.active,
+[data-theme="solwed-dark"] [role="tablist"] [role="tab"][aria-selected="true"] {
+  color: oklch(32.3% 0.010 207) !important;
+  background-color: oklch(90.9% 0.1944 106.8) !important;
+  border-color: oklch(90.9% 0.1944 106.8) !important;
 }
 
 /* ============================================
