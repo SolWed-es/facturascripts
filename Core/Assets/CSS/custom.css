@@ -74,18 +74,43 @@ body {
   font-weight: 450;
 }
 
-/* Tipografía más grande y bold globalmente */
-h1, h2, h3, h4, h5, h6 {
+/* ============================================
+   Tipografía — Orbitron para títulos, Inter para body
+   ============================================ */
+h1, h2, h3 {
+  font-family: 'Orbitron', sans-serif !important;
   font-weight: 700 !important;
+  letter-spacing: 0.02em;
+}
+
+h1 { font-size: 1.75rem !important; }
+h2 { font-size: 1.4rem !important; }
+h3 { font-size: 1.15rem !important; }
+
+h4, h5, h6 {
+  font-family: 'Orbitron', sans-serif !important;
+  font-weight: 600 !important;
 }
 
 .card-title, .card-header {
   font-weight: 600 !important;
+  font-size: 1rem;
+}
+
+/* Título de página en el header derecho */
+.solwed-main h1.h3,
+.solwed-main h1.h4,
+.solwed-main h1.h5 {
+  font-family: 'Orbitron', sans-serif !important;
+  font-size: 1.5rem !important;
+  font-weight: 700 !important;
 }
 
 .table > thead > tr > th {
   font-weight: 700 !important;
   font-size: 0.8125rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
 }
 
 .nav-link, .sidebar-label {
@@ -101,22 +126,33 @@ label, .form-label {
   font-weight: 600;
 }
 
-/* Dark mode global: letras blancas, detalles amarillos SOLWED */
+/* ============================================
+   Dark mode global — letras blancas, links y detalles amarillos
+   ============================================ */
 [data-theme="solwed-dark"] {
   --foreground: oklch(94% 0.003 207);
   --muted-foreground: oklch(80% 0.005 207);
 }
 
+/* Textos generales en blanco */
 [data-theme="solwed-dark"] body,
 [data-theme="solwed-dark"] .text-foreground,
 [data-theme="solwed-dark"] p,
 [data-theme="solwed-dark"] span,
 [data-theme="solwed-dark"] label,
 [data-theme="solwed-dark"] td,
-[data-theme="solwed-dark"] th {
-  color: oklch(92% 0.003 207) !important;
+[data-theme="solwed-dark"] th,
+[data-theme="solwed-dark"] li,
+[data-theme="solwed-dark"] dt,
+[data-theme="solwed-dark"] dd,
+[data-theme="solwed-dark"] .form-label,
+[data-theme="solwed-dark"] .form-text,
+[data-theme="solwed-dark"] .text-muted,
+[data-theme="solwed-dark"] .breadcrumb-item {
+  color: #eee !important;
 }
 
+/* Títulos en blanco puro */
 [data-theme="solwed-dark"] h1,
 [data-theme="solwed-dark"] h2,
 [data-theme="solwed-dark"] h3,
@@ -128,12 +164,26 @@ label, .form-label {
   color: #fff !important;
 }
 
+/* Links en amarillo SOLWED */
 [data-theme="solwed-dark"] a {
   color: oklch(90.9% 0.1944 106.8);
 }
 
 [data-theme="solwed-dark"] a:hover {
   color: oklch(95% 0.18 106.8) !important;
+}
+
+/* Secciones de grupo (Información de contacto, Dirección, etc.) */
+[data-theme="solwed-dark"] .col-sm-12 > span,
+[data-theme="solwed-dark"] legend {
+  color: oklch(90.9% 0.1944 106.8) !important;
+}
+
+/* Textos secundarios/muted más claros */
+[data-theme="solwed-dark"] .text-secondary,
+[data-theme="solwed-dark"] small,
+[data-theme="solwed-dark"] .form-text {
+  color: #bbb !important;
 }
 
 /* Login card — siempre fondo claro, incluso en dark mode */
