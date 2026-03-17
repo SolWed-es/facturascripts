@@ -33,7 +33,7 @@ foreach (scandir(__DIR__, SCANDIR_SORT_ASCENDING) as $filename) {
     }
 }
 
-// download json from facturascripts.com
+// download json from mind.solwed.es
 foreach ($files as $filename) {
     $url = "https://mind.solwed.es/api/fs/translations?code=" . substr($filename, 0, -5);
     $newContent = file_get_contents($url);
