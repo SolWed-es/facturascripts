@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view>
+    <columns>
+        <group name="credentials" numcolumns="12" valign="top" title="Credenciales Stripe API" icon="fa-solid fa-key">
+            <column name="name" display="none" order="0">
+                <widget type="text" fieldname="name" readonly="true" required="true" />
+            </column>
+            <column name="stripe_secret_key" order="10" title="Secret Key" description="Clave secreta: sk_live_... o sk_test_..." numcolumns="12">
+                <widget type="text" fieldname="stripe_secret_key" icon="fa-solid fa-lock"/>
+            </column>
+            <column name="stripe_webhook_secret" order="20" title="Webhook Secret" description="Secreto del webhook: whsec_..." numcolumns="12">
+                <widget type="text" fieldname="stripe_webhook_secret" icon="fa-solid fa-shield-alt"/>
+            </column>
+            <column name="stripe_public_key" order="30" title="Public Key" description="Clave pública: pk_live_... o pk_test_... (opcional)" numcolumns="12">
+                <widget type="text" fieldname="stripe_public_key" icon="fa-solid fa-key"/>
+            </column>
+        </group>
+        <group name="features" numcolumns="12" valign="top" title="Documentos a Generar" icon="fa-solid fa-file-alt">
+            <column name="crear_factura" order="10" title="Crear Factura" description="Genera FacturaCliente automáticamente al recibir pago" numcolumns="4">
+                <widget type="checkbox" fieldname="crear_factura"/>
+            </column>
+            <column name="crear_albaran" order="20" title="Crear Albarán" description="Genera AlbaranCliente automáticamente al recibir pago" numcolumns="4">
+                <widget type="checkbox" fieldname="crear_albaran"/>
+            </column>
+            <column name="enviar_email" order="30" title="Enviar Email" description="Envía email con PDF adjunto al cliente" numcolumns="4">
+                <widget type="checkbox" fieldname="enviar_email"/>
+            </column>
+        </group>
+        <group name="series" numcolumns="12" valign="top" title="Series de Documentos" icon="fa-solid fa-list-ol">
+            <column name="serie_factura" order="10" title="Serie Facturas" description="Código de serie para facturas automáticas" numcolumns="6">
+                <widget type="text" fieldname="serie_factura" maxlength="10"/>
+            </column>
+            <column name="serie_albaran" order="20" title="Serie Albaranes" description="Código de serie para albaranes automáticos" numcolumns="6">
+                <widget type="text" fieldname="serie_albaran" maxlength="10"/>
+            </column>
+        </group>
+        <group name="webhook_info" numcolumns="12" valign="top" title="Información del Webhook" icon="fa-solid fa-info-circle">
+            <column name="webhook_url" order="10" title="URL del Webhook" description="Configura esta URL en tu dashboard de Stripe" numcolumns="12">
+                <widget type="text" fieldname="webhook_url" readonly="true"/>
+            </column>
+        </group>
+    </columns>
+</view>

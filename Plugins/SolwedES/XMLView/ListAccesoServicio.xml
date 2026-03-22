@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ * Plugin SolwedES - Vista de listado de accesos a servicios
+ *
+ * @author    Solwed Desarrollo
+ * @copyright 2025 Solwed
+-->
+<view>
+    <columns>
+        <column name="id" display="right" order="100">
+            <widget type="text" />
+        </column>
+        <column name="idcontacto" order="110">
+            <widget type="autocomplete">
+                <values source="contactos" fieldcode="idcontacto" fieldtitle="nombre" />
+            </widget>
+        </column>
+        <column name="idservicio" order="120">
+            <widget type="autocomplete">
+                <values source="solwedes_servicios" fieldcode="id" fieldtitle="nombre" />
+            </widget>
+        </column>
+        <column name="tipo_acceso" order="130">
+            <widget type="text" />
+        </column>
+        <column name="url_acceso" order="140">
+            <widget type="text" />
+        </column>
+        <column name="usuario" order="150">
+            <widget type="text" />
+        </column>
+        <column name="activo" display="center" order="160">
+            <widget type="checkbox" readonly="true" />
+        </column>
+        <column name="last_access" order="170">
+            <widget type="datetime" />
+        </column>
+        <column name="intentos_fallidos" display="right" order="180">
+            <widget type="number" />
+        </column>
+    </columns>
+</view>

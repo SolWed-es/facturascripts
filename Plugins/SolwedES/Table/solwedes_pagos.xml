@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<table>
+    <column>
+        <name>id</name>
+        <type>serial</type>
+    </column>
+    <column>
+        <name>idcontacto</name>
+        <type>integer</type>
+    </column>
+    <column>
+        <name>idsuscripcion</name>
+        <type>integer</type>
+    </column>
+    <column>
+        <name>idservicio</name>
+        <type>integer</type>
+    </column>
+    <column>
+        <name>stripe_payment_intent</name>
+        <type>character varying(100)</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>stripe_invoice_id</name>
+        <type>character varying(100)</type>
+    </column>
+    <column>
+        <name>stripe_checkout_session</name>
+        <type>character varying(100)</type>
+    </column>
+    <column>
+        <name>stripe_customer_id</name>
+        <type>character varying(100)</type>
+    </column>
+    <column>
+        <name>tipo</name>
+        <type>character varying(20)</type>
+        <default>'one_time'</default>
+    </column>
+    <column>
+        <name>concepto</name>
+        <type>character varying(500)</type>
+    </column>
+    <column>
+        <name>importe</name>
+        <type>double precision</type>
+        <default>0</default>
+    </column>
+    <column>
+        <name>moneda</name>
+        <type>character varying(3)</type>
+        <default>'EUR'</default>
+    </column>
+    <column>
+        <name>estado</name>
+        <type>character varying(20)</type>
+        <default>'pending'</default>
+    </column>
+    <column>
+        <name>metodo_pago</name>
+        <type>text</type>
+    </column>
+    <column>
+        <name>idfactura</name>
+        <type>integer</type>
+    </column>
+    <column>
+        <name>idalbaran</name>
+        <type>integer</type>
+    </column>
+    <column>
+        <name>fecha_pago</name>
+        <type>timestamp</type>
+    </column>
+    <column>
+        <name>metadata</name>
+        <type>text</type>
+    </column>
+    <column>
+        <name>creation_date</name>
+        <type>timestamp</type>
+    </column>
+    <column>
+        <name>last_update</name>
+        <type>timestamp</type>
+    </column>
+    <constraint>
+        <name>solwedes_pagos_pkey</name>
+        <type>PRIMARY KEY (id)</type>
+    </constraint>
+    <constraint>
+        <name>solwedes_pagos_pi_unique</name>
+        <type>UNIQUE (stripe_payment_intent)</type>
+    </constraint>
+</table>

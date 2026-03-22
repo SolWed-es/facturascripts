@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ * Plugin SolwedES - Gestión de servicios SOLWED
+ *
+ * @author    Solwed Desarrollo
+ * @copyright 2025 Solwed
+-->
+<view>
+    <columns>
+        <group name="basic-info" numcolumns="12" title="basic-info">
+            <column name="nombre" numcolumns="6" order="100">
+                <widget type="text" fieldname="nombre" required="true" maxlength="100"/>
+            </column>
+            <column name="categoria" numcolumns="6" order="110">
+                <widget type="text" fieldname="categoria" maxlength="50"/>
+            </column>
+            <column name="descripcion" numcolumns="12" order="120">
+                <widget type="textarea" fieldname="descripcion"/>
+            </column>
+        </group>
+        <group name="stripe" numcolumns="12" title="stripe-subscription">
+            <column name="stripe_product_id" numcolumns="6" order="100">
+                <widget type="text" fieldname="stripe_product_id" maxlength="255">
+                    <hint>ID del producto en Stripe (prod_xxx). Los precios se configuran en la pestaña "Precios"</hint>
+                </widget>
+            </column>
+            <column name="genera_suscripcion" numcolumns="3" order="110">
+                <widget type="checkbox" fieldname="genera_suscripcion">
+                    <hint>Crear suscripción recurrente en Stripe</hint>
+                </widget>
+            </column>
+            <column name="idproducto" numcolumns="3" order="120">
+                <widget type="select" fieldname="idproducto" onclick="EditProducto">
+                    <values source="productos" fieldcode="idproducto" fieldtitle="descripcion"/>
+                </widget>
+            </column>
+        </group>
+        <group name="presentation" numcolumns="12" title="presentation">
+            <column name="icono" numcolumns="4" order="100">
+                <widget type="text" fieldname="icono" maxlength="50" icon="fa-solid fa-icons">
+                    <hint>Clase CSS del icono (ej: fa-solid fa-globe)</hint>
+                </widget>
+            </column>
+            <column name="color" numcolumns="4" order="110">
+                <widget type="color" fieldname="color" maxlength="20"/>
+            </column>
+            <column name="orden" numcolumns="4" order="120">
+                <widget type="number" fieldname="orden" decimal="0"/>
+            </column>
+            <column name="imagen" numcolumns="12" order="130">
+                <widget type="text" fieldname="imagen" maxlength="200"/>
+            </column>
+        </group>
+        <group name="features" numcolumns="12" title="features">
+            <column name="caracteristicas" numcolumns="12" order="100">
+                <widget type="textarea" fieldname="caracteristicas" rows="10">
+                    <hint>JSON con características. Ejemplo: {"features": ["Feature 1", "Feature 2"], "metadata": {"destacado": true, "badge": "Popular"}}</hint>
+                </widget>
+            </column>
+        </group>
+        <group name="status" numcolumns="12" title="status">
+            <column name="activo" numcolumns="6" order="100">
+                <widget type="checkbox" fieldname="activo"/>
+            </column>
+            <column name="comprable" numcolumns="6" order="110">
+                <widget type="checkbox" fieldname="comprable"/>
+            </column>
+        </group>
+        <group name="timestamps" numcolumns="12" title="dates">
+            <column name="creation_date" numcolumns="6" order="100">
+                <widget type="datetime" fieldname="creation_date" readonly="dinamic"/>
+            </column>
+            <column name="last_update" numcolumns="6" order="110">
+                <widget type="datetime" fieldname="last_update" readonly="dinamic"/>
+            </column>
+        </group>
+    </columns>
+</view>

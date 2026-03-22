@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ * Plugin SolwedES - Contratos de Servicios
+ *
+ * @author    Solwed Desarrollo
+ * @copyright 2025 Solwed
+-->
+<view>
+    <columns>
+        <column name="id" order="100">
+            <widget type="text" fieldname="id"/>
+        </column>
+        <column name="contact" order="110">
+            <widget type="autocomplete" fieldname="idcontacto" onclick="EditContacto">
+                <values source="contactos" fieldcode="idcontacto" fieldtitle="nombre"/>
+            </widget>
+        </column>
+        <column name="service" order="120">
+            <widget type="select" fieldname="idservicio" onclick="EditServicio">
+                <values source="solwedes_servicios" fieldcode="id" fieldtitle="nombre"/>
+            </widget>
+        </column>
+        <column name="status" order="130">
+            <widget type="text" fieldname="estado"/>
+        </column>
+        <column name="start-date" order="140">
+            <widget type="date" fieldname="fecha_inicio"/>
+        </column>
+        <column name="expiration" order="150">
+            <widget type="date" fieldname="fecha_vencimiento"/>
+        </column>
+        <column name="payment-method" order="160">
+            <widget type="text" fieldname="metodo_pago"/>
+        </column>
+        <column name="amount" display="right" order="170">
+            <widget type="money" fieldname="importe"/>
+        </column>
+        <column name="auto-renew" display="center" order="180">
+            <widget type="checkbox" fieldname="auto_renovar"/>
+        </column>
+        <column name="stripe_customer_id" display="none" order="190">
+            <widget type="text" fieldname="stripe_customer_id"/>
+        </column>
+    </columns>
+    <rows>
+        <row type="status" fieldname="estado">
+            <option color="success">activo</option>
+            <option color="warning">pendiente</option>
+            <option color="warning">suspendido</option>
+            <option color="danger">cancelado</option>
+            <option color="danger">vencido</option>
+        </row>
+        <row type="actions">
+            <option icon="fa-solid fa-edit" label="edit" type="edit"/>
+            <option icon="fa-solid fa-trash-alt" label="delete" type="delete" confirm="true"/>
+        </row>
+        <row type="statistics" fieldname="importe">
+            <option type="sum" label="sum"/>
+            <option type="count" label="count"/>
+        </row>
+    </rows>
+</view>

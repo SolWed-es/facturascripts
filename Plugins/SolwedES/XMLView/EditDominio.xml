@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ * Plugin SolwedES - Vista de edición de dominio
+ *
+ * @author    Solwed Desarrollo
+ * @copyright 2025 Solwed
+-->
+<view>
+    <columns>
+        <group name="data" numcolumns="8" title="domain-data">
+            <column name="id" display="none" order="100">
+                <widget type="text" fieldname="id" readonly="true"/>
+            </column>
+            <column name="nombre" order="110" numcolumns="4" title="domain-name">
+                <widget type="text" fieldname="nombre" required="true" maxlength="100"/>
+            </column>
+            <column name="tld" order="120" numcolumns="2" title="tld">
+                <widget type="text" fieldname="tld" required="true" maxlength="20"/>
+            </column>
+            <column name="idcontacto" order="130" numcolumns="6" title="contact">
+                <widget type="autocomplete" fieldname="idcontacto" onclick="EditContacto">
+                    <values source="contactos" fieldcode="idcontacto" fieldtitle="nombre"/>
+                </widget>
+            </column>
+            <column name="dondominio_id" order="140" numcolumns="3" title="dondominio-id">
+                <widget type="number" fieldname="dondominio_id" decimal="0"/>
+            </column>
+            <column name="estado" order="150" numcolumns="3" title="status">
+                <widget type="select" fieldname="estado" required="true" translate="true">
+                    <values title="active">active</values>
+                    <values title="expired">expired</values>
+                    <values title="pending-transfer">pending_transfer</values>
+                    <values title="redemption">redemption</values>
+                    <values title="inactive">inactive</values>
+                </widget>
+            </column>
+        </group>
+        <group name="dates" numcolumns="4" title="dates">
+            <column name="fecha_registro" order="200" numcolumns="6" title="registration-date">
+                <widget type="date" fieldname="fecha_registro"/>
+            </column>
+            <column name="fecha_expiracion" order="210" numcolumns="6" title="expiration-date">
+                <widget type="date" fieldname="fecha_expiracion"/>
+            </column>
+        </group>
+        <group name="options" numcolumns="6" title="options">
+            <column name="gestionado_solwed" order="300" numcolumns="4" title="managed-by-solwed">
+                <widget type="checkbox" fieldname="gestionado_solwed"/>
+            </column>
+            <column name="bloqueado" order="310" numcolumns="4" title="locked">
+                <widget type="checkbox" fieldname="bloqueado"/>
+            </column>
+            <column name="privacidad_whois" order="320" numcolumns="4" title="whois-privacy">
+                <widget type="checkbox" fieldname="privacidad_whois"/>
+            </column>
+        </group>
+        <group name="contract" numcolumns="12" title="service-contract">
+            <column name="idcontrato" order="400" numcolumns="6" title="contract">
+                <widget type="autocomplete" fieldname="idcontrato" onclick="EditContratServicio">
+                    <values source="solwedes_contratos" fieldcode="id" fieldtitle="id"/>
+                </widget>
+            </column>
+        </group>
+        <group name="notes" numcolumns="12" title="observations">
+            <column name="observaciones" order="500" numcolumns="12">
+                <widget type="textarea" fieldname="observaciones"/>
+            </column>
+        </group>
+    </columns>
+</view>

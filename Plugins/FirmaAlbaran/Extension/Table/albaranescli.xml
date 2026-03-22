@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ * FirmaAlbaran plugin for FacturaScripts
+ * Extiende albaranescli con campos de firma digital
+-->
+<table>
+    <column>
+        <name>firma</name>
+        <type>text</type>
+        <null>YES</null>
+    </column>
+    <column>
+        <name>firmante</name>
+        <type>character varying(100)</type>
+        <null>YES</null>
+    </column>
+    <column>
+        <name>fecha_firma</name>
+        <type>timestamp</type>
+        <null>YES</null>
+    </column>
+</table>
