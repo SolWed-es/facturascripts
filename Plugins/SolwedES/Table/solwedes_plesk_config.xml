@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<table>
+    <column>
+        <name>id</name>
+        <type>serial</type>
+    </column>
+    <column>
+        <name>server_name</name>
+        <type>character varying(100)</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>server_url</name>
+        <type>character varying(255)</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>api_token</name>
+        <type>character varying(500)</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>api_type</name>
+        <type>character varying(20)</type>
+        <default>'rest'</default>
+    </column>
+    <column>
+        <name>verify_ssl</name>
+        <type>boolean</type>
+        <default>true</default>
+    </column>
+    <column>
+        <name>activo</name>
+        <type>boolean</type>
+        <default>true</default>
+    </column>
+    <column>
+        <name>connection_status</name>
+        <type>character varying(50)</type>
+    </column>
+    <column>
+        <name>last_connection_test</name>
+        <type>timestamp</type>
+    </column>
+    <constraint>
+        <name>solwedes_plesk_config_pkey</name>
+        <type>PRIMARY KEY (id)</type>
+    </constraint>
+</table>

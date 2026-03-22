@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view>
+    <columns>
+        <group name="data" numcolumns="12">
+            <column name="id" numcolumns="2" order="10">
+                <widget type="text" fieldname="id" readonly="true"/>
+            </column>
+            <column name="fecha_pago" numcolumns="4" order="20">
+                <widget type="datetime" fieldname="fecha_pago" readonly="true"/>
+            </column>
+            <column name="estado" numcolumns="3" order="30">
+                <widget type="select" fieldname="estado" readonly="true" translate="true">
+                    <values title="pending">pending</values>
+                    <values title="succeeded">succeeded</values>
+                    <values title="failed">failed</values>
+                    <values title="refunded">refunded</values>
+                    <values title="partial_refund">partial_refund</values>
+                    <values title="canceled">canceled</values>
+                </widget>
+            </column>
+            <column name="tipo" numcolumns="3" order="40">
+                <widget type="select" fieldname="tipo" readonly="true" translate="true">
+                    <values title="subscription">subscription</values>
+                    <values title="one_time">one_time</values>
+                </widget>
+            </column>
+        </group>
+        <group name="payment-info" title="payment-info" numcolumns="12">
+            <column name="concepto" numcolumns="12" order="50">
+                <widget type="text" fieldname="concepto" readonly="true"/>
+            </column>
+            <column name="importe" numcolumns="4" order="60">
+                <widget type="money" fieldname="importe" readonly="true"/>
+            </column>
+            <column name="moneda" numcolumns="2" order="70">
+                <widget type="text" fieldname="moneda" readonly="true"/>
+            </column>
+            <column name="metodo_pago" numcolumns="6" order="80">
+                <widget type="text" fieldname="metodo_pago" readonly="true"/>
+            </column>
+        </group>
+        <group name="contact-info" title="contact" numcolumns="12">
+            <column name="idcontacto" numcolumns="6" order="90">
+                <widget type="autocomplete" fieldname="idcontacto" readonly="true" onclick="EditContacto">
+                    <values source="contactos" fieldcode="idcontacto" fieldtitle="nombre"/>
+                </widget>
+            </column>
+            <column name="idservicio" numcolumns="6" order="100">
+                <widget type="select" fieldname="idservicio" readonly="true">
+                    <values source="solwedes_servicios" fieldcode="id" fieldtitle="nombre"/>
+                </widget>
+            </column>
+        </group>
+        <group name="documents" title="documents" numcolumns="12">
+            <column name="idfactura" numcolumns="6" order="110">
+                <widget type="autocomplete" fieldname="idfactura" readonly="true" onclick="EditFacturaCliente">
+                    <values source="facturascli" fieldcode="idfactura" fieldtitle="codigo"/>
+                </widget>
+            </column>
+            <column name="idalbaran" numcolumns="6" order="120">
+                <widget type="autocomplete" fieldname="idalbaran" readonly="true" onclick="EditAlbaranCliente">
+                    <values source="albaranescli" fieldcode="idalbaran" fieldtitle="codigo"/>
+                </widget>
+            </column>
+            <!-- idsuscripcion is deprecated - SuscripcionStripe replaced by ContratServicio -->
+            <column name="idsuscripcion" numcolumns="6" order="130">
+                <widget type="number" fieldname="idsuscripcion" readonly="true"/>
+            </column>
+        </group>
+        <group name="stripe-data" title="stripe-data" numcolumns="12">
+            <column name="stripe_payment_intent" numcolumns="6" order="140">
+                <widget type="text" fieldname="stripe_payment_intent" readonly="true"/>
+            </column>
+            <column name="stripe_customer_id" numcolumns="6" order="150">
+                <widget type="text" fieldname="stripe_customer_id" readonly="true"/>
+            </column>
+            <column name="stripe_invoice_id" numcolumns="6" order="160">
+                <widget type="text" fieldname="stripe_invoice_id" readonly="true"/>
+            </column>
+            <column name="stripe_checkout_session" numcolumns="6" order="170">
+                <widget type="text" fieldname="stripe_checkout_session" readonly="true"/>
+            </column>
+        </group>
+        <group name="metadata" title="metadata" numcolumns="12">
+            <column name="creation_date" numcolumns="6" order="180">
+                <widget type="datetime" fieldname="creation_date" readonly="true"/>
+            </column>
+            <column name="last_update" numcolumns="6" order="190">
+                <widget type="datetime" fieldname="last_update" readonly="true"/>
+            </column>
+            <column name="metadata" numcolumns="12" order="200">
+                <widget type="textarea" fieldname="metadata" readonly="true"/>
+            </column>
+        </group>
+    </columns>
+</view>

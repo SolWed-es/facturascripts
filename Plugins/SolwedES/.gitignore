@@ -1,0 +1,22 @@
+# fsmaker generated
+vendor/
+.idea/
+*.log
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+*.swp
+*.swo
+*~
+
+# Cache
+*.cache
+
+# Archivos de backup
+*.bak
+*.backup
+
+# Archivos de configuración local
+config.local.php

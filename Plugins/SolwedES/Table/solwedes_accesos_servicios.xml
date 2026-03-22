@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ * Plugin SolwedES - Gestión de accesos a servicios contratados
+ * Tabla: solwedes_accesos_servicios
+ *
+ * @author    Solwed Desarrollo
+ * @copyright 2025 Solwed
+-->
+<table>
+    <column>
+        <name>id</name>
+        <type>serial</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>idcontacto</name>
+        <type>integer</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>idservicio</name>
+        <type>integer</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>url_acceso</name>
+        <type>character varying(500)</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>tipo_acceso</name>
+        <type>character varying(50)</type>
+        <null>NO</null>
+        <default>'wordpress'</default>
+    </column>
+    <column>
+        <name>usuario</name>
+        <type>character varying(200)</type>
+        <null>YES</null>
+    </column>
+    <column>
+        <name>password_hash</name>
+        <type>text</type>
+        <null>YES</null>
+    </column>
+    <column>
+        <name>token_sso</name>
+        <type>character varying(255)</type>
+        <null>YES</null>
+    </column>
+    <column>
+        <name>token_expires_at</name>
+        <type>timestamp</type>
+        <null>YES</null>
+    </column>
+    <column>
+        <name>activo</name>
+        <type>boolean</type>
+        <null>NO</null>
+        <default>true</default>
+    </column>
+    <column>
+        <name>max_intentos_sso</name>
+        <type>integer</type>
+        <null>NO</null>
+        <default>5</default>
+    </column>
+    <column>
+        <name>intentos_fallidos</name>
+        <type>integer</type>
+        <null>NO</null>
+        <default>0</default>
+    </column>
+    <column>
+        <name>last_access</name>
+        <type>timestamp</type>
+        <null>YES</null>
+    </column>
+    <column>
+        <name>notas</name>
+        <type>text</type>
+        <null>YES</null>
+    </column>
+    <column>
+        <name>creation_date</name>
+        <type>timestamp</type>
+        <null>YES</null>
+    </column>
+    <column>
+        <name>last_update</name>
+        <type>timestamp</type>
+        <null>YES</null>
+    </column>
+    <column>
+        <name>created_by</name>
+        <type>character varying(50)</type>
+        <null>YES</null>
+    </column>
+    <constraint>
+        <name>solwedes_accesos_servicios_pkey</name>
+        <type>PRIMARY KEY (id)</type>
+    </constraint>
+    <constraint>
+        <name>solwedes_accesos_servicios_contacto_servicio_unique</name>
+        <type>UNIQUE (idcontacto, idservicio)</type>
+    </constraint>
+    <constraint>
+        <name>solwedes_accesos_servicios_contactos_fk</name>
+        <type>FOREIGN KEY (idcontacto) REFERENCES contactos (idcontacto) ON DELETE CASCADE ON UPDATE CASCADE</type>
+    </constraint>
+    <constraint>
+        <name>solwedes_accesos_servicios_servicios_fk</name>
+        <type>FOREIGN KEY (idservicio) REFERENCES solwedes_servicios (id) ON DELETE CASCADE ON UPDATE CASCADE</type>
+    </constraint>
+</table>

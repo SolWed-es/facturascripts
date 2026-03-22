@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<translations>
+    <!-- Contratos de Servicio -->
+    <trans key="service-contracts">Contratos de Servicio</trans>
+    <trans key="contracts">Contratos</trans>
+    <trans key="contract">Contrato</trans>
+    <trans key="service-contract">Contrato de Servicio</trans>
+
+    <!-- Estados -->
+    <trans key="activo">Activo</trans>
+    <trans key="suspendido">Suspendido</trans>
+    <trans key="cancelado">Cancelado</trans>
+    <trans key="vencido">Vencido</trans>
+    <trans key="pendiente">Pendiente</trans>
+
+    <!-- Métodos de pago -->
+    <trans key="payment-method">Método de Pago</trans>
+    <trans key="stripe">Stripe</trans>
+    <trans key="transferencia">Transferencia</trans>
+    <trans key="domiciliacion">Domiciliación</trans>
+    <trans key="manual">Manual</trans>
+
+    <!-- Campos -->
+    <trans key="start-date">Fecha Inicio</trans>
+    <trans key="expiration">Vencimiento</trans>
+    <trans key="next-payment">Próximo Pago</trans>
+    <trans key="last-payment">Último Pago</trans>
+    <trans key="auto-renewal">Renovación Automática</trans>
+    <trans key="external-reference">Referencia Externa</trans>
+    <trans key="amount">Importe</trans>
+
+    <!-- Dominios -->
+    <trans key="domains">Dominios</trans>
+    <trans key="domain">Dominio</trans>
+
+    <!-- Servicios -->
+    <trans key="service">Servicio</trans>
+    <trans key="services">Servicios</trans>
+
+    <!-- Acciones -->
+    <trans key="cancel-subscription">Cancelar Suscripción</trans>
+    <trans key="reactivate">Reactivar</trans>
+</translations>

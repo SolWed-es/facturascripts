@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ * Plugin SolwedES - Vista de edición de accesos a servicios
+ *
+ * @author    Solwed Desarrollo
+ * @copyright 2025 Solwed
+-->
+<view>
+    <columns>
+        <group name="basic-info" numcolumns="12" title="basic-info">
+            <column name="id" display="right" order="100">
+                <widget type="text" readonly="true" />
+            </column>
+            <column name="idcontacto" numcolumns="6" order="110">
+                <widget type="autocomplete">
+                    <values source="contactos" fieldcode="idcontacto" fieldtitle="nombre" />
+                </widget>
+            </column>
+            <column name="idservicio" numcolumns="6" order="120">
+                <widget type="autocomplete">
+                    <values source="solwedes_servicios" fieldcode="id" fieldtitle="nombre" />
+                </widget>
+            </column>
+            <column name="activo" numcolumns="6" order="130">
+                <widget type="checkbox" />
+            </column>
+        </group>
+
+        <group name="access-config" numcolumns="12" title="access-configuration">
+            <column name="tipo_acceso" numcolumns="6" order="200">
+                <widget type="select">
+                    <values title="WordPress">wordpress</values>
+                    <values title="FacturaScripts">facturascripts</values>
+                    <values title="Plesk">plesk</values>
+                    <values title="Otro">otro</values>
+                </widget>
+            </column>
+            <column name="url_acceso" numcolumns="12" order="210">
+                <widget type="text" />
+            </column>
+        </group>
+
+        <group name="credentials" numcolumns="12" title="credentials">
+            <column name="usuario" numcolumns="6" order="300">
+                <widget type="text" />
+            </column>
+            <column name="password_hash" numcolumns="6" order="310">
+                <widget type="password" />
+            </column>
+        </group>
+
+        <group name="sso-config" numcolumns="12" title="sso-configuration">
+            <column name="max_intentos_sso" numcolumns="4" order="400">
+                <widget type="number" />
+            </column>
+            <column name="intentos_fallidos" numcolumns="4" order="410">
+                <widget type="number" readonly="true" />
+            </column>
+            <column name="last_access" numcolumns="4" order="420">
+                <widget type="datetime" readonly="true" />
+            </column>
+            <column name="token_sso" numcolumns="8" order="430">
+                <widget type="text" readonly="true" />
+            </column>
+            <column name="token_expires_at" numcolumns="4" order="440">
+                <widget type="datetime" readonly="true" />
+            </column>
+        </group>
+
+        <group name="notes" numcolumns="12" title="notes">
+            <column name="notas" numcolumns="12" order="500">
+                <widget type="textarea" rows="4" />
+            </column>
+        </group>
+
+        <group name="metadata" numcolumns="12" title="metadata">
+            <column name="creation_date" numcolumns="4" order="600">
+                <widget type="datetime" readonly="true" />
+            </column>
+            <column name="last_update" numcolumns="4" order="610">
+                <widget type="datetime" readonly="true" />
+            </column>
+            <column name="created_by" numcolumns="4" order="620">
+                <widget type="text" readonly="true" />
+            </column>
+        </group>
+    </columns>
+
+    <rows>
+        <row type="actions">
+            <button type="action" action="generate-password" icon="fa-solid fa-key" label="generate-password" />
+            <button type="action" action="test-access" icon="fa-solid fa-vial" label="test-connection" />
+            <button type="action" action="generate-sso-token" icon="fa-solid fa-ticket" label="generate-sso-token" />
+        </row>
+    </rows>
+</view>

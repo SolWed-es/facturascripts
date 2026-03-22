@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ * Plugin SolwedES - Edición de precio de servicio
+ *
+ * @author    Solwed Desarrollo
+ * @copyright 2025 Solwed
+-->
+<view>
+    <columns>
+        <group name="data" numcolumns="12" title="price-data">
+            <column name="idservicio" numcolumns="12" order="100">
+                <widget type="select" fieldname="idservicio" required="true" onclick="EditServicio">
+                    <values source="solwedes_servicios" fieldcode="id" fieldtitle="nombre"/>
+                </widget>
+            </column>
+            <column name="periodo" numcolumns="6" order="110">
+                <widget type="select" fieldname="periodo" required="true" translate="true">
+                    <values title="mensual">mensual</values>
+                    <values title="anual">anual</values>
+                    <values title="semestral">semestral</values>
+                    <values title="trimestral">trimestral</values>
+                    <values title="horario">horario</values>
+                    <values title="unico">unico</values>
+                </widget>
+            </column>
+            <column name="meses" numcolumns="6" order="120">
+                <widget type="number" fieldname="meses" decimal="0">
+                    <hint>Meses de recurrencia: 1=mensual, 12=anual, 0=único/horario</hint>
+                </widget>
+            </column>
+            <column name="precio" numcolumns="6" order="130">
+                <widget type="number" fieldname="precio" decimal="2" required="true"/>
+            </column>
+            <column name="stripe_price_id" numcolumns="6" order="140">
+                <widget type="text" fieldname="stripe_price_id" maxlength="255">
+                    <hint>ID del precio en Stripe (ej: price_xxxxxxxxx)</hint>
+                </widget>
+            </column>
+            <column name="descuento_label" numcolumns="6" order="150">
+                <widget type="text" fieldname="descuento_label" maxlength="50">
+                    <hint>Etiqueta de descuento visible al cliente (ej: "2 meses gratis")</hint>
+                </widget>
+            </column>
+            <column name="orden" numcolumns="3" order="160">
+                <widget type="number" fieldname="orden" decimal="0"/>
+            </column>
+            <column name="activo" numcolumns="3" order="170">
+                <widget type="checkbox" fieldname="activo"/>
+            </column>
+        </group>
+        <group name="timestamps" numcolumns="12" title="dates">
+            <column name="creation_date" numcolumns="6" order="100">
+                <widget type="datetime" fieldname="creation_date" readonly="dinamic"/>
+            </column>
+            <column name="last_update" numcolumns="6" order="110">
+                <widget type="datetime" fieldname="last_update" readonly="dinamic"/>
+            </column>
+        </group>
+    </columns>
+</view>

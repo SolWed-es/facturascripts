@@ -1,0 +1,121 @@
+<?php
+
+/**
+ * Plugin SolwedES - Gestión de servicios SOLWED
+ *
+ * @author    Solwed Desarrollo
+ * @copyright 2025 Solwed
+ */
+
+namespace FacturaScripts\Plugins\SolwedES;
+
+// Load Composer dependencies (DonDominio SDK, etc.)
+if (file_exists(__DIR__ . '/vendor/autoload.php')) {
+    require_once __DIR__ . '/vendor/autoload.php';
+}
+
+use FacturaScripts\Core\Template\InitClass;
+use FacturaScripts\Core\Tools;
+use FacturaScripts\Core\Kernel;
+use FacturaScripts\Core\Controller\ApiRoot;
+
+/**
+ * Clase de inicialización del plugin SolwedES
+ */
+class Init extends InitClass
+{
+    public function init(): void
+    {
+        // Cargar extensión de EditContacto (pestana Stripe)
+        $this->loadExtension(new Extension\Controller\EditContacto());
+
+        // Registrar endpoint API para productos con imágenes
+        Kernel::addRoute('/api/3/productos-con-imagenes', 'ApiProductosConImagenes', -1);
+        ApiRoot::addCustomResource('productos-con-imagenes');
+
+        // Registrar endpoint API para archivos de tickets
+        Kernel::addRoute('/api/3/ticket-files', 'ApiTicketFiles', -1);
+        ApiRoot::addCustomResource('ticket-files');
+
+        // Registrar modelos SolwedES como recursos API REST
+        ApiRoot::addCustomResource('servicios');
+        ApiRoot::addCustomResource('servicioprecios');
+        ApiRoot::addCustomResource('contratservicios');
+        ApiRoot::addCustomResource('accesoservicios');
+        ApiRoot::addCustomResource('dominios');
+        ApiRoot::addCustomResource('pagostripes');
+        ApiRoot::addCustomResource('suscripciones');
+    }
+
+    public function update(): void
+    {
+        // Configurar valores por defecto de Stripe
+        $this->setupStripeSettings();
+
+        // Configurar valores por defecto de DonDominio
+        $this->setupDonDominioSettings();
+    }
+
+    public function uninstall(): void
+    {
+        // Lógica de desinstalación si es necesaria
+    }
+
+    /**
+     * Configura valores por defecto para la integración Stripe
+     */
+    private function setupStripeSettings(): void
+    {
+        // Solo establecer si no existen (no sobrescribir configuración del usuario)
+        if (empty(Tools::settings('stripe', 'crear_factura'))) {
+            Tools::settingsSet('stripe', 'crear_factura', true);
+        }
+        if (empty(Tools::settings('stripe', 'crear_albaran'))) {
+            Tools::settingsSet('stripe', 'crear_albaran', true);
+        }
+        if (empty(Tools::settings('stripe', 'enviar_email'))) {
+            Tools::settingsSet('stripe', 'enviar_email', true);
+        }
+        if (empty(Tools::settings('stripe', 'serie_factura'))) {
+            Tools::settingsSet('stripe', 'serie_factura', 'A');
+        }
+        if (empty(Tools::settings('stripe', 'serie_albaran'))) {
+            Tools::settingsSet('stripe', 'serie_albaran', 'A');
+        }
+
+        // URL del webhook (informativo, solo lectura)
+        $baseUrl = Tools::settings('default', 'site_url', '');
+        if (!empty($baseUrl)) {
+            Tools::settingsSet('stripe', 'webhook_url', rtrim($baseUrl, '/') . '/StripeWebhook');
+        } else {
+            Tools::settingsSet('stripe', 'webhook_url', 'https://erp.solwed.es/StripeWebhook');
+        }
+
+        Tools::settingsSave();
+    }
+
+    /**
+     * Configura valores por defecto para la integracion DonDominio
+     */
+    private function setupDonDominioSettings(): void
+    {
+        // Solo establecer si no existen (no sobrescribir configuracion del usuario)
+        if (empty(Tools::settings('dondominio', 'dondominio_auto_sync'))) {
+            Tools::settingsSet('dondominio', 'dondominio_auto_sync', true);
+        }
+        if (empty(Tools::settings('dondominio', 'dondominio_create_contacts'))) {
+            Tools::settingsSet('dondominio', 'dondominio_create_contacts', false);
+        }
+        if (empty(Tools::settings('dondominio', 'dondominio_send_notifications'))) {
+            Tools::settingsSet('dondominio', 'dondominio_send_notifications', true);
+        }
+        if (empty(Tools::settings('dondominio', 'dondominio_default_years'))) {
+            Tools::settingsSet('dondominio', 'dondominio_default_years', 1);
+        }
+        if (empty(Tools::settings('dondominio', 'dondominio_default_nameservers'))) {
+            Tools::settingsSet('dondominio', 'dondominio_default_nameservers', 'ns1.solwed.es,ns2.solwed.es');
+        }
+
+        Tools::settingsSave();
+    }
+}

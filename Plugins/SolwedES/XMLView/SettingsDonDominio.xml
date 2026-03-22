@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view>
+    <columns>
+        <group name="credentials" numcolumns="12" valign="top" title="Credenciales DonDominio API" icon="fa-solid fa-key">
+            <column name="name" display="none" order="0">
+                <widget type="text" fieldname="name" readonly="true" required="true" />
+            </column>
+            <column name="dondominio_api_user" order="10" title="API User" description="Usuario de API de DonDominio (ej: 123456-ABCD)" numcolumns="6">
+                <widget type="text" fieldname="dondominio_api_user" icon="fa-solid fa-user"/>
+            </column>
+            <column name="dondominio_api_pass" order="20" title="API Password" description="Contraseña de API de DonDominio" numcolumns="6">
+                <widget type="password" fieldname="dondominio_api_pass" icon="fa-solid fa-lock"/>
+            </column>
+        </group>
+        <group name="options" numcolumns="12" valign="top" title="Opciones de Sincronizacion" icon="fa-solid fa-cog">
+            <column name="dondominio_auto_sync" order="10" title="Sincronizacion Automatica" description="Sincroniza dominios automaticamente cada hora via cron" numcolumns="4">
+                <widget type="checkbox" fieldname="dondominio_auto_sync"/>
+            </column>
+            <column name="dondominio_create_contacts" order="20" title="Crear Contactos" description="Crear contactos automaticamente si no existen en FS" numcolumns="4">
+                <widget type="checkbox" fieldname="dondominio_create_contacts"/>
+            </column>
+            <column name="dondominio_send_notifications" order="30" title="Enviar Notificaciones" description="Enviar emails de confirmacion para registros y renovaciones" numcolumns="4">
+                <widget type="checkbox" fieldname="dondominio_send_notifications"/>
+            </column>
+        </group>
+        <group name="defaults" numcolumns="12" valign="top" title="Valores por Defecto" icon="fa-solid fa-sliders-h">
+            <column name="dondominio_default_years" order="10" title="Anos de Registro" description="Anos por defecto para nuevos registros de dominios" numcolumns="4">
+                <widget type="number" fieldname="dondominio_default_years" min="1" max="10" step="1"/>
+            </column>
+            <column name="dondominio_default_nameservers" order="20" title="Nameservers" description="Nameservers por defecto (separados por coma)" numcolumns="8">
+                <widget type="text" fieldname="dondominio_default_nameservers" placeholder="ns1.solwed.es,ns2.solwed.es"/>
+            </column>
+        </group>
+        <group name="status" numcolumns="12" valign="top" title="Estado de Conexion" icon="fa-solid fa-info-circle">
+            <column name="dondominio_last_sync" order="10" title="Ultima Sincronizacion" description="Fecha y hora de la ultima sincronizacion exitosa" numcolumns="6">
+                <widget type="datetime" fieldname="dondominio_last_sync" readonly="true"/>
+            </column>
+            <column name="dondominio_account_balance" order="20" title="Saldo en Cuenta" description="Saldo disponible en la cuenta de DonDominio. Se actualiza automaticamente cada hora con la sincronizacion de dominios." numcolumns="6">
+                <widget type="money" fieldname="dondominio_account_balance" readonly="true"/>
+            </column>
+        </group>
+    </columns>
+</view>

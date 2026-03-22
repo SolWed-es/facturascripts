@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view>
+    <columns>
+        <column name="id" display="left" order="10">
+            <widget type="text" fieldname="id"/>
+        </column>
+        <column name="fecha_pago" display="left" order="20">
+            <widget type="datetime" fieldname="fecha_pago"/>
+        </column>
+        <column name="concepto" display="left" order="30">
+            <widget type="text" fieldname="concepto"/>
+        </column>
+        <column name="tipo" display="center" order="40">
+            <widget type="text" fieldname="tipo" translate="true">
+                <option color="info">subscription</option>
+                <option color="primary">one_time</option>
+            </widget>
+        </column>
+        <column name="estado" display="center" order="50">
+            <widget type="text" fieldname="estado" translate="true">
+                <option color="warning">pending</option>
+                <option color="success">succeeded</option>
+                <option color="danger">failed</option>
+                <option color="secondary">refunded</option>
+                <option color="info">partial_refund</option>
+                <option color="dark">canceled</option>
+            </widget>
+        </column>
+        <column name="importe" display="right" order="60">
+            <widget type="money" fieldname="importe"/>
+        </column>
+        <column name="moneda" display="center" order="70">
+            <widget type="text" fieldname="moneda"/>
+        </column>
+        <column name="idcontacto" display="left" order="80">
+            <widget type="autocomplete" fieldname="idcontacto" onclick="EditContacto">
+                <values source="contactos" fieldcode="idcontacto" fieldtitle="nombre"/>
+            </widget>
+        </column>
+        <column name="stripe_payment_intent" display="none" order="90">
+            <widget type="text" fieldname="stripe_payment_intent"/>
+        </column>
+        <column name="idfactura" display="left" order="100">
+            <widget type="autocomplete" fieldname="idfactura" onclick="EditFacturaCliente">
+                <values source="facturascli" fieldcode="idfactura" fieldtitle="codigo"/>
+            </widget>
+        </column>
+    </columns>
+</view>

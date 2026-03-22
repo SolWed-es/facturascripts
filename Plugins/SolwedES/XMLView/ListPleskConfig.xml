@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Plugin SolwedES - Gestión de servicios SOLWED
+    Vista de listado de configuraciones de servidores Plesk
+
+    @author    Solwed Desarrollo
+    @copyright 2025 Solwed
+-->
+<view>
+    <columns>
+        <column name="id" order="100">
+            <widget type="number" fieldname="id" />
+        </column>
+        <column name="server_name" order="110">
+            <widget type="text" fieldname="server_name" />
+        </column>
+        <column name="server_url" order="120">
+            <widget type="text" fieldname="server_url" />
+        </column>
+        <column name="api_type" order="130">
+            <widget type="select" fieldname="api_type">
+                <values title="REST API">rest</values>
+                <values title="XML-RPC">xmlrpc</values>
+            </widget>
+        </column>
+        <column name="connection_status" order="140" display="center">
+            <widget type="select" fieldname="connection_status">
+                <values title="connection-success">success</values>
+                <values title="connection-failed">failed</values>
+                <values title="connection-untested">untested</values>
+            </widget>
+        </column>
+        <column name="last_connection_test" order="150">
+            <widget type="datetime" fieldname="last_connection_test" />
+        </column>
+        <column name="activo" order="160" display="center">
+            <widget type="checkbox" fieldname="activo" />
+        </column>
+    </columns>
+</view>

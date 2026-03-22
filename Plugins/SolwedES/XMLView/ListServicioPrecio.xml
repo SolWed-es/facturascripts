@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ * Plugin SolwedES - Lista de Precios de Servicios
+ *
+ * @author    Solwed Desarrollo
+ * @copyright 2025 Solwed
+-->
+<view>
+    <columns>
+        <column name="orden" order="90" display="center">
+            <widget type="number" fieldname="orden"/>
+        </column>
+        <column name="periodo" order="100">
+            <widget type="select" fieldname="periodo" required="true" translate="true" onclick="EditServicioPrecio">
+                <values title="mensual">mensual</values>
+                <values title="anual">anual</values>
+                <values title="semestral">semestral</values>
+                <values title="trimestral">trimestral</values>
+                <values title="horario">horario</values>
+                <values title="unico">unico</values>
+            </widget>
+        </column>
+        <column name="meses" order="110" display="center">
+            <widget type="number" fieldname="meses" decimal="0"/>
+        </column>
+        <column name="precio" display="right" order="120">
+            <widget type="money" fieldname="precio"/>
+        </column>
+        <column name="descuento_label" order="130">
+            <widget type="text" fieldname="descuento_label"/>
+        </column>
+        <column name="stripe_price_id" order="140">
+            <widget type="text" fieldname="stripe_price_id"/>
+        </column>
+        <column name="activo" display="center" order="150">
+            <widget type="checkbox" fieldname="activo"/>
+        </column>
+    </columns>
+    <rows>
+        <row type="status" fieldname="activo">
+            <option color="success">1</option>
+            <option color="warning">0</option>
+        </row>
+        <row type="actions">
+            <option icon="fa-solid fa-edit" label="edit" type="edit"/>
+            <option icon="fa-solid fa-trash-alt" label="delete" type="delete" confirm="true"/>
+        </row>
+        <row type="statistics" fieldname="precio">
+            <option type="count" label="count"/>
+        </row>
+    </rows>
+</view>

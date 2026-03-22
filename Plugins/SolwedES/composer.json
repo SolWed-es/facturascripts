@@ -1,0 +1,16 @@
+{
+    "name": "solwed/solwedes-plugin",
+    "description": "SOLWED services management plugin for FacturaScripts",
+    "type": "facturascripts-plugin",
+    "license": "proprietary",
+    "require": {
+        "php": ">=8.0",
+        "dondominio/api-sdk-php": "@stable"
+    },
+    "config": {
+        "platform": {
+            "php": "8.0"
+        },
+        "optimize-autoloader": true
+    }
+}

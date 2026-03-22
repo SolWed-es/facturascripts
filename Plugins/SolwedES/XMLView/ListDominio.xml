@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ * Plugin SolwedES - Vista de listado de dominios
+ *
+ * @author    Solwed Desarrollo
+ * @copyright 2025 Solwed
+-->
+<view>
+    <columns>
+        <column name="nombre" order="100">
+            <widget type="text" fieldname="nombre"/>
+        </column>
+        <column name="tld" order="110">
+            <widget type="text" fieldname="tld"/>
+        </column>
+        <column name="idcontacto" order="120" title="contact">
+            <widget type="autocomplete" fieldname="idcontacto" onclick="EditContacto">
+                <values source="contactos" fieldcode="idcontacto" fieldtitle="nombre"/>
+            </widget>
+        </column>
+        <column name="estado" order="130">
+            <widget type="text" fieldname="estado" translate="true"/>
+        </column>
+        <column name="fecha_expiracion" order="140" title="expiration">
+            <widget type="date" fieldname="fecha_expiracion"/>
+        </column>
+        <column name="idcontrato" order="150" title="contract">
+            <widget type="autocomplete" fieldname="idcontrato" onclick="EditContratServicio">
+                <values source="solwedes_contratos" fieldcode="id" fieldtitle="id"/>
+            </widget>
+        </column>
+        <column name="gestionado_solwed" display="center" order="160" title="managed">
+            <widget type="checkbox" fieldname="gestionado_solwed"/>
+        </column>
+        <column name="bloqueado" display="center" order="170" title="locked">
+            <widget type="checkbox" fieldname="bloqueado"/>
+        </column>
+        <column name="privacidad_whois" display="center" order="180" title="whois-privacy">
+            <widget type="checkbox" fieldname="privacidad_whois"/>
+        </column>
+    </columns>
+    <rows>
+        <row type="status" fieldname="estado">
+            <option color="success">active</option>
+            <option color="warning">pending_transfer</option>
+            <option color="danger">expired</option>
+            <option color="danger">redemption</option>
+            <option color="secondary">inactive</option>
+        </row>
+        <row type="actions">
+            <option icon="fa-solid fa-edit" label="edit" type="edit"/>
+            <option icon="fa-solid fa-trash-alt" label="delete" type="delete" confirm="true"/>
+        </row>
+        <row type="statistics" fieldname="id">
+            <option type="count" label="count"/>
+        </row>
+    </rows>
+</view>
