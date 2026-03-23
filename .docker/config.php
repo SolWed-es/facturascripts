@@ -17,3 +17,4 @@ define('FS_LANG', 'es_ES');
 define('FS_TIMEZONE', 'Europe/Madrid');
 define('FS_ROUTE', '');
 define('FS_DEBUG', true);
+define('FS_COOKIES_EXPIRE', 604800);
