@@ -9,6 +9,8 @@
 !/Plugins/SolwedPlugins/
 !/Plugins/Blog/
 !/Plugins/ImportarFacturasEmail/
+!/Plugins/FirmaAlbaran/
+!/Plugins/SolwedES/
 /vendor/
 .DS_Store
 .htaccess
