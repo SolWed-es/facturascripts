@@ -36,15 +36,15 @@
     {% endfor %}
     {% block css %}
         {# Fuentes locales: Inter + Orbitron #}
-        <link rel="stylesheet" href="{{ asset('Dinamic/Assets/CSS/fonts.css') }}?v={{ 'now' | date('ymd') }}"/>
+        <link rel="stylesheet" href="{{ asset('Dinamic/Assets/CSS/fonts.css') }}?v={{ 'now' | date('ymdHi') }}"/>
         {# Tailwind compilado — framework principal #}
-        <link rel="stylesheet" href="{{ asset('Dinamic/Assets/CSS/tailwind-output.css') }}?v={{ 'now' | date('ymd') }}"/>
+        <link rel="stylesheet" href="{{ asset('Dinamic/Assets/CSS/tailwind-output.css') }}?v={{ 'now' | date('ymdHi') }}"/>
         {# Compatibilidad Bootstrap — para widgets Core PHP #}
-        <link rel="stylesheet" href="{{ asset('Dinamic/Assets/CSS/bootstrap-compat.css') }}?v={{ 'now' | date('ymd') }}"/>
+        <link rel="stylesheet" href="{{ asset('Dinamic/Assets/CSS/bootstrap-compat.css') }}?v={{ 'now' | date('ymdHi') }}"/>
         {# FontAwesome — iconos #}
         <link rel="stylesheet" href="{{ asset('node_modules/@fortawesome/fontawesome-free/css/all.min.css') }}?v=6"/>
         {# Tema SOLWED — colores, sidebar, logos, dark mode #}
-        <link rel="stylesheet" href="{{ asset('Dinamic/Assets/CSS/solwed-theme.css') }}?v={{ 'now' | date('ymd') }}"/>
+        <link rel="stylesheet" href="{{ asset('Dinamic/Assets/CSS/solwed-theme.css') }}?v={{ 'now' | date('ymdHi') }}"/>
     {% endblock %}
     {# Lucide Icons — local #}
     <script src="{{ asset('Dinamic/Assets/JS/lucide.min.js') }}"></script>
@@ -59,13 +59,13 @@
         {% include includeView['path'] %}
     {% endfor %}
     {% block javascripts %}
-        <script src="{{ asset('Dinamic/Assets/JS/ThemeToggle.js') }}?v={{ 'now' | date('ymd') }}"></script>
+        <script src="{{ asset('Dinamic/Assets/JS/ThemeToggle.js') }}?v={{ 'now' | date('ymdHi') }}"></script>
         <script src="{{ asset('node_modules/jquery/dist/jquery.min.js') }}"></script>
         {# Bootstrap JS bundle — SOLO para modals, dropdowns, tooltips, toasts #}
         <script src="{{ asset('node_modules/bootstrap/dist/js/bootstrap.bundle.min.js') }}?v=5"></script>
         <script src="{{ asset('node_modules/pace-js/pace.min.js') }}"></script>
         <script src="{{ asset('node_modules/@fortawesome/fontawesome-free/js/all.min.js') }}?v=6"></script>
-        <script src="{{ asset('Dinamic/Assets/JS/Custom.js') }}?v={{ 'now' | date('ymd') }}"></script>
+        <script src="{{ asset('Dinamic/Assets/JS/Custom.js') }}?v={{ 'now' | date('ymdHi') }}"></script>
     {% endblock %}
     {# Adds custom JS assets #}
     {% for js in assetManager.get('js') %}
@@ -143,8 +143,8 @@
     </div>
 
     {# Sidebar JS #}
-    <script src="{{ asset('Dinamic/Assets/JS/sidebar.js') }}?v={{ 'now' | date('ymd') }}"></script>
-    <script src="{{ asset('Dinamic/Assets/JS/theme.js') }}?v={{ 'now' | date('ymd') }}"></script>
+    <script src="{{ asset('Dinamic/Assets/JS/sidebar.js') }}?v={{ 'now' | date('ymdHi') }}"></script>
+    <script src="{{ asset('Dinamic/Assets/JS/theme.js') }}?v={{ 'now' | date('ymdHi') }}"></script>
 
     {% for includeView in getIncludeViews('MenuTemplate', 'JsFooter') %}
         {% include includeView['path'] %}
