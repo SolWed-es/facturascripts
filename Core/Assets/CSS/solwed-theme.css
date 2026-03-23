@@ -249,3 +249,20 @@ hr {
         color: black !important;
     }
 }
+
+/* Logos sidebar */
+.solwed-logo {
+    max-height: 3rem;
+    width: auto;
+}
+
+.solwed-logo-light { display: block; }
+.solwed-logo-dark { display: none; }
+
+[data-theme="solwed-dark"] .solwed-logo-light { display: none; }
+[data-theme="solwed-dark"] .solwed-logo-dark { display: block; }
+
+.solwed-logo-sm {
+    max-height: 2rem;
+    width: auto;
+}
