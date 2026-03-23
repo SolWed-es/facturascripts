@@ -31,26 +31,23 @@
         <link rel="apple-touch-icon" sizes="180x180"
               href="{{ asset('Dinamic/Assets/Images/apple-icon-180x180.png') }}"/>
     {% endblock %}
-    {# Fuentes: Inter (body) + Orbitron (headings) #}
-    <link rel="preconnect" href="https://fonts.googleapis.com"/>
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Orbitron:wght@400;500;600;700&display=swap"
-          rel="stylesheet"/>
     {% for includeView in getIncludeViews('MenuTemplate', 'CssBefore') %}
         {% include includeView['path'] %}
     {% endfor %}
     {% block css %}
+        {# Fuentes locales: Inter + Orbitron #}
+        <link rel="stylesheet" href="{{ asset('Dinamic/Assets/CSS/fonts.css') }}?v={{ 'now' | date('ymd') }}"/>
         {# Tailwind compilado — framework principal #}
         <link rel="stylesheet" href="{{ asset('Dinamic/Assets/CSS/tailwind-output.css') }}?v={{ 'now' | date('ymd') }}"/>
         {# Compatibilidad Bootstrap — para widgets Core PHP #}
         <link rel="stylesheet" href="{{ asset('Dinamic/Assets/CSS/bootstrap-compat.css') }}?v={{ 'now' | date('ymd') }}"/>
-        {# FontAwesome — para iconos en widgets Core #}
+        {# FontAwesome — iconos #}
         <link rel="stylesheet" href="{{ asset('node_modules/@fortawesome/fontawesome-free/css/all.min.css') }}?v=6"/>
         {# Tema SOLWED — colores, sidebar, logos, dark mode #}
         <link rel="stylesheet" href="{{ asset('Dinamic/Assets/CSS/solwed-theme.css') }}?v={{ 'now' | date('ymd') }}"/>
     {% endblock %}
-    {# Lucide Icons via CDN #}
-    <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+    {# Lucide Icons — local #}
+    <script src="{{ asset('Dinamic/Assets/JS/lucide.min.js') }}"></script>
     {# Adds custom CSS assets #}
     {% for css in assetManager.get('css') %}
         <link rel="stylesheet" href="{{ css }}"/>
