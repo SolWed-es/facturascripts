@@ -49,6 +49,9 @@ class Updater extends Controller
     /** @var array */
     public $coreUpdateWarnings = [];
 
+    /** @var \FacturaScripts\Core\Telemetry */
+    public $telemetryManager;
+
     /** @var array */
     public $updaterItems = [];
 
@@ -107,6 +110,8 @@ class Updater extends Controller
     public function privateCore(&$response, $user, $permissions)
     {
         parent::privateCore($response, $user, $permissions);
+
+        $this->telemetryManager = \FacturaScripts\Core\Telemetry::init();
 
         // Folders writable?
         $folders = $this->notWritableFolders();

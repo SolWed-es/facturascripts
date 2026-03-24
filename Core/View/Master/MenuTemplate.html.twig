@@ -19,11 +19,11 @@
         <title>{{ fsc.title | raw }}</title>
         <meta name="description" content="{{ trans('meta-description') }}"/>
         <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-        <meta name="generator" content="FacturaScripts"/>
+        <meta name="generator" content="FacturaSolwed"/>
         <meta name="robots" content="noindex"/>
         <link rel="manifest" href="{{ asset('manifest.json') }}"/>
         <meta name="theme-color" content="#2E3536"/>
-        <meta name="apple-mobile-web-app-capable" content="yes"/>
+        <meta name="mobile-web-app-capable" content="yes"/>
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
     {% endblock %}
     {% block icons %}
@@ -41,8 +41,6 @@
         <link rel="stylesheet" href="{{ asset('Dinamic/Assets/CSS/tailwind-output.css') }}?v={{ 'now' | date('ymdHi') }}"/>
         {# Compatibilidad Bootstrap — para widgets Core PHP #}
         <link rel="stylesheet" href="{{ asset('Dinamic/Assets/CSS/bootstrap-compat.css') }}?v={{ 'now' | date('ymdHi') }}"/>
-        {# FontAwesome — iconos #}
-        <link rel="stylesheet" href="{{ asset('node_modules/@fortawesome/fontawesome-free/css/all.min.css') }}?v=6"/>
         {# Tema SOLWED — colores, sidebar, logos, dark mode #}
         <link rel="stylesheet" href="{{ asset('Dinamic/Assets/CSS/solwed-theme.css') }}?v={{ 'now' | date('ymdHi') }}"/>
     {% endblock %}
@@ -155,12 +153,6 @@
     {% if debugBarRender %}
         {{ debugBarRender.render() | raw }}
     {% endif %}
-    <script>lucide.createIcons();</script>
-    <script>
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/sw.js').catch(function(){});
-    }
-    </script>
     </body>
 {% endblock %}
 </html>

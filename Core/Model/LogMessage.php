@@ -19,7 +19,6 @@
 
 namespace FacturaScripts\Core\Model;
 
-use FacturaScripts\Core\Logger;
 use FacturaScripts\Core\Template\ModelClass;
 use FacturaScripts\Core\Template\ModelTrait;
 use FacturaScripts\Core\Tools;
@@ -37,14 +36,6 @@ class LogMessage extends ModelClass
     const AUDIT_CHANNEL = 'audit';
     const DOCS_CHANNEL = 'docs';
     const MAX_MESSAGE_LEN = 3000;
-    const VALID_LEVELS = [
-        Logger::LEVEL_CRITICAL,
-        Logger::LEVEL_DEBUG,
-        Logger::LEVEL_ERROR,
-        Logger::LEVEL_INFO,
-        Logger::LEVEL_NOTICE,
-        Logger::LEVEL_WARNING,
-    ];
 
     /**
      * @var string
@@ -131,7 +122,7 @@ class LogMessage extends ModelClass
      */
     public function context(): array
     {
-        return json_decode(Tools::fixHtml($this->context) ?? '', true) ?? [];
+        return json_decode(Tools::fixHtml($this->context), true);
     }
 
     public function delete(): bool
@@ -153,7 +144,6 @@ class LogMessage extends ModelClass
     {
         $this->channel = Tools::noHtml($this->channel);
         $this->context = Tools::noHtml($this->context);
-        $this->ip = Tools::noHtml($this->ip);
         $this->message = Tools::noHtml($this->message);
         if (strlen($this->message) > static::MAX_MESSAGE_LEN) {
             $this->message = substr($this->message, 0, static::MAX_MESSAGE_LEN);
@@ -161,13 +151,7 @@ class LogMessage extends ModelClass
 
         $this->model = Tools::noHtml($this->model);
         $this->modelcode = Tools::noHtml($this->modelcode);
-        $this->nick = Tools::noHtml($this->nick);
         $this->uri = Tools::noHtml($this->uri);
-
-        if (false === in_array($this->level, static::VALID_LEVELS)) {
-            Tools::log()->warning('invalid-log-level', ['%level%' => $this->level]);
-            return false;
-        }
 
         return parent::test();
     }

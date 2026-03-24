@@ -10,7 +10,7 @@
    CSS Variables (tokens shadcn SOLWED)
    ============================================ */
 :root {
-  --bs-body-font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  --bs-body-font-family: 'Jura', system-ui, -apple-system, sans-serif;
   --bs-body-font-size: 0.875rem;
   --bs-body-line-height: 1.5;
   --bs-body-color: oklch(32.3% 0.010 207);
@@ -1410,9 +1410,9 @@ textarea.form-control {
 .overflow-hidden { overflow: hidden !important; }
 
 /* Typography headings */
-.h1 { font-size: 2rem; font-weight: 700; font-family: 'Orbitron', 'Inter', system-ui, sans-serif; }
-.h2 { font-size: 1.5rem; font-weight: 700; font-family: 'Orbitron', 'Inter', system-ui, sans-serif; }
-.h3 { font-size: 1.25rem; font-weight: 600; font-family: 'Orbitron', 'Inter', system-ui, sans-serif; }
+.h1 { font-size: 2rem; font-weight: 700; font-family: 'Chakra Petch', 'Jura', system-ui, sans-serif; }
+.h2 { font-size: 1.5rem; font-weight: 700; font-family: 'Chakra Petch', 'Jura', system-ui, sans-serif; }
+.h3 { font-size: 1.25rem; font-weight: 600; font-family: 'Chakra Petch', 'Jura', system-ui, sans-serif; }
 .h4 { font-size: 1.125rem; font-weight: 600; }
 .h5 { font-size: 1rem; font-weight: 600; }
 .h6 { font-size: 0.875rem; font-weight: 600; }

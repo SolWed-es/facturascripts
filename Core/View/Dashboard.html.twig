@@ -70,7 +70,6 @@
             {% if 'low-stock' in fsc.sections %}
                 {{ _self.sectionLowStock(fsc) }}
             {% endif %}
-            {{ _self.sectionNews(fsc) }}
         {% endblock %}
         {% for includeView in getIncludeViews('Dashboard', 'sectionsAfter') %}
             {% include includeView['path'] %}
@@ -246,16 +245,3 @@
     </div>
 {% endmacro %}
 
-{% macro sectionNews(fsc) %}
-    {% for news in fsc.news %}
-        <div class="card-shadcn mb-4">
-            <div class="p-3 border-b border-border flex items-center justify-between">
-                <a href="{{ news.url }}" target="_blank" class="text-sm font-medium hover:underline">{{ news.title | raw }}</a>
-                <span class="text-xs text-muted-foreground">{{ news.fecha }}</span>
-            </div>
-            <div class="p-4">
-                <div class="text-sm text-muted-foreground">{{ news.body | raw }}</div>
-            </div>
-        </div>
-    {% endfor %}
-{% endmacro %}

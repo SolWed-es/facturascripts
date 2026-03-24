@@ -53,8 +53,10 @@ class SolwedDemoPlugins
                 if (empty($plugin['download_url'])) {
                     $plugin['download_url'] = self::BASE_URL . '/SolwedPluginExport?action=download&plugin='
                         . urlencode($plugin['name']);
-                } elseif (strpos($plugin['download_url'], self::BASE_URL . '/') !== 0
-                    && strpos($plugin['download_url'], self::BASE_URL) === 0) {
+                } elseif (
+                    strpos($plugin['download_url'], self::BASE_URL . '/') !== 0
+                    && strpos($plugin['download_url'], self::BASE_URL) === 0
+                ) {
                     // URL malformada: https://demo.erpsolwed.esSolwedPlugin... → añadir /
                     $plugin['download_url'] = self::BASE_URL . '/'
                         . substr($plugin['download_url'], strlen(self::BASE_URL));

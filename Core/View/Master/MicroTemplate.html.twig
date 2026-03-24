@@ -10,11 +10,11 @@
             <title>{{ fsc.title }}</title>
             <meta name="description" content="{{ trans('meta-description') }}"/>
             <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-            <meta name="generator" content="FacturaScripts"/>
+            <meta name="generator" content="FacturaSolwed"/>
             <meta name="robots" content="noindex"/>
             <link rel="manifest" href="{{ asset('manifest.json') }}"/>
             <meta name="theme-color" content="#2E3536"/>
-            <meta name="apple-mobile-web-app-capable" content="yes"/>
+            <meta name="mobile-web-app-capable" content="yes"/>
             <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
         {% endblock %}
         {% block icons %}
@@ -22,23 +22,21 @@
             <link rel="apple-touch-icon" sizes="180x180"
                   href="{{ asset('Dinamic/Assets/Images/apple-icon-180x180.png') }}"/>
         {% endblock %}
-        <link rel="preconnect" href="https://fonts.googleapis.com"/>
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Orbitron:wght@400;500;600;700&display=swap"
-              rel="stylesheet"/>
         {% block css %}
-            <link rel="stylesheet" href="{{ asset('Dinamic/Assets/CSS/tailwind-output.css') }}?v={{ 'now' | date('ymd') }}"/>
-            <link rel="stylesheet" href="{{ asset('Dinamic/Assets/CSS/bootstrap-compat.css') }}?v={{ 'now' | date('ymd') }}"/>
+            {# Fuentes locales: Inter + Orbitron #}
+            <link rel="stylesheet" href="{{ asset('Dinamic/Assets/CSS/fonts.css') }}?v={{ 'now' | date('ymdHi') }}"/>
+            <link rel="stylesheet" href="{{ asset('Dinamic/Assets/CSS/tailwind-output.css') }}?v={{ 'now' | date('ymdHi') }}"/>
+            <link rel="stylesheet" href="{{ asset('Dinamic/Assets/CSS/bootstrap-compat.css') }}?v={{ 'now' | date('ymdHi') }}"/>
             <link rel="stylesheet" href="{{ asset('node_modules/@fortawesome/fontawesome-free/css/all.min.css') }}?v=6"/>
-            <link rel="stylesheet" href="{{ asset('Dinamic/Assets/CSS/custom.css') }}?v={{ 'now' | date('ymd') }}"/>
+            <link rel="stylesheet" href="{{ asset('Dinamic/Assets/CSS/solwed-theme.css') }}?v={{ 'now' | date('ymdHi') }}"/>
         {% endblock %}
-        <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+        <script src="{{ asset('Dinamic/Assets/JS/lucide.min.js') }}"></script>
         {# Adds custom CSS assets #}
         {% for css in assetManager.get('css') %}
             <link rel="stylesheet" href="{{ css }}"/>
         {% endfor %}
         {% block javascripts %}
-            <script src="{{ asset('Dinamic/Assets/JS/ThemeToggle.js') }}?v={{ 'now' | date('ymd') }}"></script>
+            <script src="{{ asset('Dinamic/Assets/JS/ThemeToggle.js') }}?v={{ 'now' | date('ymdHi') }}"></script>
             <script src="{{ asset('node_modules/jquery/dist/jquery.min.js') }}"></script>
             <script src="{{ asset('node_modules/bootstrap/dist/js/bootstrap.bundle.min.js') }}?v=5"></script>
             {# FA JS no necesario — ya se carga FA CSS para iconos de widgets Core #}

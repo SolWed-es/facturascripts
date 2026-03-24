@@ -23,7 +23,6 @@ use FacturaScripts\Core\Base\Controller;
 use FacturaScripts\Core\Base\ControllerPermissions;
 use FacturaScripts\Core\Cache;
 use FacturaScripts\Core\Http;
-use FacturaScripts\Core\Internal\Forja;
 use FacturaScripts\Core\Internal\MindClient;
 use FacturaScripts\Core\Internal\SolwedDemoPlugins;
 use FacturaScripts\Core\Internal\SolwedGitHubPlugins;
@@ -223,9 +222,8 @@ class AdminPlugins extends Controller
             $installedMap[$plugin->name] = $plugin->version;
         }
 
-        // plugins de demo.erpsolwed.es — instalables directamente
-        $demoMap = SolwedDemoPlugins::getPluginMap();
-        foreach ($demoMap as $item) {
+        // plugins de demo.erpsolwed.es — fuente principal
+        foreach (SolwedDemoPlugins::getPluginMap() as $item) {
             if (!isset($installedMap[$item['name']])) {
                 $this->remotePluginList[] = $item;
             } elseif ((float)($item['version'] ?? 0) > (float)$installedMap[$item['name']]) {
@@ -233,22 +231,6 @@ class AdminPlugins extends Controller
                 $item['installed_version'] = $installedMap[$item['name']];
                 $this->remotePluginList[] = $item;
             }
-        }
-
-        // plugins de Forja (upstream) — los que no están ya en demo ni instalados
-        foreach (Forja::plugins() as $item) {
-            if (!is_array($item) || empty($item['name'])) {
-                continue;
-            }
-            // si ya está en demo (tiene botón directo), saltamos
-            if (isset($demoMap[$item['name']])) {
-                continue;
-            }
-            // si está instalado, saltamos
-            if (isset($installedMap[$item['name']])) {
-                continue;
-            }
-            $this->remotePluginList[] = $item;
         }
     }
 
