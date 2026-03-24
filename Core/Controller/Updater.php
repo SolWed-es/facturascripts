@@ -394,8 +394,7 @@ class Updater extends Controller
     {
         $notWritable = [];
 
-        // Core y vendor se actualizan via git, no desde el navegador
-        $foldersToCheck = ['Dinamic', 'MyFiles', 'Plugins'];
+        $foldersToCheck = ['Core', 'Dinamic', 'MyFiles', 'Plugins', 'vendor'];
 
         foreach ($foldersToCheck as $folderName) {
             $folderPath = Tools::folder($folderName);
@@ -512,7 +511,7 @@ class Updater extends Controller
     {
         // extract zip content
         if (false === $zip->extractTo(FS_FOLDER)) {
-            Tools::log()->critical('ZIP EXTRACT ERROR: ' . $fileName);
+            Tools::log()->critical('update-zip-extract-error', ['%file%' => $fileName]);
             $zip->close();
             return false;
         }
@@ -526,13 +525,15 @@ class Updater extends Controller
             $origin = Tools::folder(self::CORE_ZIP_FOLDER, $folder);
             $dest = Tools::folder($folder);
             if (false === file_exists($origin)) {
-                Tools::log()->critical('COPY ERROR: ' . $origin);
+                Tools::log()->critical('update-folder-not-found', ['%folder%' => $folder]);
+                Tools::folderDelete(Tools::folder(self::CORE_ZIP_FOLDER));
                 return false;
             }
 
             Tools::folderDelete($dest);
             if (false === Tools::folderCopy($origin, $dest)) {
-                Tools::log()->critical('COPY ERROR2: ' . $origin);
+                Tools::log()->critical('update-folder-copy-error', ['%folder%' => $folder]);
+                Tools::folderDelete(Tools::folder(self::CORE_ZIP_FOLDER));
                 return false;
             }
         }
@@ -540,8 +541,9 @@ class Updater extends Controller
         // update files
         foreach (['index.php', 'replace_index_to_restore.php'] as $name) {
             $origin = Tools::folder(self::CORE_ZIP_FOLDER, $name);
-            $dest = Tools::folder($name);
-            copy($origin, $dest);
+            if (file_exists($origin)) {
+                copy($origin, Tools::folder($name));
+            }
         }
 
         // remove zip folder

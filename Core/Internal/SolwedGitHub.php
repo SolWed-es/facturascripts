@@ -60,14 +60,19 @@ class SolwedGitHub
                 }
             }
 
-            // 2. Fallback: GitHub API directa — buscar release de solwed/production
+            // 2. Fallback: GitHub API directa — primera release con tag v* y ZIP adjunto
             $http = self::apiRequest(sprintf(self::GITHUB_API_RELEASES, self::CORE_REPO) . '?per_page=10');
             if ($http->status() !== 200) {
                 return [];
             }
             foreach ($http->json() ?? [] as $release) {
-                if (($release['target_commitish'] ?? '') === self::RELEASE_BRANCH) {
-                    return self::buildFromRelease($release, '');
+                $tag = $release['tag_name'] ?? '';
+                if (!str_starts_with($tag, 'v')) {
+                    continue;
+                }
+                $build = self::buildFromRelease($release, '');
+                if (!empty($build)) {
+                    return $build;
                 }
             }
             return [];
