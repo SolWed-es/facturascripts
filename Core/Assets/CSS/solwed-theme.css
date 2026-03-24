@@ -358,15 +358,19 @@ body:has(.solwed-sidebar.collapsed) .solwed-main {
 }
 
 .solwed-sidebar .sidebar-brand {
-  padding: 1.25rem;
+  padding: 1rem 1.25rem;
   display: flex;
   align-items: center;
   justify-content: center;
   border-bottom: 1px solid var(--sidebar-border);
+  background: #ffffff;
 }
 
 .solwed-sidebar .sidebar-brand img {
   transition: all 0.2s ease;
+  max-height: 40px;
+  width: auto;
+  object-fit: contain;
 }
 
 .solwed-sidebar.collapsed .sidebar-brand img {
@@ -496,7 +500,7 @@ body:has(.solwed-sidebar.collapsed) .solwed-main {
   transition: all 0.15s ease;
   color: var(--muted-foreground);
   cursor: pointer;
-  border: none;
+  border: 1px solid var(--border);
   background: transparent;
 }
 
