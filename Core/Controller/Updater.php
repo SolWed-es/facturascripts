@@ -526,8 +526,12 @@ class Updater extends Controller
             $origin = Tools::folder(self::CORE_ZIP_FOLDER, $folder);
             $dest = Tools::folder($folder);
             if (false === file_exists($origin)) {
-                Tools::log()->critical('COPY ERROR: ' . $origin);
-                return false;
+                if ($folder === 'Core') {
+                    Tools::log()->critical('COPY ERROR: ' . $origin);
+                    return false;
+                }
+                // node_modules y vendor son opcionales en el ZIP
+                continue;
             }
 
             Tools::folderDelete($dest);
