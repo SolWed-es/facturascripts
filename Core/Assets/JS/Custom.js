@@ -132,7 +132,6 @@ function setModalParentForm(modal, form) {
             input.value = code;
             $("#" + modal).parent().append(input);
         });
-        console.log(codes);
     }
 }
 
