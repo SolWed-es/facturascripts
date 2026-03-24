@@ -27,7 +27,7 @@
                         </li>
                         <li class="breadcrumb-item active" aria-current="page">
                             {% if fsc.hasData %}
-                                {{ firstView.model.primaryDescription() | raw }}
+                                {{ firstView.model.primaryDescription() }}
                             {% else %}
                                 {{ trans('new') }}
                             {% endif %}
@@ -66,7 +66,7 @@
             <div class="col-md-auto d-none d-md-block text-end">
                 <h1 class="h5 mb-0">{{ trans(pageData.title) }}</h1>
                 {% if fsc.hasData %}
-                    <p class="text-muted-foreground text-sm mb-3">{{ firstView.model.primaryDescription() | raw }}</p>
+                    <p class="text-muted-foreground text-sm mb-3">{{ firstView.model.primaryDescription() }}</p>
                 {% else %}
                     <p class="text-info text-sm mb-3">{{ trans('new') }}</p>
                 {% endif %}
@@ -86,31 +86,9 @@
 {% block body %}
     {% set firstView = fsc.views | first %}
     <div class="container-fluid">
-        {# -- Tabs horizontales arriba -- #}
-        {% if fsc.views | length > 1 %}
-            <div class="nav-tabs-wrapper mb-2">
-                <ul class="nav nav-tabs solwed-panel-pills" id="mainTabs" role="tablist">
-                    {% for viewName, view in fsc.views %}
-                        {% set active = (viewName == fsc.active) ? ' active' : '' %}
-                        {% set disable = view.settings.active ? '' : ' disabled' %}
-                        <li class="nav-item">
-                            <a class="nav-link{{ active }}{{ disable }}" id="{{ viewName }}-tab"
-                               data-bs-toggle="tab" href="#{{ viewName }}" role="tab"
-                               aria-controls="{{ viewName }}">
-                                <i class="{{ view.icon }} fa-fw me-1 d-none d-sm-inline" aria-hidden="true"></i>
-                                <span>{{ view.title }}</span>
-                                {% if view.count > 0 %}
-                                    <span class="badge bg-secondary ms-1">{{ number(view.count, 0) }}</span>
-                                {% endif %}
-                            </a>
-                        </li>
-                    {% endfor %}
-                </ul>
-            </div>
-        {% endif %}
-        <div class="row">
+        <div class="solwed-panel-outer">
             {# -- Contenido -- #}
-            <div class="col-12">
+            <div class="solwed-panel-content">
                 <div class="tab-content" id="mainTabsContent">
                     {% for viewName, view in fsc.views %}
                         {% set active = (viewName == fsc.active) ? ' show active' : '' %}
@@ -122,8 +100,25 @@
                     {% endfor %}
                 </div>
             </div>
+            {# -- Nav: pills en móvil, rail vertical a la derecha en desktop -- #}
+            {% if fsc.views | length > 1 %}
+                <nav class="solwed-panel-nav" id="mainTabs" role="tablist">
+                    {% for viewName, view in fsc.views %}
+                        {% set active = (viewName == fsc.active) ? ' active' : '' %}
+                        {% set disable = view.settings.active ? '' : ' disabled' %}
+                        <a class="solwed-nav-item{{ active }}{{ disable }}" id="{{ viewName }}-tab"
+                           data-bs-toggle="tab" href="#{{ viewName }}" role="tab"
+                           aria-controls="{{ viewName }}">
+                            <i class="{{ view.icon }} fa-fw" aria-hidden="true"></i>
+                            <span>{{ view.title }}</span>
+                            {% if view.count > 0 %}
+                                <span class="solwed-nav-badge">{{ number(view.count, 0) }}</span>
+                            {% endif %}
+                        </a>
+                    {% endfor %}
+                </nav>
+            {% endif %}
         </div>
-    </div>
     </div>
 {% endblock %}
 

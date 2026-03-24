@@ -144,6 +144,30 @@
 .row-cols-2 > * { flex: 0 0 auto; width: 50%; }
 .row-cols-3 > * { flex: 0 0 auto; width: 33.333333%; }
 .row-cols-4 > * { flex: 0 0 auto; width: 25%; }
+@media (min-width: 576px) {
+  .row-cols-sm-1 > * { flex: 0 0 auto; width: 100%; }
+  .row-cols-sm-2 > * { flex: 0 0 auto; width: 50%; }
+  .row-cols-sm-3 > * { flex: 0 0 auto; width: 33.333333%; }
+  .row-cols-sm-4 > * { flex: 0 0 auto; width: 25%; }
+}
+@media (min-width: 768px) {
+  .row-cols-md-1 > * { flex: 0 0 auto; width: 100%; }
+  .row-cols-md-2 > * { flex: 0 0 auto; width: 50%; }
+  .row-cols-md-3 > * { flex: 0 0 auto; width: 33.333333%; }
+  .row-cols-md-4 > * { flex: 0 0 auto; width: 25%; }
+}
+@media (min-width: 992px) {
+  .row-cols-lg-1 > * { flex: 0 0 auto; width: 100%; }
+  .row-cols-lg-2 > * { flex: 0 0 auto; width: 50%; }
+  .row-cols-lg-3 > * { flex: 0 0 auto; width: 33.333333%; }
+  .row-cols-lg-4 > * { flex: 0 0 auto; width: 25%; }
+}
+@media (min-width: 1200px) {
+  .row-cols-xl-1 > * { flex: 0 0 auto; width: 100%; }
+  .row-cols-xl-2 > * { flex: 0 0 auto; width: 50%; }
+  .row-cols-xl-3 > * { flex: 0 0 auto; width: 33.333333%; }
+  .row-cols-xl-4 > * { flex: 0 0 auto; width: 25%; }
+}
 
 /* ============================================
    Forms — estilo shadcn

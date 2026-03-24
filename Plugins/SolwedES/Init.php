@@ -49,6 +49,9 @@ class Init extends InitClass
 
     public function update(): void
     {
+        // Configurar valores por defecto del portal
+        $this->setupPortalSettings();
+
         // Configurar valores por defecto de Stripe
         $this->setupStripeSettings();
 
@@ -59,6 +62,17 @@ class Init extends InitClass
     public function uninstall(): void
     {
         // Lógica de desinstalación si es necesaria
+    }
+
+    /**
+     * Configura valores por defecto del portal de clientes
+     */
+    private function setupPortalSettings(): void
+    {
+        if (empty(Tools::settings('solwed', 'portal_url'))) {
+            Tools::settingsSet('solwed', 'portal_url', 'https://app.solwed.es');
+            Tools::settingsSave();
+        }
     }
 
     /**

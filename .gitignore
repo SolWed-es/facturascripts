@@ -20,6 +20,9 @@ generateDoc.sh
 package-lock.json
 *.cache
 *.lock
+/test-results/
+/.playwright-mcp/
+/playwright-report/
 
 # Eclipse
 .buildpath

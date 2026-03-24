@@ -73,7 +73,7 @@
 {% endblock %}
 
 {% macro loadLogo(idfile) %}
-    {% set url = 'Dinamic/Assets/Images/logo-dark.png' %}
+    {% set url = 'Core/Assets/Images/logo-dark.png' %}
     {% if idfile > 0 %}
         {% set attached = attachedFile(idfile) %}
         {% if attached.filename is not empty %}

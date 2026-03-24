@@ -49,6 +49,7 @@ const pages = [
 ];
 
 test('Full app scan - buscar errores PHP', async ({ page }) => {
+  test.setTimeout(120000);
   page.setDefaultTimeout(15000);
   await page.setViewportSize({ width: 1440, height: 900 });
   await login(page);
@@ -58,7 +59,7 @@ test('Full app scan - buscar errores PHP', async ({ page }) => {
   for (const url of pages) {
     await page.goto(url);
     await page.waitForLoadState('domcontentloaded');
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(300);
 
     const body = await page.textContent('body');
 

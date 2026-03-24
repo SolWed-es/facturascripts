@@ -45,56 +45,47 @@
         </div>
     </div>
     {# -- Attached files -- #}
-    <div class="row">
-        <div class="col">
-            {% for counter, docfile in currentView.cursor %}
-                {% set formName = currentView.getViewName() ~ (counter + 1) %}
-                {% set file = docfile.getFile() %}
-                {% set urlDownload = file.url('download') %}
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
+        {% for counter, docfile in currentView.cursor %}
+            {% set formName = currentView.getViewName() ~ (counter + 1) %}
+            {% set file = docfile.getFile() %}
+            {% set urlDownload = file.url('download') %}
+            <div class="col">
                 <form id="{{ 'form' ~ formName }}" action="{{ doc.url() }}" method="post" enctype="multipart/form-data" onsubmit="animateSpinner('add')">
                     {{ formToken() }}
                     <input type="hidden" name="activetab" value="{{ currentView.getViewName() }}" />
                     <input type="hidden" name="id" value="{{ docfile.id }}" />
                     <input type="hidden" name="action" value="edit-file"/>
-                    <div class="card-shadcn mb-3">
+                    <div class="card-shadcn h-full">
+                        <div class="text-center border-b border-border">
+                            {{ _self.previewFile(urlDownload, file.filename, file.getExtension()) }}
+                        </div>
                         <div class="p-3">
-                            <div class="row">
-                                <div class="col-md-9">
-                                    <h5 class="font-semibold mb-3 flex items-center gap-2">
-                                        <i data-lucide="image" class="w-5 h-5"></i> {{ file.filename }}
-                                    </h5>
-                                    {{ _self.inputTextArea(docfile.observations) }}
-                                    <div class="row">
-                                        <div class="col">
-                                            {{ _self.buttonDelete(formName) }}
-                                        </div>
-                                        <div class="col text-center">
-                                            <small class="text-muted-foreground">
-                                                <i data-lucide="user" class="w-3 h-3 inline"></i> {{ docfile.nick }} &nbsp;
-                                                <i data-lucide="calendar" class="w-3 h-3 inline"></i> {{ docfile.creationdate }}
-                                            </small>
-                                        </div>
-                                        <div class="col text-end">
-                                            <a class="btn btn-sm btn-outline-info" target="_blank" href="{{ asset(urlDownload) }}">
-                                                <i data-lucide="cloud-download" class="w-3.5 h-3.5 me-1"></i>
-                                                <span class="d-none d-sm-inline-block">{{ trans('download') }}</span>
-                                            </a>
-                                            <button class="btn btn-sm btn-primary" type="submit" name="action" value="edit-file">
-                                                <i data-lucide="save" class="w-3.5 h-3.5 me-1"></i>
-                                                <span class="d-none d-sm-inline-block">{{ trans('save') }}</span>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-3 text-center">
-                                    {{ _self.previewFile(urlDownload, file.filename, file.getExtension()) }}
+                            <h6 class="font-semibold mb-2 flex items-center gap-2 text-sm">
+                                <i data-lucide="paperclip" class="w-4 h-4 flex-shrink-0"></i>
+                                <span class="truncate">{{ file.filename }}</span>
+                            </h6>
+                            {{ _self.inputTextArea(docfile.observations) }}
+                            <div class="flex items-center justify-between gap-2">
+                                {{ _self.buttonDelete(formName) }}
+                                <small class="text-muted-foreground text-xs text-center">
+                                    <i data-lucide="user" class="w-3 h-3 inline"></i> {{ docfile.nick }}<br>
+                                    <i data-lucide="calendar" class="w-3 h-3 inline"></i> {{ docfile.creationdate }}
+                                </small>
+                                <div class="flex gap-1">
+                                    <a class="btn btn-sm btn-outline-info" target="_blank" href="{{ asset(urlDownload) }}">
+                                        <i data-lucide="cloud-download" class="w-3.5 h-3.5"></i>
+                                    </a>
+                                    <button class="btn btn-sm btn-primary" type="submit" name="action" value="edit-file">
+                                        <i data-lucide="save" class="w-3.5 h-3.5"></i>
+                                    </button>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </form>
-            {% endfor %}
-        </div>
+            </div>
+        {% endfor %}
     </div>
 </div>
 

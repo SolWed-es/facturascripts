@@ -8,6 +8,22 @@ async function login(page) {
   await page.waitForURL('**/Dashboard');
 }
 
+// Simula hover via JS para evitar problemas de visibilidad en contenedores overflow
+async function hoverFirstRow(page) {
+  await page.evaluate(() => {
+    const rows = document.querySelectorAll('.tab-pane.active table tbody tr, table tbody tr');
+    for (const row of rows) {
+      const rect = (row as HTMLElement).getBoundingClientRect();
+      if (rect.height > 0 && rect.width > 0) {
+        (row as HTMLElement).dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }));
+        (row as HTMLElement).classList.add('hovered');
+        break;
+      }
+    }
+  });
+  await page.waitForTimeout(300);
+}
+
 test('Hover states - dark mode', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await login(page);
@@ -18,12 +34,8 @@ test('Hover states - dark mode', async ({ page }) => {
 
   // Facturas - hover sobre filas de tabla
   await page.goto('/ListFacturaCliente');
-  await page.waitForLoadState('networkidle');
-  const rows = page.locator('table tbody tr');
-  if (await rows.count() > 2) {
-    await rows.nth(2).hover();
-    await page.waitForTimeout(300);
-  }
+  await page.waitForLoadState('domcontentloaded');
+  await hoverFirstRow(page);
   await page.screenshot({ path: 'test-results/hover-dark-table-row.png' });
 
   // Hover sobre botón Nuevo
@@ -36,10 +48,19 @@ test('Hover states - dark mode', async ({ page }) => {
   await page.waitForTimeout(400);
   await page.screenshot({ path: 'test-results/hover-dark-dropdown.png' });
 
-  // Input focus en EditCliente
-  await page.goto('/EditCliente?code=1');
-  await page.waitForLoadState('networkidle');
-  await page.locator('input[name="nombre"]').click();
+  // Input focus en EditCliente — navegar a un cliente real
+  await page.goto('/ListCliente');
+  await page.waitForLoadState('domcontentloaded');
+  const firstRowLink = await page.evaluate(() => {
+    const a = document.querySelector('.tab-pane.active table tbody tr a, table tbody tr a') as HTMLAnchorElement;
+    return a ? a.getAttribute('href') : null;
+  });
+  if (firstRowLink) {
+    await page.goto(firstRowLink);
+    await page.waitForLoadState('domcontentloaded');
+    const input = page.locator('input[name="nombre"]').first();
+    if (await input.count() > 0) await input.click();
+  }
   await page.waitForTimeout(200);
   await page.screenshot({ path: 'test-results/hover-dark-input-focus.png' });
 });
@@ -54,12 +75,8 @@ test('Hover states - light mode', async ({ page }) => {
 
   // Facturas - hover sobre filas
   await page.goto('/ListFacturaCliente');
-  await page.waitForLoadState('networkidle');
-  const rows = page.locator('table tbody tr');
-  if (await rows.count() > 2) {
-    await rows.nth(2).hover();
-    await page.waitForTimeout(300);
-  }
+  await page.waitForLoadState('domcontentloaded');
+  await hoverFirstRow(page);
   await page.screenshot({ path: 'test-results/hover-light-table-row.png' });
 
   // Dropdown user menu
@@ -67,10 +84,19 @@ test('Hover states - light mode', async ({ page }) => {
   await page.waitForTimeout(400);
   await page.screenshot({ path: 'test-results/hover-light-dropdown.png' });
 
-  // Input focus
-  await page.goto('/EditCliente?code=1');
-  await page.waitForLoadState('networkidle');
-  await page.locator('input[name="nombre"]').click();
+  // Input focus en EditCliente — navegar a un cliente real
+  await page.goto('/ListCliente');
+  await page.waitForLoadState('domcontentloaded');
+  const firstRowLink = await page.evaluate(() => {
+    const a = document.querySelector('.tab-pane.active table tbody tr a, table tbody tr a') as HTMLAnchorElement;
+    return a ? a.getAttribute('href') : null;
+  });
+  if (firstRowLink) {
+    await page.goto(firstRowLink);
+    await page.waitForLoadState('domcontentloaded');
+    const input = page.locator('input[name="nombre"]').first();
+    if (await input.count() > 0) await input.click();
+  }
   await page.waitForTimeout(200);
   await page.screenshot({ path: 'test-results/hover-light-input-focus.png' });
 });

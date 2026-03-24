@@ -62,17 +62,18 @@
                                 {% else %}
                                     <div class="p-3">
                                         <a href="{{ file.url('download-permanent') }}" target="_blank"
-                                           class="btn w-100 btn-lg btn-secondary" aria-label="{{ trans('download') }} {{ file.filename }}">
+                                           class="btn w-100 btn-secondary d-flex align-items-center gap-2 overflow-hidden"
+                                           title="{{ file.filename }}" aria-label="{{ trans('download') }} {{ file.filename }}">
                                             {% if file.isPdf() %}
-                                                <i data-lucide="file-text" class="w-5 h-5 me-1"></i>
+                                                <i data-lucide="file-text" class="w-5 h-5 flex-shrink-0"></i>
                                             {% elseif file.isVideo() %}
-                                                <i data-lucide="video" class="w-5 h-5 me-1"></i>
+                                                <i data-lucide="video" class="w-5 h-5 flex-shrink-0"></i>
                                             {% elseif file.isArchive() %}
-                                                <i data-lucide="archive" class="w-5 h-5 me-1"></i>
+                                                <i data-lucide="archive" class="w-5 h-5 flex-shrink-0"></i>
                                             {% else %}
-                                                <i data-lucide="file" class="w-5 h-5 me-1"></i>
+                                                <i data-lucide="file" class="w-5 h-5 flex-shrink-0"></i>
                                             {% endif %}
-                                            <span class="text-break">{{ file.filename | raw }}</span>
+                                            <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;">{{ file.filename }}</span>
                                         </a>
                                     </div>
                                 {% endif %}
@@ -80,7 +81,7 @@
                                     <div class="mb-3">
                                         <label for="observations-{{ docfile.id }}" class="visually-hidden">{{ trans('observations') }}</label>
                                         <textarea name="observations" id="observations-{{ docfile.id }}" class="form-control"
-                                                  placeholder="{{ trans('observations') }}">{{ docfile.observations | raw }}</textarea>
+                                                  placeholder="{{ trans('observations') }}">{{ docfile.observations }}</textarea>
                                     </div>
                                     {% for includeView in getIncludeViews('DocFiles', 'formEditBody') %}
                                         {% include includeView['path'] %}
@@ -119,7 +120,7 @@
                                                     <li><hr class="dropdown-divider"></li>
                                                     <li>
                                                         <button type="button"
-                                                                onclick="if(confirm('{{ trans('confirm-delete') }}')) { this.form.action.value='delete-file';this.form.submit(); }"
+                                                                onclick="if(confirm('{{ trans('confirm-delete') | e('js') }}')) { this.form.action.value='delete-file';this.form.submit(); }"
                                                                 class="dropdown-item text-danger">
                                                             <i data-lucide="trash-2" class="w-4 h-4 me-1"></i> {{ trans('delete-file') }}
                                                         </button>

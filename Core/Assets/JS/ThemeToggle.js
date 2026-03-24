@@ -35,8 +35,14 @@
         }
     }
 
-    // Aplicar tema inmediatamente (antes de render)
-    apply(getPreferred());
+    // Aplicar data-theme inmediatamente (antes de render, evita flash)
+    var _initialTheme = getPreferred();
+    document.documentElement.setAttribute('data-theme', _initialTheme);
+
+    // Actualizar label e icono cuando el DOM esté listo
+    document.addEventListener('DOMContentLoaded', function () {
+        apply(_initialTheme);
+    });
 
     // Exponer toggle global
     window.solwedToggleTheme = function () {

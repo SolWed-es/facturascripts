@@ -16,12 +16,12 @@
     {% endfor %}
     {% block meta %}
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
-        <title>{{ fsc.title | raw }}</title>
+        <title>{{ fsc.title }}</title>
         <meta name="description" content="{{ trans('meta-description') }}"/>
         <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
         <meta name="generator" content="FacturaSolwed"/>
         <meta name="robots" content="noindex"/>
-        <link rel="manifest" href="{{ asset('manifest.json') }}"/>
+        <link rel="manifest" href="{{ asset('Core/Assets/manifest.json') }}"/>
         <meta name="theme-color" content="#2E3536"/>
         <meta name="mobile-web-app-capable" content="yes"/>
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
@@ -96,9 +96,9 @@
                 {# Logo #}
                 <div class="sidebar-brand">
                     <a href="{{ asset(fsc.user.homepage) }}" title="{{ trans('homepage') }}">
-                        <img src="{{ asset('Dinamic/Assets/Images/logo-dark.png') }}"
+                        <img src="{{ asset('Core/Assets/Images/logo-dark.png') }}"
                              class="solwed-logo solwed-logo-light" alt="SOLWED"/>
-                        <img src="{{ asset('Dinamic/Assets/Images/logo-white.png') }}"
+                        <img src="{{ asset('Core/Assets/Images/logo-white.png') }}"
                              class="solwed-logo solwed-logo-dark" alt="SOLWED"/>
                     </a>
                 </div>

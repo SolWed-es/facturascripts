@@ -35,8 +35,5 @@ test('AdminPlugins - Portal SolWed tab', async ({ page }) => {
     // Puede que todos los plugins SolWed ya estén instalados
   }
 
-  // Verificar Más plugins (Forja)
-  await page.click('text=Más plugins');
-  await page.waitForTimeout(500);
-  await page.screenshot({ path: 'test-results/plugins-forja-tab.png' });
+  // Nota: La pestaña "Más plugins" (Forja) fue eliminada del diseño SolWed
 });
