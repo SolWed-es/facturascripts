@@ -58,10 +58,10 @@
   --header-bg: oklch(32.3% 0.010 207);
   --header-border: oklch(38.3% 0.011 207);
 
-  --table-success-bg: oklch(45% 0.08 145 / 0.25);
-  --table-danger-bg: oklch(45% 0.08 25 / 0.25);
-  --table-warning-bg: oklch(45% 0.08 80 / 0.25);
-  --table-info-bg: oklch(45% 0.08 240 / 0.25);
+  --table-success-bg: oklch(42% 0.015 145 / 0.35);
+  --table-danger-bg: oklch(42% 0.015 25 / 0.35);
+  --table-warning-bg: oklch(42% 0.015 80 / 0.35);
+  --table-info-bg: oklch(42% 0.015 240 / 0.35);
 }
 
 /* ============================================
@@ -161,7 +161,7 @@ label, .form-label {
 }
 
 [data-theme="solwed-dark"] a:hover {
-  color: oklch(95% 0.18 106.8) !important;
+  color: #fff !important;
 }
 
 /* Secciones de grupo (Información de contacto, Dirección, etc.) */
