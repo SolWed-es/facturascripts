@@ -14,7 +14,9 @@ jobs:
           ref: solwed/production   # siempre desde esta rama
 
       - name: Install dependencies
-        run: composer install --no-dev --optimize-autoloader
+        run: |
+          composer install --no-dev --optimize-autoloader
+          npm install --omit=dev
 
       - name: Build ZIP
         run: |
