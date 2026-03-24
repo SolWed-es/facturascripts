@@ -17,8 +17,10 @@
             {# Logo #}
             <div class="login-logo">
                 <a href="{{ asset('login') }}">
-                    {% set idfile = settings('default','idloginimage', 0) %}
-                    {{ _self.loadLogo(idfile) }}
+                    {% set idlight = settings('default', 'idloginimage', 0) %}
+                    {% set iddark = settings('default', 'idloginimagedark', 0) %}
+                    {{ _self.loadLogo(idlight, 'solwed-logo-light') }}
+                    {{ _self.loadLogo(iddark, 'solwed-logo-dark') }}
                 </a>
             </div>
 
@@ -138,13 +140,15 @@
     </form>
 {% endblock %}
 
-{% macro loadLogo(idfile) %}
-    {% set url = 'Core/Assets/Images/logo-dark.png' %}
+{% macro loadLogo(idfile, cssClass) %}
+    {% set isLight = (cssClass == 'solwed-logo-light') %}
+    {% set defaultUrl = isLight ? 'Core/Assets/Images/logo-dark.png' : 'Core/Assets/Images/logo-white.png' %}
+    {% set url = defaultUrl %}
     {% if idfile > 0 %}
         {% set attached = attachedFile(idfile) %}
         {% if attached.filename is not empty %}
             {% set url = attached.url('download-permanent') %}
         {% endif %}
     {% endif %}
-    <img src="{{ asset(url) }}" alt="Logo" style="max-height:60px; width:auto; max-width:100%;"/>
+    <img src="{{ asset(url) }}" alt="Logo" class="{{ cssClass }}" style="max-height:60px; width:auto; max-width:100%;"/>
 {% endmacro loadLogo %}

@@ -96,21 +96,35 @@
                 {# Logo — usa idloginimage si está configurado, si no los logos por defecto #}
                 <div class="sidebar-brand">
                     <a href="{{ asset(fsc.user.homepage) }}" title="{{ trans('homepage') }}">
-                        {% set idloginimage = settings('default', 'idloginimage', 0) %}
-                        {% if idloginimage > 0 %}
-                            {% set attached = attachedFile(idloginimage) %}
-                            {% if attached.filename is not empty %}
-                                <img src="{{ attached.url('download-permanent') }}"
-                                     class="solwed-logo" alt="Logo" style="max-height:40px; width:auto;"/>
+                        {% set idlogolight = settings('default', 'idloginimage', 0) %}
+                        {% set idlogodark = settings('default', 'idloginimagedark', 0) %}
+
+                        {# Logo modo claro #}
+                        {% if idlogolight > 0 %}
+                            {% set attachedLight = attachedFile(idlogolight) %}
+                            {% if attachedLight.filename is not empty %}
+                                <img src="{{ attachedLight.url('download-permanent') }}"
+                                     class="solwed-logo solwed-logo-light" alt="Logo" style="max-height:40px; width:auto;"/>
                             {% else %}
                                 <img src="{{ asset('Core/Assets/Images/logo-dark.png') }}"
                                      class="solwed-logo solwed-logo-light" alt="SOLWED"/>
-                                <img src="{{ asset('Core/Assets/Images/logo-white.png') }}"
-                                     class="solwed-logo solwed-logo-dark" alt="SOLWED"/>
                             {% endif %}
                         {% else %}
                             <img src="{{ asset('Core/Assets/Images/logo-dark.png') }}"
                                  class="solwed-logo solwed-logo-light" alt="SOLWED"/>
+                        {% endif %}
+
+                        {# Logo modo oscuro #}
+                        {% if idlogodark > 0 %}
+                            {% set attachedDark = attachedFile(idlogodark) %}
+                            {% if attachedDark.filename is not empty %}
+                                <img src="{{ attachedDark.url('download-permanent') }}"
+                                     class="solwed-logo solwed-logo-dark" alt="Logo" style="max-height:40px; width:auto;"/>
+                            {% else %}
+                                <img src="{{ asset('Core/Assets/Images/logo-white.png') }}"
+                                     class="solwed-logo solwed-logo-dark" alt="SOLWED"/>
+                            {% endif %}
+                        {% else %}
                             <img src="{{ asset('Core/Assets/Images/logo-white.png') }}"
                                  class="solwed-logo solwed-logo-dark" alt="SOLWED"/>
                         {% endif %}

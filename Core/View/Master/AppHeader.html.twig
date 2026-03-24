@@ -43,34 +43,45 @@
         {# Separador #}
         <div class="w-px h-6 bg-border mx-1 hidden sm:block"></div>
 
-        {# Menú usuario #}
+        {# Menú usuario — Identity Chip #}
         <div class="dropdown">
-            <button type="button"
-                    class="solwed-header-icon px-3 gap-2 w-auto"
-                    data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" id="menuIconUser"
+            <button type="button" class="user-chip" id="menuIconUser"
+                    data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"
                     title="{{ trans('user') }}">
-                <i data-lucide="circle-user" class="w-4 h-4"></i>
-                <span class="hidden sm:inline text-sm">{{ fsc.user.nick }}</span>
-                <i data-lucide="chevron-down" class="w-3 h-3 opacity-50"></i>
+                <span class="user-chip-avatar">{{ fsc.user.nick | slice(0,1) | upper }}</span>
+                <span class="user-chip-nick">{{ fsc.user.nick }}</span>
+                <i data-lucide="chevron-down" class="user-chip-chevron"></i>
             </button>
-            <div class="dropdown-menu dropdown-menu-end" aria-labelledby="menuIconUser">
-                <a class="dropdown-item" href="{{ fsc.user.url() }}">
-                    <i data-lucide="user" class="w-4 h-4 me-2"></i> {{ fsc.user.nick }}
+            <div class="dropdown-menu dropdown-menu-end user-dropdown" aria-labelledby="menuIconUser">
+                <div class="user-dropdown-header">
+                    <span class="user-dropdown-avatar">{{ fsc.user.nick | slice(0,1) | upper }}</span>
+                    <div>
+                        <div class="user-dropdown-name">{{ fsc.user.nick }}</div>
+                        <div class="user-dropdown-role">{{ fsc.empresa.nombrecorto | raw }}</div>
+                    </div>
+                </div>
+                <div class="user-dropdown-divider"></div>
+                <a class="user-dropdown-item" href="{{ fsc.user.url() }}">
+                    <i data-lucide="user-round" class="user-dropdown-icon"></i>
+                    <span>{{ trans('my-profile') }}</span>
                 </a>
-                <a class="dropdown-item" href="SendMail">
-                    <i data-lucide="mail" class="w-4 h-4 me-2"></i> {{ trans('send-mail') }}
+                <a class="user-dropdown-item" href="SendMail">
+                    <i data-lucide="mail" class="user-dropdown-icon"></i>
+                    <span>{{ trans('send-mail') }}</span>
                 </a>
                 {% for includeView in getIncludeViews('MenuTemplate', 'MenuIconUser') %}
                     {% include includeView['path'] %}
                 {% endfor %}
-                <div class="dropdown-divider"></div>
-                <a class="dropdown-item" href="#" onclick="solwedToggleTheme(); return false;">
-                    <i id="themeToggleIcon" data-lucide="moon" class="w-4 h-4 me-2"></i>
+                <div class="user-dropdown-divider"></div>
+                <a class="user-dropdown-item" href="#" onclick="solwedToggleTheme(); return false;">
+                    <i id="themeToggleIcon" data-lucide="moon" class="user-dropdown-icon"></i>
                     <span id="themeToggleLabel">Modo oscuro</span>
                 </a>
-                <div class="dropdown-divider"></div>
-                <a class="dropdown-item text-destructive" href="{{ asset('login') }}?action=logout&multireqtoken={{ formToken(false) }}">
-                    <i data-lucide="log-out" class="w-4 h-4 me-2"></i> {{ trans('logout') }}
+                <div class="user-dropdown-divider"></div>
+                <a class="user-dropdown-item user-dropdown-item--danger"
+                   href="{{ asset('login') }}?action=logout&multireqtoken={{ formToken(false) }}">
+                    <i data-lucide="log-out" class="user-dropdown-icon"></i>
+                    <span>{{ trans('logout') }}</span>
                 </a>
             </div>
         </div>

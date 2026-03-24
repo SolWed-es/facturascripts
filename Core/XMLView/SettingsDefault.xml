@@ -158,6 +158,9 @@
             <column name="login-image" numcolumns="3" order="120">
                 <widget type="library" fieldname="idloginimage" icon="fa-solid fa-image" onclick="EditAttachedFile" accept=".gif,.jpg,.png"/>
             </column>
+            <column name="login-image-dark" numcolumns="3" order="121">
+                <widget type="library" fieldname="idloginimagedark" icon="fa-solid fa-image" onclick="EditAttachedFile" accept=".gif,.jpg,.png"/>
+            </column>
             <column name="table-size" numcolumns="3" order="130">
                 <widget type="select" fieldname="tablesize" icon="fa-solid fa-table" required="true" translate="true">
                     <values title="big">big</values>
