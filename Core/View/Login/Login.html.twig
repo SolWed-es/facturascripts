@@ -1,147 +1,141 @@
-{# SolwedShadcn — Login page (estilo shadcn card centrada) #}
+{# SolwedShadcn — Login page (card centrada, textos editables via settings) #}
 {% extends "Master/MicroTemplate.html.twig" %}
 
+{% block messages %}{% endblock %}
+
 {% block body %}
-    {{ parent() }}
-    <div class="min-h-screen flex items-center justify-center px-4 py-12 bg-muted/30">
-        <div class="w-full max-w-md">
-            <form action="{{ asset('login') }}" method="post">
+    {% from 'Macro/Utils.html.twig' import message as showMessage %}
+    <div class="login-wrap">
+        <div style="width:100%;max-width:420px;">
+            {{ showMessage(log, ['error', 'critical'], 'danger') }}
+            {{ showMessage(log, ['warning'], 'warning') }}
+            {{ showMessage(log, ['notice'], 'success') }}
+            {{ showMessage(log, ['info'], 'info') }}
+        </div>
+        <div class="login-card">
+
+            {# Logo #}
+            <div class="login-logo">
+                <a href="{{ asset('login') }}">
+                    {% set idfile = settings('default','idloginimage', 0) %}
+                    {{ _self.loadLogo(idfile) }}
+                </a>
+            </div>
+
+            <form action="{{ asset('login') }}" method="post" class="login-form">
                 {{ formToken() }}
                 <input type="hidden" name="action" value="login">
 
-                {# Card login shadcn #}
-                <div class="card-shadcn overflow-hidden solwed-login-card">
-                    {# Logo #}
-                    <a href="{{ asset('login') }}" class="block">
-                        {% set idfile = settings('default','idloginimage', 0) %}
-                        {{ _self.loadLogo(idfile) }}
-                    </a>
+                {# Usuario #}
+                <div class="form-group">
+                    <label class="form-label" for="login-nick">{{ trans('user') }}</label>
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i data-lucide="user" class="w-4 h-4"></i>
+                        </span>
+                        <input id="login-nick" type="text" name="fsNick" class="form-control"
+                               maxlength="50" placeholder="{{ trans('user') }}"
+                               required autocomplete="username" autofocus/>
+                    </div>
+                </div>
 
-                    <div class="p-6 space-y-4">
-                        <p class="text-center text-muted-foreground text-sm">{{ trans('login-text') }}</p>
-
-                        {# Usuario #}
-                        <div>
-                            <div class="input-group">
-                                <span class="input-group-text">
-                                    <i data-lucide="user" class="w-4 h-4"></i>
-                                </span>
-                                <input type="text" name="fsNick" class="form-control" maxlength="50"
-                                       placeholder="{{ trans('user') }}" required autocomplete="off" autofocus/>
-                            </div>
-                        </div>
-
-                        {# Contraseña #}
-                        <div>
-                            <div class="input-group">
-                                <span class="input-group-text">
-                                    <i data-lucide="key-round" class="w-4 h-4"></i>
-                                </span>
-                                <input type="password" name="fsPassword" class="form-control" maxlength="50"
-                                       placeholder="{{ trans('password') }}" required autocomplete="off"/>
-                            </div>
-                            <div class="text-end mt-1">
-                                <a href="#" class="text-xs text-muted-foreground hover:text-foreground transition-colors"
-                                   data-bs-toggle="modal" data-bs-target="#newPasswordModal">
-                                    {{ trans('i-forgot-password') }}
-                                </a>
-                            </div>
-                        </div>
-
-                        {# Botón login #}
-                        <button type="submit"
-                                class="w-full inline-flex items-center justify-center rounded-md text-sm font-medium
-                                       bg-foreground text-background hover:bg-foreground/90 h-11 px-4 transition-colors">
-                            <i data-lucide="arrow-right" class="w-4 h-4 me-2"></i>
-                            {{ trans('login') }}
+                {# Contraseña #}
+                <div class="form-group">
+                    <label class="form-label" for="login-pass">{{ trans('password') }}</label>
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i data-lucide="key-round" class="w-4 h-4"></i>
+                        </span>
+                        <input id="login-pass" type="password" name="fsPassword" class="form-control"
+                               maxlength="50" placeholder="{{ trans('password') }}"
+                               required autocomplete="current-password"/>
+                        <button type="button" class="btn btn-outline-secondary"
+                                onclick="this.previousElementSibling.type = this.previousElementSibling.type === 'password' ? 'text' : 'password'"
+                                tabindex="-1" aria-label="Mostrar contraseña">
+                            <i data-lucide="eye" class="w-4 h-4"></i>
                         </button>
                     </div>
-
-                    {# Footer #}
-                    <div class="border-t border-border px-6 py-4 text-center">
-                        <p class="text-xs text-muted-foreground mb-3">
-                            Software de contabilidad y facturación para tu empresa.
-                        </p><p class="text-xs text-muted-foreground mb-3">
-                            Powered by SOLWED.ES
-                        </p>
-                        <div class="flex items-center justify-center gap-2">
-                            <a href="https://solwed.es" rel="nofollow" target="_blank"
-                               class="btn btn-sm btn-secondary">
-                                SOLWED.ES
-                            </a>
-                            <a href="https://www.instagram.com/solwed.es/" rel="nofollow" target="_blank"
-                               class="btn btn-sm btn-outline-secondary" title="Instagram">
-                                <i class="fa-brands fa-instagram"></i>
-                            </a>
-                            <a href="https://www.linkedin.com/company/solwed/" rel="nofollow" target="_blank"
-                               class="btn btn-sm btn-outline-secondary" title="LinkedIn">
-                                <i class="fa-brands fa-linkedin-in"></i>
-                            </a>
-                        </div>
+                    <div class="text-end mt-1">
+                        <a href="#" class="login-forgot"
+                           data-bs-toggle="modal" data-bs-target="#newPasswordModal">
+                            {{ trans('i-forgot-password') }}
+                        </a>
                     </div>
                 </div>
+
+                <button type="submit" class="btn login-submit w-100">
+                    <i data-lucide="arrow-right" class="w-4 h-4 me-2"></i>
+                    {{ trans('login') }}
+                </button>
             </form>
 
-            {# Modal cambio de contraseña #}
-            <form action="{{ asset('login') }}" method="post">
-                {{ formToken() }}
-                <input type="hidden" name="action" value="change-password">
-                <div class="modal fade" id="newPasswordModal" tabindex="-1" role="dialog" aria-hidden="true">
-                    <div class="modal-dialog" role="document">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title">
-                                    <i data-lucide="lock" class="w-5 h-5 inline me-2"></i>
-                                    {{ trans('new-password') }}
-                                </h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body space-y-4">
-                                <a href="https://solwed.es/ayuda/olvidar-contrasena" rel="nofollow"
-                                   target="_blank" class="btn btn-link w-100 mb-2">
-                                    {{ trans('need-help-password') }}
-                                </a>
-                                <div class="input-group">
-                                    <span class="input-group-text">
-                                        <i data-lucide="user" class="w-4 h-4"></i>
-                                    </span>
-                                    <input type="text" name="fsNewUserPasswd" class="form-control" maxlength="50"
-                                           placeholder="{{ trans('user') }}" required autocomplete="off"/>
-                                </div>
-                                <div class="input-group">
-                                    <span class="input-group-text">
-                                        <i data-lucide="key-round" class="w-4 h-4"></i>
-                                    </span>
-                                    <input type="password" name="fsNewPasswd" class="form-control" maxlength="50"
-                                           placeholder="{{ trans('new-password') }}" required autocomplete="off"/>
-                                </div>
-                                <div class="input-group">
-                                    <span class="input-group-text">
-                                        <i data-lucide="eye" class="w-4 h-4"></i>
-                                    </span>
-                                    <input type="password" name="fsNewPasswd2" class="form-control" maxlength="50"
-                                           placeholder="{{ trans('repeat-new-password') }}" required autocomplete="off"/>
-                                </div>
-                                <div>
-                                    <label class="form-label">{{ trans('database') }}</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text">
-                                            <i data-lucide="database" class="w-4 h-4"></i>
-                                        </span>
-                                        <input type="password" name="fsDbPasswd" class="form-control"
-                                               placeholder="{{ trans('db-password') }}" autocomplete="off"/>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="submit" class="btn btn-primary w-100">{{ trans('save') }}</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </form>
+            <div class="login-footer">
+                <p>Powered by <a href="https://solwed.es" rel="nofollow" target="_blank">SOLWED.ES</a></p>
+            </div>
+
         </div>
     </div>
+
+    {# Modal — Cambio de contraseña #}
+    <form action="{{ asset('login') }}" method="post">
+        {{ formToken() }}
+        <input type="hidden" name="action" value="change-password">
+        <div class="modal fade" id="newPasswordModal" tabindex="-1" role="dialog" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i data-lucide="lock" class="w-5 h-5 inline me-2"></i>
+                            {{ trans('new-password') }}
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body space-y-4">
+                        <a href="https://solwed.es/ayuda/olvidar-contrasena" rel="nofollow"
+                           target="_blank" class="btn btn-link w-100 mb-2">
+                            {{ trans('need-help-password') }}
+                        </a>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i data-lucide="user" class="w-4 h-4"></i>
+                            </span>
+                            <input type="text" name="fsNewUserPasswd" class="form-control" maxlength="50"
+                                   placeholder="{{ trans('user') }}" required autocomplete="off"/>
+                        </div>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i data-lucide="key-round" class="w-4 h-4"></i>
+                            </span>
+                            <input type="password" name="fsNewPasswd" class="form-control" maxlength="50"
+                                   placeholder="{{ trans('new-password') }}" required autocomplete="off"/>
+                        </div>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i data-lucide="eye" class="w-4 h-4"></i>
+                            </span>
+                            <input type="password" name="fsNewPasswd2" class="form-control" maxlength="50"
+                                   placeholder="{{ trans('repeat-new-password') }}" required autocomplete="off"/>
+                        </div>
+                        <div>
+                            <label class="form-label">{{ trans('database') }}</label>
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i data-lucide="database" class="w-4 h-4"></i>
+                                </span>
+                                <input type="password" name="fsDbPasswd" class="form-control"
+                                       placeholder="{{ trans('db-password') }}" autocomplete="off"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary w-100">
+                            {{ trans('save') }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
 {% endblock %}
 
 {% macro loadLogo(idfile) %}
@@ -152,5 +146,5 @@
             {% set url = attached.url('download-permanent') %}
         {% endif %}
     {% endif %}
-    <img class="w-full" src="{{ asset(url) }}" alt="SOLWED"/>
+    <img src="{{ asset(url) }}" alt="Logo" style="max-height:60px; width:auto; max-width:100%;"/>
 {% endmacro loadLogo %}

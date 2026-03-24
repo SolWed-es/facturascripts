@@ -75,7 +75,8 @@ trait RandomDataTrait
     {
         $company = new Empresa();
         $company->direccion = 'Calle falsa 123';
-        $company->cifnif = 'B' . mt_rand(1, 999999);
+        $nifNumC = mt_rand(10000000, 99999999);
+        $company->cifnif = $nifNumC . substr('TRWAGMYFPDXBNJZSQVHLCKE', $nifNumC % 23, 1);
         $company->nombre = 'Company ' . mt_rand(1, 99999);
         $company->nombrecorto = 'Comp' . mt_rand(1, 99999);
 
@@ -85,7 +86,8 @@ trait RandomDataTrait
     protected function getRandomContact(string $test_name = ''): Contacto
     {
         $contact = new Contacto();
-        $contact->cifnif = 'B' . mt_rand(1, 999999);
+        $nifNumCt = mt_rand(10000000, 99999999);
+        $contact->cifnif = $nifNumCt . substr('TRWAGMYFPDXBNJZSQVHLCKE', $nifNumCt % 23, 1);
         $contact->nombre = 'Contact Rand ' . mt_rand(1, 99999);
         $contact->empresa = 'Empresa ' . mt_rand(1, 99999);
         $contact->observaciones = $test_name;
@@ -105,7 +107,8 @@ trait RandomDataTrait
     protected function getRandomCustomer(string $test_name = ''): Cliente
     {
         $cliente = new Cliente();
-        $cliente->cifnif = 'B' . mt_rand(1, 999999);
+        $nifNum = mt_rand(10000000, 99999999);
+        $cliente->cifnif = $nifNum . substr('TRWAGMYFPDXBNJZSQVHLCKE', $nifNum % 23, 1);
         $cliente->nombre = 'Customer Rand ' . mt_rand(1, 99999);
         $cliente->observaciones = $test_name;
         $cliente->razonsocial = 'Empresa ' . mt_rand(1, 99999);
@@ -189,7 +192,8 @@ trait RandomDataTrait
     protected function getRandomSupplier(string $test_name = ''): Proveedor
     {
         $proveedor = new Proveedor();
-        $proveedor->cifnif = mt_rand(1, 99999999) . 'J';
+        $nifNumP = mt_rand(10000000, 99999999);
+        $proveedor->cifnif = $nifNumP . substr('TRWAGMYFPDXBNJZSQVHLCKE', $nifNumP % 23, 1);
         $proveedor->nombre = 'Proveedor Rand ' . mt_rand(1, 999);
         $proveedor->observaciones = $test_name;
         $proveedor->razonsocial = 'Empresa ' . mt_rand(1, 999);

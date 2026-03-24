@@ -177,70 +177,144 @@ label, .form-label {
   color: #bbb !important;
 }
 
-/* Login card — siempre fondo claro, incluso en dark mode */
-.solwed-login-card,
-[data-theme="solwed-dark"] .solwed-login-card {
-  background-color: #fff !important;
-  color: #333 !important;
-  border-color: oklch(88% 0.008 210) !important;
-  padding:40px;
+/* ── Login page ── */
+.login-wrap {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  background: var(--background);
 }
 
-.solwed-login-card,
-.solwed-login-card *,
-[data-theme="solwed-dark"] .solwed-login-card,
-[data-theme="solwed-dark"] .solwed-login-card * {
-  color: #333 !important;
+.login-card {
+  width: 100%;
+  max-width: 420px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 4px 24px rgba(0,0,0,.08);
+  overflow: hidden;
 }
 
-.solwed-login-card .form-control,
-[data-theme="solwed-dark"] .solwed-login-card .form-control {
-  background-color: #f8f9fa !important;
-  border-color: #dee2e6 !important;
-  color: #333 !important;
+[data-theme="solwed-dark"] .login-card {
+  background: #1a1a1a;
+  border-color: #2e2e2e;
+  box-shadow: 0 4px 24px rgba(0,0,0,.4);
 }
 
-.solwed-login-card .form-control::placeholder {
-  color: #999 !important;
+.login-logo {
+  padding: 2rem 2rem 1rem;
+  text-align: center;
+  border-bottom: 1px solid #f0f0f0;
+}
+[data-theme="solwed-dark"] .login-logo { border-bottom-color: #2e2e2e; }
+
+.login-logo img { max-height: 56px; width: auto; }
+
+.login-tagline {
+  text-align: center;
+  font-size: 0.8rem;
+  color: #888;
+  padding: 0.75rem 2rem 0;
+  margin: 0;
+}
+[data-theme="solwed-dark"] .login-tagline { color: #999; }
+
+.login-form {
+  padding: 1.5rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
-.solwed-login-card .input-group-text,
-[data-theme="solwed-dark"] .solwed-login-card .input-group-text {
-  background-color: #e9ecef !important;
-  border-color: #dee2e6 !important;
-  color: #555 !important;
+.login-form .form-group { margin: 0; }
+
+.login-form .form-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #666;
+  margin-bottom: 0.4rem;
+  display: block;
+}
+[data-theme="solwed-dark"] .login-form .form-label { color: #aaa; }
+
+.login-form .form-control {
+  background: #f9fafb;
+  border-color: #e5e7eb;
+  color: #111;
+}
+[data-theme="solwed-dark"] .login-form .form-control {
+  background: #111;
+  border-color: #2e2e2e;
+  color: #eee;
+}
+.login-form .form-control:focus,
+.login-form .form-control:focus-visible {
+  border-color: #FFE000;
+  box-shadow: 0 0 0 3px rgba(255,224,0,.2);
+  outline: none;
+}
+.login-form .input-group:focus-within .input-group-text {
+  border-color: #FFE000;
+}
+.login-form .btn-outline-secondary:focus,
+.login-form .btn-outline-secondary:active {
+  box-shadow: 0 0 0 3px rgba(255,224,0,.2);
+  border-color: #FFE000;
+  outline: none;
 }
 
-.solwed-login-card .input-group-text i,
-.solwed-login-card .input-group-text svg,
-[data-theme="solwed-dark"] .solwed-login-card .input-group-text i,
-[data-theme="solwed-dark"] .solwed-login-card .input-group-text svg {
-  color: #555 !important;
+.login-form .input-group-text {
+  background: #f0f0f0;
+  border-color: #e5e7eb;
+  color: #888;
+}
+[data-theme="solwed-dark"] .login-form .input-group-text {
+  background: #222;
+  border-color: #2e2e2e;
+  color: #888;
 }
 
-.solwed-login-card button[type="submit"],
-[data-theme="solwed-dark"] .solwed-login-card button[type="submit"] {
-  background-color: #333 !important;
+.login-forgot {
+  font-size: 0.75rem;
+  color: #999;
+  text-decoration: none;
+}
+.login-forgot:hover { color: #FFE000; }
+
+.login-submit {
+  background: #111 !important;
   color: #fff !important;
+  border: none;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  height: 44px;
+  transition: background .2s;
+}
+.login-submit:hover { background: #FFE000 !important; color: #111 !important; }
+[data-theme="solwed-dark"] .login-submit { background: #FFE000 !important; color: #111 !important; }
+[data-theme="solwed-dark"] .login-submit:hover { background: #fff !important; color: #111 !important; }
+
+.login-footer {
+  padding: 1rem 2rem;
+  border-top: 1px solid #f0f0f0;
+  text-align: center;
+}
+[data-theme="solwed-dark"] .login-footer { border-top-color: #2e2e2e; }
+.login-footer p {
+  font-size: 0.75rem;
+  color: #aaa;
+  margin: 0;
 }
 
-.solwed-login-card button[type="submit"] i,
-.solwed-login-card button[type="submit"] svg,
-[data-theme="solwed-dark"] .solwed-login-card button[type="submit"] i,
-[data-theme="solwed-dark"] .solwed-login-card button[type="submit"] svg {
-  color: #fff !important;
-}
-
-.solwed-login-card .border-t,
-[data-theme="solwed-dark"] .solwed-login-card .border-t {
-  border-color: #eee !important;
-}
-
-.solwed-login-card .btn-sm,
-[data-theme="solwed-dark"] .solwed-login-card .btn-sm {
-  color: #fff !important;
-  border-color: #ccc !important;
-}
+/* Mensajes en login — encima del card */
+.login-wrap .alert { max-width: 420px; width: 100%; margin-bottom: 1rem; }
 
 /* Diagonal stripe background en dark mode (marca SOLWED) */
 [data-theme="solwed-dark"] body {
@@ -259,12 +333,16 @@ label, .form-label {
    ============================================ */
 .solwed-sidebar {
   width: 16rem;
-  min-height: 100vh;
+  height: 100vh;
+  position: sticky;
+  top: 0;
   background-color: var(--sidebar-bg);
   border-right: 1px solid var(--sidebar-border);
   transition: width 0.2s ease;
   overflow: hidden;
   flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .solwed-sidebar.collapsed {
@@ -292,8 +370,24 @@ label, .form-label {
 .solwed-sidebar .sidebar-nav {
   padding: 0.5rem;
   overflow-y: auto;
-  height: calc(100vh - 5rem);
+  flex: 1;
 }
+
+.solwed-sidebar .sidebar-powered {
+  padding: 0.75rem 1.25rem;
+  border-top: 1px solid var(--sidebar-border);
+  text-align: center;
+}
+.solwed-sidebar .sidebar-powered a {
+  font-size: 0.65rem;
+  color: var(--sidebar-muted, #888);
+  text-decoration: none;
+  letter-spacing: 0.04em;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+.solwed-sidebar .sidebar-powered a:hover { opacity: 1; }
+.solwed-sidebar.collapsed .sidebar-powered { display: none; }
 
 .solwed-sidebar.collapsed .sidebar-label,
 .solwed-sidebar.collapsed .sidebar-submenu {

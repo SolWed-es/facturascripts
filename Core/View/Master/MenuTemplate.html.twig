@@ -93,13 +93,27 @@
         {% block navbar %}
             {# ===== SIDEBAR ===== #}
             <aside id="solwedSidebar" class="solwed-sidebar d-print-none">
-                {# Logo #}
+                {# Logo — usa idloginimage si está configurado, si no los logos por defecto #}
                 <div class="sidebar-brand">
                     <a href="{{ asset(fsc.user.homepage) }}" title="{{ trans('homepage') }}">
-                        <img src="{{ asset('Core/Assets/Images/logo-dark.png') }}"
-                             class="solwed-logo solwed-logo-light" alt="SOLWED"/>
-                        <img src="{{ asset('Core/Assets/Images/logo-white.png') }}"
-                             class="solwed-logo solwed-logo-dark" alt="SOLWED"/>
+                        {% set idloginimage = settings('default', 'idloginimage', 0) %}
+                        {% if idloginimage > 0 %}
+                            {% set attached = attachedFile(idloginimage) %}
+                            {% if attached.filename is not empty %}
+                                <img src="{{ attached.url('download-permanent') }}"
+                                     class="solwed-logo" alt="Logo" style="max-height:40px; width:auto;"/>
+                            {% else %}
+                                <img src="{{ asset('Core/Assets/Images/logo-dark.png') }}"
+                                     class="solwed-logo solwed-logo-light" alt="SOLWED"/>
+                                <img src="{{ asset('Core/Assets/Images/logo-white.png') }}"
+                                     class="solwed-logo solwed-logo-dark" alt="SOLWED"/>
+                            {% endif %}
+                        {% else %}
+                            <img src="{{ asset('Core/Assets/Images/logo-dark.png') }}"
+                                 class="solwed-logo solwed-logo-light" alt="SOLWED"/>
+                            <img src="{{ asset('Core/Assets/Images/logo-white.png') }}"
+                                 class="solwed-logo solwed-logo-dark" alt="SOLWED"/>
+                        {% endif %}
                     </a>
                 </div>
 
@@ -110,6 +124,11 @@
                         {{ macros.showMenu(menuItem) }}
                     {% endfor %}
                 </nav>
+
+                {# Powered by #}
+                <div class="sidebar-powered">
+                    <a href="https://solwed.es" rel="nofollow" target="_blank">Powered by SOLWED.ES</a>
+                </div>
             </aside>
         {% endblock %}
 
