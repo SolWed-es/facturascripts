@@ -196,7 +196,7 @@ abstract class ModelClass
                 substr($field['type'], 0, strpos($field['type'], '('));
             $this->{$key} = match ($type) {
                 'tinyint', 'boolean' => in_array($field['default'], ['true', 't', '1'], false),
-                'integer', 'int' => intval($field['default']),
+                'integer', 'int', 'bigint', 'smallint' => intval($field['default']),
                 'decimal', 'double', 'double precision', 'float' => floatval($field['default']),
                 'date' => Tools::date(), // asumimos que el campo fecha nunca tendrá valor por defecto
                 'datetime', 'timestamp' => Tools::dateTime(), // asumimos que el campo datetime nunca tendrá valor por defecto

@@ -181,6 +181,11 @@
         <type>boolean</type>
         <default>false</default>
     </column>
+    <column>
+        <name>advance</name>
+        <type>integer</type>
+        <default>0</default>
+    </column>
     <constraint>
         <name>facturasprov_pkey</name>
         <type>PRIMARY KEY (idfactura)</type>
