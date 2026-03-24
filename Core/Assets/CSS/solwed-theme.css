@@ -334,7 +334,8 @@ label, .form-label {
 .solwed-sidebar {
   width: 16rem;
   height: 100vh;
-  position: sticky;
+  position: fixed;
+  left: 0;
   top: 0;
   background-color: var(--sidebar-bg);
   border-right: 1px solid var(--sidebar-border);
@@ -343,11 +344,17 @@ label, .form-label {
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
+  z-index: 100;
 }
 
 .solwed-sidebar.collapsed {
   width: 0;
   border-right: none;
+}
+
+.solwed-sidebar.collapsed ~ .solwed-main,
+body:has(.solwed-sidebar.collapsed) .solwed-main {
+  margin-left: 0;
 }
 
 .solwed-sidebar .sidebar-brand {
@@ -457,6 +464,7 @@ label, .form-label {
   min-width: 0;
   display: flex;
   flex-direction: column;
+  margin-left: 16rem;
 }
 
 /* ============================================
@@ -1580,11 +1588,16 @@ label {
    TABLET (min-width: 768px)
    ============================================ */
 @media (min-width: 768px) {
-  /* Sidebar: visible fijo */
+  /* Sidebar: fixed permanente en desktop */
   .solwed-sidebar {
-    position: relative;
+    position: fixed;
     left: 0;
+    top: 0;
     box-shadow: none;
+  }
+
+  .solwed-main {
+    margin-left: 16rem;
   }
 
   .sidebar-overlay {
