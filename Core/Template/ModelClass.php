@@ -260,7 +260,7 @@ abstract class ModelClass
      */
     public function get($code)
     {
-        if (null === $code) {
+        if (null === $code || '' === $code) {
             return false;
         }
 
@@ -359,7 +359,7 @@ abstract class ModelClass
      */
     public function load($code): bool
     {
-        if (null === $code) {
+        if (null === $code || '' === $code) {
             return false;
         }
 
