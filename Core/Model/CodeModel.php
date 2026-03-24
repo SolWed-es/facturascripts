@@ -199,6 +199,11 @@ class CodeModel
             return new static();
         }
 
+        // empty code returns empty model
+        if (null === $code || '' === $code) {
+            return new static();
+        }
+
         // is a table or a model?
         $modelClass = self::MODEL_NAMESPACE . $tableName;
         if ($tableName && class_exists($modelClass)) {
