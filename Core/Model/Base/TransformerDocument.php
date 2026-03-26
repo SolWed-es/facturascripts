@@ -1,7 +1,7 @@
 <?php
 /**
  * This file is part of FacturaScripts
- * Copyright (C) 2013-2025 Carlos Garcia Gomez <carlos@facturascripts.com>
+ * Copyright (C) 2013-2026 Carlos Garcia Gomez <carlos@facturascripts.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as
@@ -19,8 +19,8 @@
 
 namespace FacturaScripts\Core\Model\Base;
 
-use FacturaScripts\Core\Where;
 use FacturaScripts\Core\Tools;
+use FacturaScripts\Core\Where;
 use FacturaScripts\Dinamic\Lib\BusinessDocumentGenerator;
 use FacturaScripts\Dinamic\Model\DocTransformation;
 use FacturaScripts\Dinamic\Model\EstadoDocumento;
@@ -59,11 +59,18 @@ abstract class TransformerDocument extends BusinessDocument
     public $idestado;
 
     /**
+     * Estado anterior del documento, del modelo EstadoDocumento.
+     *
+     * @var int|null
+     */
+    public $idestado_ant;
+
+    /**
      * Campos que se pueden modificar aunque el documento no sea editable.
      *
      * @var array
      */
-    private static $unlocked_fields = ['femail', 'idestado', 'numdocs', 'pagada'];
+    private static $unlocked_fields = ['femail', 'idestado', 'idestado_ant', 'numdocs', 'pagada'];
 
     /**
      * Añade un campo a la lista de campos desbloqueados (editables aunque el documento no sea editable).
@@ -179,12 +186,21 @@ abstract class TransformerDocument extends BusinessDocument
 
         // cambiamos el estado del documento padre
         foreach ($parents as $parent) {
+            $previousStatus = $parent->getPreviousStatus();
+            if ($previousStatus && empty($previousStatus->generadoc)) {
+                $parent->idestado = $previousStatus->idestado;
+                $parent->save();
+                continue;
+            }
+
             foreach ($parent->getAvailableStatus() as $status) {
-                if ($status->predeterminado) {
-                    $parent->idestado = $status->idestado;
-                    $parent->save();
-                    break;
+                if (!$status->predeterminado) {
+                    continue;
                 }
+
+                $parent->idestado = $status->idestado;
+                $parent->save();
+                break;
             }
         }
 
@@ -236,6 +252,21 @@ abstract class TransformerDocument extends BusinessDocument
         $status = new EstadoDocumento();
         $status->load($this->idestado);
         return $status;
+    }
+
+    /**
+     * Devuelve el modelo EstadoDocumento anterior de este documento.
+     *
+     * @return EstadoDocumento|null
+     */
+    public function getPreviousStatus(): ?EstadoDocumento
+    {
+        if (empty($this->idestado_ant)) {
+            return null;
+        }
+
+        $status = new EstadoDocumento();
+        return $status->load($this->idestado_ant) ? $status : null;
     }
 
     /**
@@ -341,6 +372,9 @@ abstract class TransformerDocument extends BusinessDocument
         if ($field !== 'idestado') {
             return parent::onChange($field);
         }
+
+        // guardamos el estado anterior real antes del cambio
+        $this->idestado_ant = $this->getOriginal('idestado');
 
         $status = $this->getStatus();
         if (empty($status->generadoc) || false === self::$document_generation) {
