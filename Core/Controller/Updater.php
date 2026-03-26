@@ -538,12 +538,10 @@ class Updater extends Controller
             }
         }
 
-        // update files
-        foreach (['index.php', 'replace_index_to_restore.php'] as $name) {
-            $origin = Tools::folder(self::CORE_ZIP_FOLDER, $name);
-            if (file_exists($origin)) {
-                copy($origin, Tools::folder($name));
-            }
+        // update index.php
+        $origin = Tools::folder(self::CORE_ZIP_FOLDER, 'index.php');
+        if (file_exists($origin)) {
+            copy($origin, Tools::folder('index.php'));
         }
 
         // remove zip folder
