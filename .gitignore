@@ -40,3 +40,17 @@ package-lock.json
 # claude
 CLAUDE.md
 /.claude
+
+# Dev utilities (local only)
+router.php
+sw.js
+
+# Screenshots / debug images
+*.png
+!Core/**/*.png
+!Plugins/**/*.png
+!MyFiles/**/*.png
+
+# Deployment artifacts
+replace_index_to_restore.php
+CORE.zip
