@@ -35,13 +35,11 @@
         {% include includeView['path'] %}
     {% endfor %}
     {% block css %}
-        {# Fuentes locales: Inter + Orbitron #}
+        {# Fuentes locales: Chakra Petch + Jura #}
         <link rel="stylesheet" href="{{ asset('Dinamic/Assets/CSS/fonts.css') }}?v={{ 'now' | date('ymdHi') }}"/>
-        {# Tailwind compilado — framework principal #}
-        <link rel="stylesheet" href="{{ asset('Dinamic/Assets/CSS/tailwind-output.css') }}?v={{ 'now' | date('ymdHi') }}"/>
-        {# Compatibilidad Bootstrap — para widgets Core PHP #}
-        <link rel="stylesheet" href="{{ asset('Dinamic/Assets/CSS/bootstrap-compat.css') }}?v={{ 'now' | date('ymdHi') }}"/>
-        {# Tema SOLWED — colores, sidebar, logos, dark mode #}
+        {# Bootstrap 5 dentro de @layer base → prioridad baja #}
+        <style>@import url("{{ asset('node_modules/bootstrap/dist/css/bootstrap.min.css') }}") layer(bootstrap);</style>
+        {# Tema SOLWED shadcn-ui — fuera de layer → siempre gana #}
         <link rel="stylesheet" href="{{ asset('Dinamic/Assets/CSS/solwed-theme.css') }}?v={{ 'now' | date('ymdHi') }}"/>
     {% endblock %}
     {# Lucide Icons — local #}
@@ -93,41 +91,10 @@
         {% block navbar %}
             {# ===== SIDEBAR ===== #}
             <aside id="solwedSidebar" class="solwed-sidebar d-print-none">
-                {# Logo — usa idloginimage si está configurado, si no los logos por defecto #}
+                {# Brand: solo nombre empresa centrado #}
                 <div class="sidebar-brand">
                     <a href="{{ asset(fsc.user.homepage) }}" title="{{ trans('homepage') }}">
-                        {% set idlogolight = settings('default', 'idloginimage', 0) %}
-                        {% set idlogodark = settings('default', 'idloginimagedark', 0) %}
-
-                        {# Logo modo claro #}
-                        {% if idlogolight > 0 %}
-                            {% set attachedLight = attachedFile(idlogolight) %}
-                            {% if attachedLight.filename is not empty %}
-                                <img src="{{ attachedLight.url('download-permanent') }}"
-                                     class="solwed-logo solwed-logo-light" alt="Logo" style="max-height:40px; width:auto;"/>
-                            {% else %}
-                                <img src="{{ asset('Core/Assets/Images/logo-dark.png') }}"
-                                     class="solwed-logo solwed-logo-light" alt="SOLWED"/>
-                            {% endif %}
-                        {% else %}
-                            <img src="{{ asset('Core/Assets/Images/logo-dark.png') }}"
-                                 class="solwed-logo solwed-logo-light" alt="SOLWED"/>
-                        {% endif %}
-
-                        {# Logo modo oscuro #}
-                        {% if idlogodark > 0 %}
-                            {% set attachedDark = attachedFile(idlogodark) %}
-                            {% if attachedDark.filename is not empty %}
-                                <img src="{{ attachedDark.url('download-permanent') }}"
-                                     class="solwed-logo solwed-logo-dark" alt="Logo" style="max-height:40px; width:auto;"/>
-                            {% else %}
-                                <img src="{{ asset('Core/Assets/Images/logo-white.png') }}"
-                                     class="solwed-logo solwed-logo-dark" alt="SOLWED"/>
-                            {% endif %}
-                        {% else %}
-                            <img src="{{ asset('Core/Assets/Images/logo-white.png') }}"
-                                 class="solwed-logo solwed-logo-dark" alt="SOLWED"/>
-                        {% endif %}
+                        <span class="sidebar-brand-name">{{ fsc.empresa.nombrecorto | raw }}</span>
                     </a>
                 </div>
 
@@ -139,9 +106,13 @@
                     {% endfor %}
                 </nav>
 
-                {# Powered by #}
+                {# Powered by SOLWED #}
                 <div class="sidebar-powered">
-                    <a href="https://solwed.es" rel="nofollow" target="_blank">Powered by SOLWED.ES</a>
+                    <a href="https://solwed.es" rel="nofollow" target="_blank">
+                        <span>Powered by</span>
+                        <img src="{{ asset('Core/Assets/Images/logo-dark.png') }}" class="sidebar-powered-logo solwed-logo-light" alt="SOLWED"/>
+                        <img src="{{ asset('Core/Assets/Images/logo-white.png') }}" class="sidebar-powered-logo solwed-logo-dark" alt="SOLWED"/>
+                    </a>
                 </div>
             </aside>
         {% endblock %}

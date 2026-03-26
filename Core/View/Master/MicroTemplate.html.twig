@@ -23,11 +23,12 @@
                   href="{{ asset('Dinamic/Assets/Images/apple-icon-180x180.png') }}"/>
         {% endblock %}
         {% block css %}
-            {# Fuentes locales: Inter + Orbitron #}
+            {# Fuentes locales: Chakra Petch + Jura #}
             <link rel="stylesheet" href="{{ asset('Dinamic/Assets/CSS/fonts.css') }}?v={{ 'now' | date('ymdHi') }}"/>
-            <link rel="stylesheet" href="{{ asset('Dinamic/Assets/CSS/tailwind-output.css') }}?v={{ 'now' | date('ymdHi') }}"/>
-            <link rel="stylesheet" href="{{ asset('Dinamic/Assets/CSS/bootstrap-compat.css') }}?v={{ 'now' | date('ymdHi') }}"/>
+            {# Bootstrap 5 dentro de @layer base → prioridad baja #}
+            <style>@import url("{{ asset('node_modules/bootstrap/dist/css/bootstrap.min.css') }}") layer(bootstrap);</style>
             <link rel="stylesheet" href="{{ asset('node_modules/@fortawesome/fontawesome-free/css/all.min.css') }}?v=6"/>
+            {# Tema SOLWED shadcn-ui — fuera de layer → siempre gana #}
             <link rel="stylesheet" href="{{ asset('Dinamic/Assets/CSS/solwed-theme.css') }}?v={{ 'now' | date('ymdHi') }}"/>
         {% endblock %}
         <script src="{{ asset('Dinamic/Assets/JS/lucide.min.js') }}"></script>

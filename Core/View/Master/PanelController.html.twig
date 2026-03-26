@@ -8,83 +8,73 @@
     {{ parent() }}
     {% set pageData = fsc.getPageData() %}
     {% set firstView = fsc.views | first %}
-    <div class="container-fluid d-print-none">
-        <div class="row">
-            <div class="col pb-2">
-                {# -- Breadcrumb móvil -- #}
-                <nav aria-label="breadcrumb" class="d-block d-md-none">
-                    <ol class="breadcrumb">
-                        <li class="breadcrumb-item">
-                            <a href="#">{{ trans(pageData.menu) }}</a>
-                        </li>
-                        {% if pageData.submenu %}
-                            <li class="breadcrumb-item">
-                                <a href="#">{{ trans(pageData.submenu) }}</a>
-                            </li>
-                        {% endif %}
-                        <li class="breadcrumb-item">
-                            <a href="{{ firstView.model.url('list') }}">{{ trans(pageData.title) }}</a>
-                        </li>
-                        <li class="breadcrumb-item active" aria-current="page">
-                            {% if fsc.hasData %}
-                                {{ firstView.model.primaryDescription() }}
-                            {% else %}
-                                {{ trans('new') }}
-                            {% endif %}
-                        </li>
-                    </ol>
-                </nav>
-                {# -- Botones superiores -- #}
-                <div class="flex items-center gap-2 flex-wrap">
-                    <div class="btn-group">
-                        <a href="{{ firstView.model.url('list') }}" class="btn btn-sm btn-secondary">
-                            <i data-lucide="list" class="w-3.5 h-3.5"></i>
-                            <span class="d-none d-lg-inline-block ms-1">{{ trans('all') }}</span>
-                        </a>
-                        <a href="{{ firstView.model.url('edit') }}" class="btn btn-sm btn-secondary"
-                           title="{{ trans('refresh') }}">
-                            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
-                        </a>
-                    </div>
-                    {{ _self.optionsButton(fsc, firstView) }}
-                    {% if fsc.hasData and firstView.settings.btnNew %}
-                        <a href="{{ firstView.model.url('new') }}" class="btn btn-sm btn-success">
-                            <i data-lucide="plus" class="w-3.5 h-3.5"></i>
-                            <span class="d-none d-lg-inline-block ms-1">{{ trans('new') }}</span>
-                        </a>
-                    {% endif %}
-                    {{ firstView.getRow('actions').renderTop() | raw }}
-                    {% if fsc.hasData and firstView.settings.btnPrint %}
-                        {{ _self.printButton(fsc, firstView, i18n) }}
-                    {% endif %}
-                    {% for includeView in getIncludeViews('PanelController', 'topButtons') %}
-                        {% include includeView['path'] %}
-                    {% endfor %}
-                </div>
-            </div>
-            {# -- Info derecha -- #}
-            <div class="col-md-auto d-none d-md-block text-end">
-                <h1 class="h5 mb-0">{{ trans(pageData.title) }}</h1>
-                {% if fsc.hasData %}
-                    <p class="text-muted-foreground text-sm mb-3">{{ firstView.model.primaryDescription() }}</p>
-                {% else %}
-                    <p class="text-info text-sm mb-3">{{ trans('new') }}</p>
-                {% endif %}
-            </div>
-            <div class="col-md-auto d-none d-lg-block">
-                {% set image = fsc.getImageUrl() %}
-                {% if image is empty %}
-                    <i class="{{ pageData.icon }} fa-3x opacity-30" aria-hidden="true"></i>
-                {% else %}
-                    <img src="{{ image }}" alt="{{ fsc.title }}" class="img-thumbnail" style="max-height: 80px;"/>
-                {% endif %}
-            </div>
+    {# -- Botones de acción (se renderizan en el header via JS) -- #}
+    <div id="pageActionsSource" class="d-none">
+        <div class="btn-group">
+            <a href="{{ firstView.model.url('list') }}" class="btn btn-sm btn-secondary">
+                <i data-lucide="list" class="icon-sm"></i>
+                <span class="d-none d-lg-inline-block ms-1">{{ trans('all') }}</span>
+            </a>
+            <a href="{{ firstView.model.url('edit') }}" class="btn btn-sm btn-secondary"
+               title="{{ trans('refresh') }}">
+                <i data-lucide="refresh-cw" class="icon-sm"></i>
+            </a>
         </div>
+        {{ _self.optionsButton(fsc, firstView) }}
+        {% if fsc.hasData and firstView.settings.btnNew %}
+            <a href="{{ firstView.model.url('new') }}" class="btn btn-sm btn-success">
+                <i data-lucide="plus" class="icon-sm"></i>
+                <span class="d-none d-lg-inline-block ms-1">{{ trans('new') }}</span>
+            </a>
+        {% endif %}
+        {{ firstView.getRow('actions').renderTop() | raw }}
+        {% if fsc.hasData and firstView.settings.btnPrint %}
+            {{ _self.printButton(fsc, firstView, i18n) }}
+        {% endif %}
+        {% for includeView in getIncludeViews('PanelController', 'topButtons') %}
+            {% include includeView['path'] %}
+        {% endfor %}
     </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Título en el header
+            var title = document.getElementById('headerPageTitle');
+            if (title) title.innerHTML = '{{ trans(pageData.title) | e('js') }}{% if fsc.hasData %} <small class="solwed-page-desc">{{ firstView.model.primaryDescription() | e('js') }}</small>{% endif %}';
+            // Botones en el header
+            var src = document.getElementById('pageActionsSource');
+            var dest = document.getElementById('headerPageActions');
+            if (src && dest) {
+                dest.innerHTML = src.innerHTML;
+                src.remove();
+                lucide.createIcons();
+            }
+        });
+    </script>
 {% endblock %}
 
 {% block body %}
     {% set firstView = fsc.views | first %}
+    {# -- Pills en móvil (encima del contenido) -- #}
+    {% if fsc.views | length > 1 %}
+        <div class="container-fluid d-md-none">
+            <nav class="solwed-panel-nav" id="mainTabsMobile" role="tablist">
+                {% for viewName, view in fsc.views %}
+                    {% set active = (viewName == fsc.active) ? ' active' : '' %}
+                    {% set disable = view.settings.active ? '' : ' disabled' %}
+                    <a class="solwed-nav-item{{ active }}{{ disable }}" id="{{ viewName }}-tab-mobile"
+                       data-bs-toggle="tab" href="#{{ viewName }}" role="tab"
+                       aria-controls="{{ viewName }}">
+                        <i class="{{ view.icon }} fa-fw" aria-hidden="true"></i>
+                        <span>{{ view.title }}</span>
+                        {% if view.count > 0 %}
+                            <span class="solwed-nav-badge">{{ number(view.count, 0) }}</span>
+                        {% endif %}
+                    </a>
+                {% endfor %}
+            </nav>
+        </div>
+    {% endif %}
+    {# -- Layout principal: contenido + nav lateral dentro de card -- #}
     <div class="container-fluid">
         <div class="solwed-panel-outer">
             {# -- Contenido -- #}
@@ -100,9 +90,9 @@
                     {% endfor %}
                 </div>
             </div>
-            {# -- Nav: pills en móvil, rail vertical a la derecha en desktop -- #}
+            {# -- Nav: rail vertical a la derecha en desktop -- #}
             {% if fsc.views | length > 1 %}
-                <nav class="solwed-panel-nav" id="mainTabs" role="tablist">
+                <nav class="solwed-panel-nav d-none d-md-flex" id="mainTabs" role="tablist">
                     {% for viewName, view in fsc.views %}
                         {% set active = (viewName == fsc.active) ? ' active' : '' %}
                         {% set disable = view.settings.active ? '' : ' disabled' %}
@@ -145,7 +135,7 @@
             <div class="dropdown">
                 <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown"
                         aria-haspopup="true" aria-expanded="false">
-                    <i data-lucide="settings" class="w-3.5 h-3.5 me-1"></i>
+                    <i data-lucide="settings" class="icon-sm me-1"></i>
                     <span class="d-none d-lg-inline-block">{{ trans('options') }}</span>
                 </button>
                 <div class="dropdown-menu">
@@ -171,7 +161,7 @@
     <div class="btn-group">
         <a href="{{ firstView.model.url() }}&action=export&option={{ fsc.exportManager.defaultOption() }}"
            target="_blank" class="btn btn-sm btn-secondary">
-            <i data-lucide="printer" class="w-3.5 h-3.5 me-1"></i>
+            <i data-lucide="printer" class="icon-sm me-1"></i>
             <span class="d-none d-lg-inline-block">{{ trans('print') }}</span>
         </a>
         <button type="button" class="btn btn-sm btn-secondary dropdown-toggle dropdown-toggle-split"
@@ -209,8 +199,8 @@
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title flex items-center gap-2">
-                            <i data-lucide="settings-2" class="w-5 h-5"></i>
+                        <h5 class="modal-title d-flex align-items-center gap-2">
+                            <i data-lucide="settings-2" class="icon-md"></i>
                             {{ trans('advanced') }}
                         </h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>

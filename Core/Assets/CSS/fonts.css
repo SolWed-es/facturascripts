@@ -23,13 +23,34 @@
   src: url(../Fonts/chakra-petch-700.woff2) format('woff2');
 }
 /* ============================================
-   Jura — body text (alineado con solwed-app)
-   Variable font: peso 400-700 en un solo archivo
+   IBM Plex Sans — body text
+   Técnica, clara, profesional
    ============================================ */
 @font-face {
-  font-family: 'Jura';
+  font-family: 'IBM Plex Sans';
   font-style: normal;
-  font-weight: 400 700;
+  font-weight: 400;
   font-display: swap;
-  src: url(../Fonts/jura-variable.woff2) format('woff2');
+  src: url(../Fonts/ibm-plex-sans-400.woff2) format('woff2');
+}
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(../Fonts/ibm-plex-sans-500.woff2) format('woff2');
+}
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url(../Fonts/ibm-plex-sans-600.woff2) format('woff2');
+}
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url(../Fonts/ibm-plex-sans-700.woff2) format('woff2');
 }

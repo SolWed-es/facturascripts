@@ -14,12 +14,14 @@
             {{ parent() }}
         {% endblock %}
         <div class="solwed-main">
-            {% include 'Master/AppHeader.html.twig' %}
-            <div class="flex-1 overflow-auto bg-background">
-                {% block messages %}
+            <div class="solwed-header-wrap d-print-none">
+                {% include 'Master/AppHeader.html.twig' %}
+                {% block bodyHeaderOptions %}
                     {{ parent() }}
                 {% endblock %}
-                {% block bodyHeaderOptions %}
+            </div>
+            <div class="flex-1 overflow-auto bg-background">
+                {% block messages %}
                     {{ parent() }}
                 {% endblock %}
                 {% block body %}
