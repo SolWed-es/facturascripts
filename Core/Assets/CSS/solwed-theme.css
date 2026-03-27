@@ -591,36 +591,34 @@ body:has(.solwed-sidebar.collapsed) .solwed-main {
 
 /* Header page title — responsive */
 .solwed-header-title {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+  line-height: 1.1;
+  padding: 0 0.5rem;
+}
+.solwed-header-title .solwed-page-name {
   font-family: 'Chakra Petch', sans-serif;
-  font-size: clamp(0.85rem, 3vw, 1.4rem);
+  font-size: clamp(0.9rem, 2.5vw, 1.3rem);
   font-weight: 700;
   color: var(--foreground);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 40%;
-  text-align: center;
 }
 .solwed-header-title .solwed-page-desc {
   display: none;
 }
-.solwed-header {
-  position: relative;
-}
 @media (min-width: 768px) {
-  .solwed-header-title {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    max-width: 50%;
-  }
   .solwed-header-title .solwed-page-desc {
-    display: inline;
+    display: block;
     font-family: 'IBM Plex Sans', sans-serif;
-    font-size: 0.85rem;
+    font-size: 0.75rem;
     font-weight: 400;
     color: var(--muted-foreground);
-    margin-left: 0.5rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
     cursor: pointer;
     user-select: all;
   }

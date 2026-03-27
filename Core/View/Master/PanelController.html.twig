@@ -39,7 +39,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             // Título en el header
             var title = document.getElementById('headerPageTitle');
-            if (title) title.innerHTML = '{{ trans(pageData.title) | e('js') }}{% if fsc.hasData %} <small class="solwed-page-desc">{{ firstView.model.primaryDescription() | e('js') }}</small>{% endif %}';
+            if (title) title.innerHTML = '<div class="solwed-page-name">{{ trans(pageData.title) | e('js') }}</div>{% if fsc.hasData %}<div class="solwed-page-desc">{{ firstView.model.primaryDescription() | e('js') }}</div>{% endif %}';
             // Botones en el header
             var src = document.getElementById('pageActionsSource');
             var dest = document.getElementById('headerPageActions');

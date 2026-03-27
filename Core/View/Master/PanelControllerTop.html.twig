@@ -36,7 +36,7 @@
             var title = document.getElementById('headerPageTitle');
             if (title) {
                 var desc = '{{ fsc.hasData ? firstView.model.primaryDescription() | e('js') : trans('new') | e('js') }}';
-                title.innerHTML = '{{ trans(pageData.title) | e('js') }}' + (desc ? ' <small class="text-muted-foreground">' + desc + '</small>' : '');
+                title.innerHTML = '<div class="solwed-page-name">{{ trans(pageData.title) | e('js') }}</div>' + (desc ? '<div class="solwed-page-desc">' + desc + '</div>' : '');
             }
             var src = document.getElementById('pageActionsSource');
             var dest = document.getElementById('headerPageActions');
