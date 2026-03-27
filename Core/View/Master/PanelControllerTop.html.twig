@@ -5,85 +5,48 @@
     {{ parent() }}
     {% set pageData = fsc.getPageData() %}
     {% set firstView = fsc.views | first %}
-    <div class="container-fluid d-print-none">
-        <div class="row">
-            <div class="col-md-12">
-                {# Breadcrumb móvil #}
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb d-md-none">
-                        <li class="breadcrumb-item">
-                            <a href="#">{{ trans(pageData.menu) }}</a>
-                        </li>
-                        {% if pageData.submenu %}
-                            <li class="breadcrumb-item">
-                                <a href="#">{{ trans(pageData.submenu) }}</a>
-                            </li>
-                        {% endif %}
-                        <li class="breadcrumb-item">
-                            <a href="{{ firstView.model.url('list') }}">{{ trans(pageData.title) }}</a>
-                        </li>
-                        <li class="breadcrumb-item active" aria-current="page">
-                            {% if fsc.hasData %}
-                                {{ firstView.model.primaryDescription() | raw }}
-                            {% else %}
-                                {{ trans('new') }}
-                            {% endif %}
-                        </li>
-                    </ol>
-                </nav>
-            </div>
+    <div id="pageActionsSource" class="d-none">
+        <div class="btn-group">
+            <a href="{{ firstView.model.url('list') }}" class="btn btn-sm btn-secondary">
+                <i data-lucide="list" class="icon-sm"></i>
+                <span class="d-none d-lg-inline-block ms-1">{{ trans('all') }}</span>
+            </a>
+            <a href="{{ firstView.model.url('edit') }}" class="btn btn-sm btn-secondary"
+               title="{{ trans('refresh') }}">
+                <i data-lucide="refresh-cw" class="icon-sm"></i>
+            </a>
         </div>
-        <div class="row">
-            {# Botones arriba izquierda #}
-            <div class="col-md-8 mb-2">
-                <div class="flex items-center gap-2 flex-wrap">
-                    <div class="btn-group">
-                        <a href="{{ firstView.model.url('list') }}" class="btn btn-sm btn-secondary">
-                            <i data-lucide="list" class="w-3.5 h-3.5"></i>
-                            <span class="d-none d-lg-inline-block ms-1">{{ trans('all') }}</span>
-                        </a>
-                        <a href="{{ firstView.model.url('edit') }}" class="btn btn-sm btn-secondary"
-                           title="{{ trans('refresh') }}">
-                            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
-                        </a>
-                    </div>
-                    {# Botón opciones #}
-                    {{ _self.optionsButton(fsc, firstView, i18n) }}
-                    {# Botón nuevo #}
-                    {% if fsc.hasData and firstView.settings.btnNew %}
-                        <a href="{{ firstView.model.url('new') }}" class="btn btn-sm btn-success">
-                            <i data-lucide="plus" class="w-3.5 h-3.5"></i>
-                            <span class="d-none d-lg-inline-block ms-1">{{ trans('new') }}</span>
-                        </a>
-                    {% endif %}
-                    {# Botones de acción #}
-                    {{ firstView.getRow('actions').renderTop() | raw }}
-                    {# Botón imprimir #}
-                    {% if fsc.hasData and firstView.settings.btnPrint %}
-                        {{ _self.printButton(fsc, firstView, i18n) }}
-                    {% endif %}
-                    {% for includeView in getIncludeViews('PanelControllerTop', 'topButtons') %}
-                        {% include includeView['path'] %}
-                    {% endfor %}
-                </div>
-            </div>
-            {# Info derecha #}
-            <div class="col-md d-none d-md-inline-block text-end">
-                {% set image = fsc.getImageUrl() %}
-                {% if image is empty %}
-                    <i class="{{ pageData.icon }} fa-3x ps-3 float-end opacity-30" aria-hidden="true"></i>
-                {% else %}
-                    <img src="{{ image }}" alt="{{ fsc.title }}" class="img-thumbnail ms-3 mb-2 float-end max-h-20"/>
-                {% endif %}
-                <h1 class="h5 mb-0">{{ trans(pageData.title) }}</h1>
-                {% if fsc.hasData %}
-                    <p class="text-muted-foreground text-sm mb-3">{{ firstView.model.primaryDescription() | raw }}</p>
-                {% else %}
-                    <p class="text-muted-foreground text-sm mb-3">{{ trans('new') }}</p>
-                {% endif %}
-            </div>
-        </div>
+        {{ _self.optionsButton(fsc, firstView, i18n) }}
+        {% if fsc.hasData and firstView.settings.btnNew %}
+            <a href="{{ firstView.model.url('new') }}" class="btn btn-sm btn-success">
+                <i data-lucide="plus" class="icon-sm"></i>
+                <span class="d-none d-lg-inline-block ms-1">{{ trans('new') }}</span>
+            </a>
+        {% endif %}
+        {{ firstView.getRow('actions').renderTop() | raw }}
+        {% if fsc.hasData and firstView.settings.btnPrint %}
+            {{ _self.printButton(fsc, firstView, i18n) }}
+        {% endif %}
+        {% for includeView in getIncludeViews('PanelControllerTop', 'topButtons') %}
+            {% include includeView['path'] %}
+        {% endfor %}
     </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var title = document.getElementById('headerPageTitle');
+            if (title) {
+                var desc = '{{ fsc.hasData ? firstView.model.primaryDescription() | e('js') : trans('new') | e('js') }}';
+                title.innerHTML = '{{ trans(pageData.title) | e('js') }}' + (desc ? ' <small class="text-muted-foreground">' + desc + '</small>' : '');
+            }
+            var src = document.getElementById('pageActionsSource');
+            var dest = document.getElementById('headerPageActions');
+            if (src && dest) {
+                dest.innerHTML = src.innerHTML;
+                src.remove();
+                lucide.createIcons();
+            }
+        });
+    </script>
     {# Tabs #}
     <div class="nav-tabs-wrapper d-print-none">
         <ul class="nav nav-tabs nav-tabs-scroll" id="mainTabs" role="tablist">
