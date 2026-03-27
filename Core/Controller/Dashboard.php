@@ -56,6 +56,9 @@ class Dashboard extends Controller
     public $openLinks = [];
 
     /** @var array */
+    public $salesChart = [];
+
+    /** @var array */
     public $receipts = [];
 
     /** @var bool */
@@ -175,9 +178,19 @@ class Dashboard extends Controller
         $this->loadCreateLinks();
         $this->loadOpenLinks();
         $this->loadStats();
+        $this->loadSalesChart();
         $this->loadLowStockSection();
         $this->loadReceiptSection();
         $this->pipe('loadExtensions');
+    }
+
+    private function loadSalesChart(): void
+    {
+        $totalModel = new TotalModel();
+        for ($i = 11; $i >= 0; $i--) {
+            $month = $this->getStatsMonth($i);
+            $this->salesChart[$month] = $totalModel->sum('facturascli', 'neto', $this->getStatsWhere('fecha', $i));
+        }
     }
 
     /**

@@ -1475,6 +1475,7 @@
     "running-plugin-cron": "Ejecutando cron del plugin %pluginName%",
     "running-work-queue": "Ejecutando la cola de eventos de trabajo",
     "sales": "Ventas",
+    "sales-last-12-months": "Ventas últimos 12 meses",
     "sales-invoice": "Factura de venta",
     "sales-rate": "Tasa de ventas",
     "sales-subaccount-not-found": "Subcuenta de ventas no encontrada",

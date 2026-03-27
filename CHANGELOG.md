@@ -2,6 +2,19 @@
 
 Historial de cambios de FacturaSolwed. Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## [2026] - 2026-03-27
+
+### Added
+- Dashboard: grafico de ventas ultimos 12 meses con Chart.js
+- Dashboard: header refactorizado con bloque `bodyHeaderOptions`
+- Traducciones: clave `sales-last-12-months` (es_ES, en_EN)
+
+### Changed
+- Version bumpeada a 2026 — **FacturaSolwed v2026**
+
+### Dev
+- package.json: anadidos @pdfme/*, esbuild como devDependencies
+
 ## [2025.93] - 2026-03-23
 
 ### Branding

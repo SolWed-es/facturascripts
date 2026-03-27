@@ -2,25 +2,45 @@
 {% extends "Master/MenuBghTemplate.html.twig" %}
 {% import 'Macro/Utils.html.twig' as Utils %}
 
+{% block bodyHeaderOptions %}
+    {{ parent() }}
+    {% set pageData = fsc.getPageData() %}
+    <div id="pageActionsSource" class="d-none">
+        <div class="btn-group">
+            <a class="btn btn-sm btn-secondary" href="{{ fsc.url() }}"
+               title="{{ trans('refresh') }}">
+                <i data-lucide="refresh-cw" class="icon-sm"></i>
+            </a>
+            {% if pageData.name == fsc.user.homepage %}
+                <a class="btn btn-sm btn-secondary active" href="{{ fsc.url() }}?defaultPage=FALSE"
+                   title="{{ trans('marked-as-homepage') }}">
+                    <i data-lucide="bookmark" class="icon-sm fill-current"></i>
+                </a>
+            {% else %}
+                <a class="btn btn-sm btn-secondary" href="{{ fsc.url() }}?defaultPage=TRUE"
+                   title="{{ trans('mark-as-homepage') }}">
+                    <i data-lucide="bookmark" class="icon-sm"></i>
+                </a>
+            {% endif %}
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var title = document.getElementById('headerPageTitle');
+            if (title) title.innerHTML = '{{ fsc.title | e('js') }}';
+            var src = document.getElementById('pageActionsSource');
+            var dest = document.getElementById('headerPageActions');
+            if (src && dest) {
+                dest.innerHTML = src.innerHTML;
+                src.remove();
+                lucide.createIcons();
+            }
+        });
+    </script>
+{% endblock %}
+
 {% block body %}
     <div class="px-4 pt-4 pb-8">
-        {# Header del dashboard #}
-        <div class="flex items-center justify-between mb-6">
-            <h1 class="text-lg font-heading font-semibold flex items-center gap-2">
-                {% if fsc.getPageData().name == fsc.user.homepage %}
-                    <a class="btn btn-sm btn-secondary active"
-                       href="{{ fsc.url() }}?defaultPage=FALSE" title="{{ trans('marked-as-homepage') }}">
-                        <i data-lucide="bookmark" class="w-4 h-4 fill-current"></i>
-                    </a>
-                {% else %}
-                    <a class="btn btn-sm btn-secondary"
-                       href="{{ fsc.url() }}?defaultPage=TRUE" title="{{ trans('mark-as-homepage') }}">
-                        <i data-lucide="bookmark" class="w-4 h-4"></i>
-                    </a>
-                {% endif %}
-                <span>{{ fsc.title }}</span>
-            </h1>
-        </div>
 
         {# Links rápidos #}
         {% block sectionLinks %}
@@ -62,6 +82,23 @@
             {{ _self.sectionStats(fsc) }}
         {% endblock %}
 
+        {# Gráfico ventas 12 meses #}
+        {% if fsc.salesChart %}
+            <div class="card-shadcn mb-6">
+                <div class="p-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-sm font-semibold flex items-center gap-2">
+                            <i data-lucide="trending-up" class="w-4 h-4"></i>
+                            {{ trans('sales-last-12-months') }}
+                        </h3>
+                    </div>
+                    <div style="position:relative;height:250px;">
+                        <canvas id="salesChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
         {# Secciones #}
         {% block sections %}
             {% if 'receipts' in fsc.sections %}
@@ -74,6 +111,88 @@
         {% for includeView in getIncludeViews('Dashboard', 'sectionsAfter') %}
             {% include includeView['path'] %}
         {% endfor %}
+
+        {% if fsc.salesChart %}
+            <script src="{{ asset('node_modules/chart.js/dist/Chart.min.js') }}"></script>
+            <script>
+                (function () {
+                    var salesData = {{ fsc.salesChart|json_encode|raw }};
+                    var labels = Object.keys(salesData);
+                    var values = Object.values(salesData);
+                    var chartInstance = null;
+
+                    function isDark() {
+                        return document.documentElement.getAttribute('data-theme') === 'solwed-dark';
+                    }
+
+                    function renderChart() {
+                        if (chartInstance) {
+                            chartInstance.destroy();
+                        }
+                        var dark = isDark();
+                        var textColor = dark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)';
+                        var gridColor = dark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
+                        var ctx = document.getElementById('salesChart').getContext('2d');
+
+                        chartInstance = new Chart(ctx, {
+                            type: 'line',
+                            data: {
+                                labels: labels,
+                                datasets: [{
+                                    label: '{{ trans("sales") }}',
+                                    data: values,
+                                    backgroundColor: 'rgba(34, 197, 94, 0.08)',
+                                    borderColor: 'rgb(34, 197, 94)',
+                                    borderWidth: 2,
+                                    pointBackgroundColor: 'rgb(34, 197, 94)',
+                                    pointBorderColor: 'rgb(34, 197, 94)',
+                                    pointRadius: 3,
+                                    pointHoverRadius: 5,
+                                    fill: true,
+                                    lineTension: 0.3
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                legend: { display: false },
+                                scales: {
+                                    xAxes: [{
+                                        gridLines: { display: false },
+                                        ticks: { fontColor: textColor, fontSize: 11 }
+                                    }],
+                                    yAxes: [{
+                                        gridLines: { color: gridColor, drawBorder: false },
+                                        ticks: { fontColor: textColor, fontSize: 11, beginAtZero: true }
+                                    }]
+                                },
+                                tooltips: {
+                                    backgroundColor: dark ? 'rgba(255,255,255,0.95)' : 'rgba(0,0,0,0.8)',
+                                    titleFontColor: dark ? '#000' : '#fff',
+                                    bodyFontColor: dark ? '#000' : '#fff',
+                                    callbacks: {
+                                        label: function (item) {
+                                            return item.yLabel.toLocaleString('es-ES', {minimumFractionDigits: 2}) + ' €';
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                    }
+
+                    document.addEventListener('DOMContentLoaded', renderChart);
+
+                    var observer = new MutationObserver(function (mutations) {
+                        mutations.forEach(function (m) {
+                            if (m.attributeName === 'data-theme') {
+                                renderChart();
+                            }
+                        });
+                    });
+                    observer.observe(document.documentElement, { attributes: true });
+                })();
+            </script>
+        {% endif %}
 
     </div>
 {% endblock %}

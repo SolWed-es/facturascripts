@@ -1483,6 +1483,7 @@
   "running-plugin-cron": "Running FacturaSolwed cron for plugin %pluginName%",
   "running-work-queue": "Running the work event queue.",
   "sales": "Sales",
+  "sales-last-12-months": "Sales last 12 months",
   "sales-invoice": "Factura de venta",
   "sales-rate": "Sales rate",
   "sales-subaccount-not-found": "Sales subaccount not found",
