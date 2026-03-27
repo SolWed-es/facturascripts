@@ -18,6 +18,15 @@ jobs:
           composer install --no-dev --optimize-autoloader
           npm install --omit=dev
 
+      - name: Validate version
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          KERNEL_VERSION=$(php -r "require 'vendor/autoload.php'; echo \FacturaScripts\Core\Kernel::version();")
+          if [ "$TAG_VERSION" != "$KERNEL_VERSION" ]; then
+            echo "::error::Tag version $TAG_VERSION does not match Kernel::version() $KERNEL_VERSION"
+            exit 1
+          fi
+
       - name: Build ZIP
         run: |
           mkdir -p /tmp/build/facturascripts
@@ -26,12 +35,16 @@ jobs:
             --exclude='.docker' --exclude='Dockerfile' \
             --exclude='docker-compose.yml' \
             --exclude='MyFiles' --exclude='Plugins' \
+            --exclude='tests' --exclude='phpunit.xml*' \
+            --exclude='phpstan.neon*' --exclude='phpcs.xml*' \
+            --exclude='CLAUDE.md' --exclude='.env*' \
+            --exclude='CHANGELOG.md' \
             . /tmp/build/facturascripts/
-          cd /tmp/build && zip -r facturascripts.zip facturascripts/
+          cd /tmp/build && zip -r facturasolwed.zip facturascripts/
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: /tmp/build/facturascripts.zip
+          files: /tmp/build/facturasolwed.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
