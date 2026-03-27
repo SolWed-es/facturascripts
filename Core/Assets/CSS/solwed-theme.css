@@ -613,7 +613,6 @@ body:has(.solwed-sidebar.collapsed) .solwed-main {
     left: 50%;
     transform: translateX(-50%);
     max-width: 50%;
-    pointer-events: none;
   }
   .solwed-header-title .solwed-page-desc {
     display: inline;
@@ -622,6 +621,11 @@ body:has(.solwed-sidebar.collapsed) .solwed-main {
     font-weight: 400;
     color: var(--muted-foreground);
     margin-left: 0.5rem;
+    cursor: pointer;
+    user-select: all;
+  }
+  .solwed-header-title .solwed-page-desc:hover {
+    color: var(--foreground);
   }
 }
 

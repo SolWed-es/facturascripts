@@ -9,8 +9,18 @@
         <div id="headerPageActions" class="d-flex align-items-center gap-1"></div>
     </div>
 
-    {# Centro: título de página #}
+    {# Centro: título de página (click en descripción = copiar) #}
     <span id="headerPageTitle" class="solwed-header-title"></span>
+    <script>
+        document.addEventListener('click', function(e) {
+            var desc = e.target.closest('.solwed-page-desc');
+            if (desc) {
+                navigator.clipboard.writeText(desc.textContent.trim());
+                desc.style.color = 'var(--success, #22c55e)';
+                setTimeout(function() { desc.style.color = ''; }, 800);
+            }
+        });
+    </script>
 
     {# Derecha: iconos + usuario #}
     <div class="d-flex align-items-center gap-1">
