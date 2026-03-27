@@ -29,19 +29,6 @@
                 <i data-lucide="refresh-cw" class="icon-sm"></i>
             </a>
         </div>
-        {% if fsc.telemetryManager.ready() %}
-            <button class="btn btn-sm btn-secondary" type="button" data-bs-toggle="modal"
-                    data-bs-target="#modalTelemetry">
-                <i data-lucide="badge-check" class="icon-sm me-1"></i>
-                <span class="d-none d-md-inline-block">{{ trans('manage-installation') }}</span>
-            </button>
-        {% else %}
-            <button class="btn btn-sm btn-warning" type="button" data-bs-toggle="modal"
-                    data-bs-target="#modalTelemetry">
-                <i data-lucide="badge-check" class="icon-sm me-1"></i>
-                <span class="d-none d-md-inline-block">Conectar con SolWed Mind</span>
-            </button>
-        {% endif %}
     </div>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -144,63 +131,6 @@
                             </form>
                         </div>
                     </div>
-                {% elseif fsc.telemetryManager.ready() == false %}
-                    <hr class="border-border"/>
-                    <div class="mt-4 mb-3">
-                        {{ Utils.registerInstall(false) }}
-                    </div>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-    <div class="modal fade" id="modalTelemetry" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                {% if fsc.telemetryManager.ready() %}
-                    <div class="modal-header">
-                        <h5 class="modal-title flex items-center gap-2">
-                            <i data-lucide="badge-check" class="w-5 h-5"></i>
-                            {{ trans('registered-installation', {'%number%': fsc.telemetryManager.id()}) }}
-                        </h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                aria-label="{{ trans('close') }}"></button>
-                    </div>
-                    <div class="modal-body">
-                        <p>{{ trans('registered-installation-p') }}</p>
-                        <p>{{ trans('telemetry-data-to-send') }}</p>
-                        <a class="btn btn-primary float-start" href="{{ fsc.url() }}?action=claim-install"
-                           target="_blank">
-                            <i data-lucide="settings" class="w-4 h-4 me-1 inline"></i>
-                            {{ trans('manage') }}
-                        </a>
-                        <form action="{{ fsc.url() }}" method="post" onsubmit="animateSpinner('add')">
-                            {{ formToken() }}
-                            <input type="hidden" name="action" value="unlink"/>
-                            <button type="submit" class="btn btn-danger btn-spin-action float-end">
-                                <i data-lucide="unlink" class="w-4 h-4 me-1 inline"></i>
-                                {{ trans('unlink') }}
-                            </button>
-                        </form>
-                    </div>
-                {% else %}
-                    <form action="{{ fsc.url() }}" method="post" onsubmit="animateSpinner('add')">
-                        {{ formToken() }}
-                        <input type="hidden" name="action" value="register"/>
-                        <div class="modal-header">
-                            <h5 class="modal-title">
-                                <i data-lucide="badge-check" class="w-5 h-5 me-1 inline"></i> Conectar con SolWed Mind
-                            </h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                    aria-label="{{ trans('close') }}"></button>
-                        </div>
-                        <div class="modal-body">
-                            <p>Conecta tu instalación con SolWed Mind para recibir actualizaciones automáticas, soporte y acceso al Portal de plugins.</p>
-                            <p class="text-muted-foreground text-sm">Se enviarán datos básicos a mind.solwed.es: versión, país, plugins activos.</p>
-                            <button type="submit" class="btn btn-primary btn-spin-action w-100">
-                                Conectar con SolWed Mind
-                            </button>
-                        </div>
-                    </form>
                 {% endif %}
             </div>
         </div>
