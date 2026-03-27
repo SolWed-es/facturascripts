@@ -502,6 +502,7 @@ class Updater extends Controller
 
             Plugins::deploy(true, false);
             Cache::clear();
+            Tools::folderDelete(Tools::folder('MyFiles', 'Cache', 'Twig'));
             $this->setTemplate(false);
             $this->redirect($this->getClassName() . '?action=post-update&init=' . $init, 3);
         }
