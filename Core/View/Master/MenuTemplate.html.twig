@@ -91,10 +91,14 @@
         {% block navbar %}
             {# ===== SIDEBAR ===== #}
             <aside id="solwedSidebar" class="solwed-sidebar d-print-none">
-                {# Brand: solo nombre empresa centrado #}
+                {# Brand: logo de empresa o nombre #}
                 <div class="sidebar-brand">
-                    <a href="{{ asset(fsc.user.homepage) }}" title="{{ trans('homepage') }}">
-                        <span class="sidebar-brand-name">{{ fsc.empresa.nombrecorto | raw }}</span>
+                    <a href="{{ asset('Dashboard') }}" title="{{ trans('dashboard') }}">
+                        {% if fsc.empresa.logoUrl() %}
+                            <img src="{{ asset(fsc.empresa.logoUrl()) }}" alt="{{ fsc.empresa.nombrecorto }}" class="sidebar-brand-logo"/>
+                        {% else %}
+                            <span class="sidebar-brand-name">{{ fsc.empresa.nombrecorto | raw }}</span>
+                        {% endif %}
                     </a>
                 </div>
 

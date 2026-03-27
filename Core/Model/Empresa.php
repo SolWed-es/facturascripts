@@ -164,6 +164,20 @@ class Empresa extends ModelClass
         return DinAlmacen::all($where, [], 0, 0);
     }
 
+    public function logoUrl(): string
+    {
+        if (empty($this->idlogo)) {
+            return '';
+        }
+
+        $file = new AttachedFile();
+        if ($file->load($this->idlogo) && file_exists($file->path)) {
+            return $file->path . '?myft=' . \FacturaScripts\Core\Lib\MyFilesToken::get($file->path, false);
+        }
+
+        return '';
+    }
+
     public function install(): string
     {
         // needed dependencies

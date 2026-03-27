@@ -1,6 +1,6 @@
 {# SolwedShadcn — Header top bar #}
 <header class="solwed-header d-print-none">
-    {# Izquierda: hamburger + botones de acción de página #}
+    {# Izquierda: hamburger + botones #}
     <div class="d-flex align-items-center gap-2 flex-shrink-0">
         <button type="button" class="solwed-header-icon"
                 onclick="toggleSidebar()" title="Menu">
@@ -9,8 +9,6 @@
         <div id="headerPageActions" class="d-flex align-items-center gap-1"></div>
     </div>
 
-    {# Centro: título + descripción (click en descripción = copiar) #}
-    <div id="headerPageTitle" class="solwed-header-title"></div>
     <script>
         document.addEventListener('click', function(e) {
             var desc = e.target.closest('.solwed-page-desc');
@@ -22,8 +20,9 @@
         });
     </script>
 
-    {# Derecha: iconos + usuario #}
+    {# Derecha: título + iconos + usuario #}
     <div class="d-flex align-items-center gap-1">
+        <div id="headerPageTitle" class="solwed-header-title"></div>
         {% for includeView in getIncludeViews('MenuTemplate', 'MenuIconBefore') %}
             {% include includeView['path'] %}
         {% endfor %}
