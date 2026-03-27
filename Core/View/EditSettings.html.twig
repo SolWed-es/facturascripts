@@ -2,22 +2,25 @@
 {% extends "Master/PanelController.html.twig" %}
 
 {% block bodyHeaderOptions %}
-    {% set pageData = fsc.getPageData() %}
-    <div class="container-fluid mb-2">
-        <div class="row">
-            <div class="col-1">
-                <div class="btn-group">
-                    <a class="btn btn-sm btn-secondary" href="{{ fsc.url() }}" title="{{ trans('refresh') }}">
-                        <i data-lucide="refresh-cw" class="w-4 h-4"></i>
-                    </a>
-                </div>
-            </div>
-            <div class="col-11 text-end">
-                <h1 class="h4 font-heading font-semibold">
-                    {{ fsc.title }}
-                    <i class="{{ pageData.icon }} fa-fw" aria-hidden="true"></i>
-                </h1>
-            </div>
+    {{ parent() }}
+    <div id="pageActionsSource" class="d-none">
+        <div class="btn-group">
+            <a class="btn btn-sm btn-secondary" href="{{ fsc.url() }}" title="{{ trans('refresh') }}">
+                <i data-lucide="refresh-cw" class="icon-sm"></i>
+            </a>
         </div>
     </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var title = document.getElementById('headerPageTitle');
+            if (title) title.innerHTML = '{{ fsc.title | e('js') }}';
+            var src = document.getElementById('pageActionsSource');
+            var dest = document.getElementById('headerPageActions');
+            if (src && dest) {
+                dest.innerHTML = src.innerHTML;
+                src.remove();
+                lucide.createIcons();
+            }
+        });
+    </script>
 {% endblock %}

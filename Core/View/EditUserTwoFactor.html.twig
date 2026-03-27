@@ -2,14 +2,20 @@
 {% extends "Master/MenuBghTemplate.html.twig" %}
 
 {% block bodyHeaderOptions %}
-    <br/><br/><br/><br/><br/>
+    {{ parent() }}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var title = document.getElementById('headerPageTitle');
+            if (title) title.innerHTML = '{{ trans("two-factor-auth") | e('js') }}';
+        });
+    </script>
 {% endblock %}
 
 {% block body %}
     {% set firstView = fsc.views | first %}
     {% set user = firstView.model %}
 
-    <div class="container" style="margin-top: -70px;">
+    <div class="container">
         <div class="row">
             <div class="col-sm-12">
                 <form action="{{ user.url() }}" method="post">
@@ -19,11 +25,6 @@
                            value="{{ user.two_factor_secret_key }}"/>
                     <div class="card-shadcn">
                         <div class="p-4">
-                            <h1 class="h2 font-heading font-semibold flex items-center gap-2 mb-3">
-                                <i data-lucide="shield-check" class="w-7 h-7"></i>
-                                {{ trans('two-factor-auth') }}
-                            </h1>
-                            <hr class="border-border mb-4"/>
                             {% set twoFactorUrl = user.getTwoFactorUrl() %}
                             {% set twoFactorQr = user.getTwoFactorQR() %}
                             <div class="row d-flex align-items-center">

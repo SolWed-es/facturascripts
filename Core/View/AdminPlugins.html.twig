@@ -4,48 +4,50 @@
 
 {% block bodyHeaderOptions %}
     {{ parent() }}
-    <div class="container-fluid mb-2">
-        <div class="row">
-            <div class="col-sm-6">
-                <div class="flex items-center gap-2 flex-wrap">
-                    <div class="btn-group">
-                        <a class="btn btn-sm btn-secondary" href="{{ fsc.url() }}" title="{{ trans('refresh') }}">
-                            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
-                        </a>
-                        {% if fsc.getPageData()['name'] == fsc.user.homepage %}
-                            <a class="btn btn-sm btn-secondary active" href="{{ fsc.url() }}?defaultPage=FALSE"
-                               title="{{ trans('marked-as-homepage') }}">
-                                <i data-lucide="bookmark" class="w-3.5 h-3.5 fill-current"></i>
-                            </a>
-                        {% else %}
-                            <a class="btn btn-sm btn-secondary" href="{{ fsc.url() }}?defaultPage=TRUE"
-                               title="{{ trans('mark-as-homepage') }}">
-                                <i data-lucide="bookmark" class="w-3.5 h-3.5"></i>
-                            </a>
-                        {% endif %}
-                    </div>
-                    {% if config('disable_add_plugins', false) == false %}
-                        <button class="btn btn-spin-action btn-sm btn-success" type="button" data-bs-toggle="modal"
-                                data-bs-target="#modalAddPlugin">
-                            <i data-lucide="plus" class="w-3.5 h-3.5 me-1"></i>
-                            <span class="d-none d-sm-inline-block">{{ trans('add') }}</span>
-                        </button>
-                    {% endif %}
-                    <a href="{{ fsc.url() }}?action=rebuild&multireqtoken={{ formToken(false) }}"
-                       onclick="animateSpinner('add')" class="btn btn-spin-action btn-sm btn-warning">
-                        <i data-lucide="hammer" class="w-3.5 h-3.5 me-1"></i>
-                        <span class="d-none d-sm-inline-block">{{ trans('rebuild') }}</span>
-                    </a>
-                </div>
-            </div>
-            <div class="col-sm text-end">
-                <h1 class="h3">
-                    {{ trans(fsc.getPageData()['title']) | capitalize }}
-                    <i class="{{ fsc.getPageData()['icon'] }} opacity-40" aria-hidden="true"></i>
-                </h1>
-            </div>
+    {% set pageData = fsc.getPageData() %}
+    <div id="pageActionsSource" class="d-none">
+        <div class="btn-group">
+            <a class="btn btn-sm btn-secondary" href="{{ fsc.url() }}" title="{{ trans('refresh') }}">
+                <i data-lucide="refresh-cw" class="icon-sm"></i>
+            </a>
+            {% if pageData.name == fsc.user.homepage %}
+                <a class="btn btn-sm btn-secondary active" href="{{ fsc.url() }}?defaultPage=FALSE"
+                   title="{{ trans('marked-as-homepage') }}">
+                    <i data-lucide="bookmark" class="icon-sm fill-current"></i>
+                </a>
+            {% else %}
+                <a class="btn btn-sm btn-secondary" href="{{ fsc.url() }}?defaultPage=TRUE"
+                   title="{{ trans('mark-as-homepage') }}">
+                    <i data-lucide="bookmark" class="icon-sm"></i>
+                </a>
+            {% endif %}
         </div>
+        {% if config('disable_add_plugins', false) == false %}
+            <button class="btn btn-spin-action btn-sm btn-success" type="button" data-bs-toggle="modal"
+                    data-bs-target="#modalAddPlugin">
+                <i data-lucide="plus" class="icon-sm me-1"></i>
+                <span class="d-none d-sm-inline-block">{{ trans('add') }}</span>
+            </button>
+        {% endif %}
+        <a href="{{ fsc.url() }}?action=rebuild&multireqtoken={{ formToken(false) }}"
+           onclick="animateSpinner('add')" class="btn btn-spin-action btn-sm btn-warning">
+            <i data-lucide="hammer" class="icon-sm me-1"></i>
+            <span class="d-none d-sm-inline-block">{{ trans('rebuild') }}</span>
+        </a>
     </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var title = document.getElementById('headerPageTitle');
+            if (title) title.innerHTML = '{{ fsc.title | e('js') }}';
+            var src = document.getElementById('pageActionsSource');
+            var dest = document.getElementById('headerPageActions');
+            if (src && dest) {
+                dest.innerHTML = src.innerHTML;
+                src.remove();
+                lucide.createIcons();
+            }
+        });
+    </script>
     <ul class="nav nav-tabs" role="tablist">
         <li class="nav-item">
             <a class="nav-link active" id="installedPluginsTab" data-bs-toggle="tab" href="#installed" role="tab">

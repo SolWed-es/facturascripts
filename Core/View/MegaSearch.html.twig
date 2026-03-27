@@ -1,15 +1,21 @@
 {# SolwedShadcn — Búsqueda global #}
 {% extends "Master/MenuBgTemplate.html.twig" %}
 
+{% block bodyHeaderOptions %}
+    {{ parent() }}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var title = document.getElementById('headerPageTitle');
+            if (title) title.innerHTML = '{{ trans("mega-search") | e('js') }}';
+        });
+    </script>
+{% endblock %}
+
 {% block body %}
     <div class="container-fluid">
         <div class="row justify-content-center">
             <div class="col-sm-8 col-md-6 col-lg-5 col-xl-4">
                 <div class="text-center mb-4 {% if fsc.query == '' %}mt-4 mt-xl-5 pt-xl-5{% else %}mt-4{% endif %}">
-                    <h1 class="mb-2 font-heading font-semibold {% if fsc.query != '' %}h3{% endif %}">
-                        <i data-lucide="search" class="w-7 h-7 text-info inline"></i>
-                        {{ trans('mega-search') }}
-                    </h1>
                     <p class="text-muted-foreground">{{ trans('search-in-all-pages') }}</p>
                 </div>
                 <form action="{{ fsc.url() }}" method="post" class="form" onsubmit="animateSpinner('add')">

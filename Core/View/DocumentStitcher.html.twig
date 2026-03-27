@@ -2,6 +2,16 @@
 {% extends "Master/MenuBgTemplate.html.twig" %}
 {% set pageData = fsc.getPageData() %}
 
+{% block bodyHeaderOptions %}
+    {{ parent() }}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var title = document.getElementById('headerPageTitle');
+            if (title) title.innerHTML = '{{ trans(pageData.title) | e('js') }}';
+        });
+    </script>
+{% endblock %}
+
 {% block body %}
     <form action="{{ fsc.url() }}" method="post" name="formDocStitcher">
         {{ formToken() }}
@@ -10,9 +20,6 @@
         <div class="container-fluid">
             <div class="row">
                 <div class="col">
-                    <h1 class="h3 font-heading font-semibold flex items-center gap-2 mb-2">
-                        <i class="{{ pageData.icon }}" aria-hidden="true"></i> {{ trans(pageData.title) }}
-                    </h1>
                     <p class="text-muted-foreground">{{ trans('group-or-split-p') }}</p>
                 </div>
             </div>

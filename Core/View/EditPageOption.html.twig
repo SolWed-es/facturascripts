@@ -4,26 +4,31 @@
 
 {% block bodyHeaderOptions %}
     {{ parent() }}
-    <div class="container-fluid mb-3">
-        {{ parent() }}
-        <div class="row">
-            <div class="col-4 d-print-none">
-                <a href="{{ fsc.backPage }}" class="btn btn-sm btn-secondary">
-                    <i data-lucide="arrow-left" class="w-4 h-4 me-1"></i>
-                    <span class="d-none d-md-inline-block">{{ trans('back') }}</span>
-                </a>
-                <a href="{{ fsc.url() ~ '?code=' ~ fsc.selectedViewName }}" class="btn btn-sm btn-secondary"
-                   title="{{ trans('refresh') }}">
-                    <i data-lucide="refresh-cw" class="w-4 h-4"></i>
-                </a>
-            </div>
-            <div class="col text-end">
-                <h1 class="h4 font-heading font-semibold">
-                    {{ fsc.title }} <i class="{{ fsc.getPageData()['icon'] }}" aria-hidden="true"></i>
-                </h1>
-            </div>
+    <div id="pageActionsSource" class="d-none">
+        <div class="btn-group">
+            <a href="{{ fsc.backPage }}" class="btn btn-sm btn-secondary">
+                <i data-lucide="arrow-left" class="icon-sm me-1"></i>
+                <span class="d-none d-md-inline-block">{{ trans('back') }}</span>
+            </a>
+            <a href="{{ fsc.url() ~ '?code=' ~ fsc.selectedViewName }}" class="btn btn-sm btn-secondary"
+               title="{{ trans('refresh') }}">
+                <i data-lucide="refresh-cw" class="icon-sm"></i>
+            </a>
         </div>
     </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var title = document.getElementById('headerPageTitle');
+            if (title) title.innerHTML = '{{ fsc.title | e('js') }}';
+            var src = document.getElementById('pageActionsSource');
+            var dest = document.getElementById('headerPageActions');
+            if (src && dest) {
+                dest.innerHTML = src.innerHTML;
+                src.remove();
+                lucide.createIcons();
+            }
+        });
+    </script>
 {% endblock %}
 
 {% block body %}

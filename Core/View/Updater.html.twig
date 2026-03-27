@@ -17,41 +17,50 @@
     </div>
 {% endblock %}
 
+{% block bodyHeaderOptions %}
+    {{ parent() }}
+    <div id="pageActionsSource" class="d-none">
+        <div class="btn-group">
+            <a href="{{ asset('AdminPlugins') }}" class="btn btn-sm btn-secondary">
+                <i data-lucide="arrow-left" class="icon-sm me-1"></i>
+                <span class="d-none d-md-inline-block">{{ trans('plugins') }}</span>
+            </a>
+            <a href="{{ fsc.url() }}" class="btn btn-sm btn-secondary" title="{{ trans('refresh') }}">
+                <i data-lucide="refresh-cw" class="icon-sm"></i>
+            </a>
+        </div>
+        {% if fsc.telemetryManager.ready() %}
+            <button class="btn btn-sm btn-secondary" type="button" data-bs-toggle="modal"
+                    data-bs-target="#modalTelemetry">
+                <i data-lucide="badge-check" class="icon-sm me-1"></i>
+                <span class="d-none d-md-inline-block">{{ trans('manage-installation') }}</span>
+            </button>
+        {% else %}
+            <button class="btn btn-sm btn-warning" type="button" data-bs-toggle="modal"
+                    data-bs-target="#modalTelemetry">
+                <i data-lucide="badge-check" class="icon-sm me-1"></i>
+                <span class="d-none d-md-inline-block">Conectar con SolWed Mind</span>
+            </button>
+        {% endif %}
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var title = document.getElementById('headerPageTitle');
+            if (title) title.innerHTML = '{{ trans("updater") | e('js') }} {{ fsc.getCoreVersion() }}';
+            var src = document.getElementById('pageActionsSource');
+            var dest = document.getElementById('headerPageActions');
+            if (src && dest) {
+                dest.innerHTML = src.innerHTML;
+                src.remove();
+                lucide.createIcons();
+            }
+        });
+    </script>
+{% endblock %}
+
 {% block body %}
     <div class="container">
-        <div class="row pt-3 pb-3">
-            <div class="col-sm-6">
-                <div class="btn-group">
-                    <a href="{{ asset('AdminPlugins') }}" class="btn btn-secondary">
-                        <i data-lucide="arrow-left" class="w-4 h-4 me-1"></i>
-                        <span class="d-none d-md-inline-block">{{ trans('plugins') }} </span>
-                    </a>
-                    <a href="{{ fsc.url() }}" class="btn btn-secondary" title="{{ trans('refresh') }}">
-                        <i data-lucide="refresh-cw" class="w-4 h-4"></i>
-                    </a>
-                </div>
-                {% if fsc.telemetryManager.ready() %}
-                    <button class="btn btn-secondary" type="button" data-bs-toggle="modal"
-                            data-bs-target="#modalTelemetry">
-                        <i data-lucide="badge-check" class="w-4 h-4 me-1 inline"></i>
-                        <span class="d-none d-md-inline-block">{{ trans('manage-installation') }} </span>
-                    </button>
-                {% else %}
-                    <button class="btn btn-warning" type="button" data-bs-toggle="modal"
-                            data-bs-target="#modalTelemetry">
-                        <i data-lucide="badge-check" class="w-4 h-4 me-1 inline"></i>
-                        <span class="d-none d-md-inline-block">Conectar con SolWed Mind</span>
-                    </button>
-                {% endif %}
-            </div>
-            <div class="col-sm-6 text-end">
-                <h1 class="h3 font-heading font-semibold">
-                    {{ trans('updater') }}
-                    <small class="text-info">{{ fsc.getCoreVersion() }}</small>
-                    <i data-lucide="cloud-download" class="w-7 h-7 inline"></i>
-                </h1>
-            </div>
-        </div>
+        <div class="row">
         <div class="row">
             <div class="col-sm">
                 <div class="card-shadcn mb-4">
