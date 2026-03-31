@@ -467,14 +467,17 @@ final class Where
 
     private static function sqlOperatorLike(string $field, string $value, string $operator): string
     {
+        // CONCAT forces implicit cast to text, needed for PostgreSQL (LOWER on INTEGER fails)
+        $col = 'LOWER(CONCAT(' . self::sqlColumn($field) . ",''))";
+
         // si no contiene %, se los añadimos
         if (strpos($value, '%') === false) {
-            return 'LOWER(' . self::sqlColumn($field) . ') ' . $operator
+            return $col . ' ' . $operator
                 . " LOWER('%" . self::db()->escapeString($value) . "%')";
         }
 
         // contiene algún comodín
-        return 'LOWER(' . self::sqlColumn($field) . ') ' . $operator
+        return $col . ' ' . $operator
             . " LOWER('" . self::db()->escapeString($value) . "')";
     }
 
