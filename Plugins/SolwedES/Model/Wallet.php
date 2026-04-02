@@ -14,7 +14,7 @@
 
 namespace FacturaScripts\Plugins\SolwedES\Model;
 
-use FacturaScripts\Core\Where;
+use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
 use FacturaScripts\Core\Template\ModelClass;
 use FacturaScripts\Core\Template\ModelTrait;
 use FacturaScripts\Core\Tools;
@@ -82,7 +82,7 @@ class Wallet extends ModelClass
     public static function getBalance(string $codcliente): float
     {
         $model = new self();
-        $where = [Where::isEqual('codcliente', $codcliente)];
+        $where = [new DataBaseWhere('codcliente', $codcliente)];
         $order = ['id' => 'DESC'];
         $items = $model->all($where, $order, 0, 1);
 
@@ -95,7 +95,7 @@ class Wallet extends ModelClass
     public static function getHistory(string $codcliente, int $offset = 0, int $limit = 20): array
     {
         $model = new self();
-        $where = [Where::isEqual('codcliente', $codcliente)];
+        $where = [new DataBaseWhere('codcliente', $codcliente)];
         $order = ['id' => 'DESC'];
         return $model->all($where, $order, $offset, $limit);
     }
@@ -170,7 +170,7 @@ class Wallet extends ModelClass
     public static function countByClient(string $codcliente): int
     {
         $model = new self();
-        $where = [Where::isEqual('codcliente', $codcliente)];
+        $where = [new DataBaseWhere('codcliente', $codcliente)];
         return $model->count($where);
     }
 

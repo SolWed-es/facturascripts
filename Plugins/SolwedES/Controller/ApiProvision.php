@@ -54,10 +54,7 @@ class ApiProvision extends Controller
             return;
         }
 
-        $token = $_SERVER['HTTP_TOKEN'] ?? '';
-        $apiKey = Tools::settings('default', 'apikey', '');
-        if (empty($token) || $token !== $apiKey) {
-            $this->jsonResponse(['error' => 'Token inválido'], 401);
+        if (!$this->validateToken()) {
             return;
         }
 
@@ -361,6 +358,23 @@ class ApiProvision extends Controller
         }
         $decoded = json_decode($raw, true);
         return is_array($decoded) ? $decoded : [];
+    }
+
+    private function validateToken(): bool
+    {
+        $token = $_SERVER['HTTP_TOKEN'] ?? '';
+        if (empty($token)) {
+            $this->jsonResponse(['error' => 'Token required'], 401);
+            return false;
+        }
+        $db = new \FacturaScripts\Core\Base\DataBase();
+        $db->connect();
+        $result = $db->select("SELECT 1 FROM api_keys WHERE apikey = " . $db->var2str($token) . " AND enabled = true LIMIT 1");
+        if (!empty($result)) {
+            return true;
+        }
+        $this->jsonResponse(['error' => 'Token inválido'], 401);
+        return false;
     }
 
     private function jsonResponse(array $data, int $status = 200): void
