@@ -69,7 +69,10 @@
   "access-facturascripts": "Acceder al ERP",
   "access-plesk": "Acceder a Plesk",
   "service-accesses": "Accesos a Servicios",
-  "service-contracts": "Contratos de Servicio",
+  "subscriptions": "Suscripciones",
+  "subscription": "Suscripcion",
+  "subscription-info": "Informacion de la Suscripcion",
+  "payment-status": "Estado de Pago",
   "access-configuration": "Configuración de Acceso",
   "basic-info": "Información Básica",
   "credentials": "Credenciales",
@@ -349,5 +352,11 @@
   "save-discount": "Ahorra",
   "months-free": "meses gratis",
     "presentation": "Presentación",
-  "price-data": "Datos del Precio"
+  "price-data": "Datos del Precio",
+  "shipping-addresses": "Direcciones de Envio",
+  "shipping-address": "Direccion de Envio",
+  "address-required": "La direccion es obligatoria",
+  "city-required": "La ciudad es obligatoria",
+  "cancel_at_period_end": "Cancelar al final del periodo",
+  "impago_alerta_sent": "Alerta impago enviada"
 }

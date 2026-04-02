@@ -54,6 +54,11 @@
         <null>YES</null>
     </column>
     <column>
+        <name>api_key</name>
+        <type>character varying(255)</type>
+        <null>YES</null>
+    </column>
+    <column>
         <name>activo</name>
         <type>boolean</type>
         <null>NO</null>

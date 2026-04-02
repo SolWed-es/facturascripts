@@ -66,13 +66,13 @@ class StripeUtils
     }
 
     /**
-     * Map Stripe subscription status to ContratServicio estado.
+     * Map Stripe subscription status to Suscripcion estado.
      *
      * @param string $stripeStatus Stripe subscription status
      *
-     * @return string ContratServicio estado constant
+     * @return string Suscripcion estado constant
      */
-    public static function mapStripeStatusToContrato(string $stripeStatus): string
+    public static function mapStripeStatusToSuscripcion(string $stripeStatus): string
     {
         $statusMap = [
             'active' => 'activo',

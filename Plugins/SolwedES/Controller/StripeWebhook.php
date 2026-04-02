@@ -25,7 +25,7 @@ use FacturaScripts\Dinamic\Model\Cliente;
 use FacturaScripts\Dinamic\Model\FacturaCliente;
 use FacturaScripts\Dinamic\Model\Serie;
 use FacturaScripts\Plugins\SolwedES\Model\AccesoServicio;
-use FacturaScripts\Plugins\SolwedES\Model\ContratServicio;
+use FacturaScripts\Plugins\SolwedES\Model\Suscripcion;
 use FacturaScripts\Plugins\SolwedES\Model\PagoStripe;
 use FacturaScripts\Plugins\SolwedES\Model\Servicio;
 use FacturaScripts\Plugins\SolwedES\Lib\StripeHelper;
@@ -204,7 +204,7 @@ class StripeWebhook extends Controller
         }
 
         // Verificar si ya existe el contrato para esta suscripción
-        $existingContrato = ContratServicio::getByStripeSubscriptionId($session->subscription);
+        $existingContrato = Suscripcion::getByStripeSubscriptionId($session->subscription);
         if ($existingContrato) {
             return ['success' => true, 'message' => 'Contract already exists'];
         }
@@ -245,26 +245,26 @@ class StripeWebhook extends Controller
         $this->db->beginTransaction();
 
         try {
-            // Crear ContratServicio (modelo unificado)
-            $contrato = new ContratServicio();
-            $contrato->idcontacto = (int)$idcontacto;
-            $contrato->idservicio = (int)$idservicio;
-            $contrato->estado = ContratServicio::ESTADO_ACTIVO;
-            $contrato->fecha_inicio = $fechaInicio;
-            $contrato->fecha_vencimiento = $fechaVencimiento;
-            $contrato->fecha_ultimo_pago = $session->payment_status === 'paid' ? date('Y-m-d') : null;
-            $contrato->fecha_proximo_pago = $fechaVencimiento;
-            $contrato->metodo_pago = ContratServicio::METODO_STRIPE;
-            $contrato->referencia_externa = $session->subscription;
-            $contrato->stripe_customer_id = $session->customer;
-            $contrato->auto_renovar = !($stripeSubscription->cancel_at_period_end ?? false);
-            $contrato->importe = ($stripeSubscription->items->data[0]->price->unit_amount ?? 0) / 100;
+            // Crear Suscripcion (modelo unificado)
+            $suscripcion = new Suscripcion();
+            $suscripcion->idcontacto = (int)$idcontacto;
+            $suscripcion->idservicio = (int)$idservicio;
+            $suscripcion->estado = Suscripcion::ESTADO_ACTIVO;
+            $suscripcion->fecha_inicio = $fechaInicio;
+            $suscripcion->fecha_vencimiento = $fechaVencimiento;
+            $suscripcion->fecha_ultimo_pago = $session->payment_status === 'paid' ? date('Y-m-d') : null;
+            $suscripcion->fecha_proximo_pago = $fechaVencimiento;
+            $suscripcion->metodo_pago = Suscripcion::METODO_STRIPE;
+            $suscripcion->referencia_externa = $session->subscription;
+            $suscripcion->stripe_customer_id = $session->customer;
+            $suscripcion->auto_renovar = !($stripeSubscription->cancel_at_period_end ?? false);
+            $suscripcion->importe = ($stripeSubscription->items->data[0]->price->unit_amount ?? 0) / 100;
 
-            if (!$contrato->save()) {
-                throw new Exception('Failed to create ContratServicio');
+            if (!$suscripcion->save()) {
+                throw new Exception('Failed to create Suscripcion');
             }
 
-            SolwedLogger::stripe('ContratServicio created: ' . $contrato->id . ' for subscription: ' . $session->subscription);
+            SolwedLogger::stripe('Suscripcion created: ' . $suscripcion->id . ' for subscription: ' . $session->subscription);
 
             // Crear acceso al servicio
             if ($idservicio) {
@@ -313,7 +313,7 @@ class StripeWebhook extends Controller
 
             return [
                 'success' => true,
-                'contrato_id' => $contrato->id,
+                'contrato_id' => $suscripcion->id,
                 'pago_id' => $pago->id
             ];
         } catch (\Throwable $e) {
@@ -450,15 +450,15 @@ class StripeWebhook extends Controller
         SolwedLogger::stripe('Customer email: ' . ($invoice->customer_email ?? 'N/A'));
         SolwedLogger::stripe('Amount paid: ' . (($invoice->amount_paid ?? 0) / 100) . ' ' . ($invoice->currency ?? 'N/A'));
 
-        // Check if this is a domain auto-renewal subscription (via ContratServicio)
+        // Check if this is a domain auto-renewal subscription (via Suscripcion)
         $subscriptionId = $invoice->subscription ?? null;
         if ($subscriptionId) {
-            $contrato = ContratServicio::getByStripeSubscriptionId($subscriptionId);
-            if ($contrato) {
+            $suscripcion = Suscripcion::getByStripeSubscriptionId($subscriptionId);
+            if ($suscripcion) {
                 // Check if it's a domain-related contract
-                $dominios = $contrato->getDominios();
+                $dominios = $suscripcion->getDominios();
                 if (!empty($dominios)) {
-                    SolwedLogger::stripe('This is a domain subscription renewal for contract: ' . $contrato->id);
+                    SolwedLogger::stripe('This is a domain subscription renewal for contract: ' . $suscripcion->id);
                     return $this->handleDomainSubscriptionRenewal($invoice, $subscriptionId);
                 }
             }
@@ -488,15 +488,15 @@ class StripeWebhook extends Controller
         $idcontacto = $contacto ? $contacto->idcontacto : null;
 
         // Si es suscripción, buscar datos de contrato local
-        $contrato = null;
+        $suscripcion = null;
         $idservicio = null;
 
         if ($isSubscription) {
-            $contrato = ContratServicio::getByStripeSubscriptionId($invoice->subscription);
-            if ($contrato) {
-                $idcontacto = $contrato->idcontacto;
-                $idservicio = $contrato->idservicio;
-                $contacto = $contrato->getContacto();
+            $suscripcion = Suscripcion::getByStripeSubscriptionId($invoice->subscription);
+            if ($suscripcion) {
+                $idcontacto = $suscripcion->idcontacto;
+                $idservicio = $suscripcion->idservicio;
+                $contacto = $suscripcion->getContacto();
             }
         }
 
@@ -565,7 +565,7 @@ class StripeWebhook extends Controller
 
             // Crear factura si está habilitado
             if (StripeHelper::getSetting('crear_factura', true)) {
-                $factura = $this->createFacturaFromInvoice($invoice, $contacto, $contrato);
+                $factura = $this->createFacturaFromInvoice($invoice, $contacto, $suscripcion);
                 if ($factura) {
                     $pago->linkToFactura($factura->idfactura);
                     $result['factura'] = $factura->codigo;
@@ -584,17 +584,17 @@ class StripeWebhook extends Controller
                 }
             }
 
-            // Actualizar ContratServicio si es suscripción
-            if ($contrato && isset($invoice->lines->data[0]->period->end)) {
+            // Actualizar Suscripcion si es suscripción
+            if ($suscripcion && isset($invoice->lines->data[0]->period->end)) {
                 $proximoCobro = date('Y-m-d', $invoice->lines->data[0]->period->end);
-                $contrato->estado = ContratServicio::ESTADO_ACTIVO;
-                $contrato->fecha_ultimo_pago = date('Y-m-d');
-                $contrato->fecha_proximo_pago = $proximoCobro;
-                $contrato->fecha_vencimiento = $proximoCobro;
-                if (!$contrato->save()) {
-                    throw new Exception('Failed to update ContratServicio');
+                $suscripcion->estado = Suscripcion::ESTADO_ACTIVO;
+                $suscripcion->fecha_ultimo_pago = date('Y-m-d');
+                $suscripcion->fecha_proximo_pago = $proximoCobro;
+                $suscripcion->fecha_vencimiento = $proximoCobro;
+                if (!$suscripcion->save()) {
+                    throw new Exception('Failed to update Suscripcion');
                 }
-                SolwedLogger::stripe('ContratServicio updated on invoice.paid: ' . $contrato->id);
+                SolwedLogger::stripe('Suscripcion updated on invoice.paid: ' . $suscripcion->id);
             }
 
             // Commit transaction on success
@@ -883,33 +883,33 @@ class StripeWebhook extends Controller
             return false;
         }
 
-        $contrato = new ContratServicio();
+        $suscripcion = new Suscripcion();
         $where = [
             new DataBaseWhere('idcontacto', $pago->idcontacto),
             new DataBaseWhere('idservicio', $pago->idservicio),
-            new DataBaseWhere('estado', ContratServicio::ESTADO_ACTIVO),
+            new DataBaseWhere('estado', Suscripcion::ESTADO_ACTIVO),
         ];
-        $contratos = $contrato->all($where, ['id' => 'DESC'], 0, 1);
+        $suscripcions = $suscripcion->all($where, ['id' => 'DESC'], 0, 1);
 
-        if (empty($contratos)) {
+        if (empty($suscripcions)) {
             SolwedLogger::stripe('No active contract found to cancel for refunded payment');
             return false;
         }
 
-        $contrato = $contratos[0];
-        $contrato->estado = ContratServicio::ESTADO_CANCELADO;
-        $contrato->notas = ($contrato->notas ?? '') . "\n[" . date('Y-m-d H:i:s') . "] Cancelado por reembolso completo";
+        $suscripcion = $suscripcions[0];
+        $suscripcion->estado = Suscripcion::ESTADO_CANCELADO;
+        $suscripcion->notas = ($suscripcion->notas ?? '') . "\n[" . date('Y-m-d H:i:s') . "] Cancelado por reembolso completo";
 
-        if (!$contrato->save()) {
+        if (!$suscripcion->save()) {
             SolwedLogger::error('Could not cancel contract after refund');
             return false;
         }
 
-        SolwedLogger::stripe('Contract ' . $contrato->id . ' canceled due to full refund');
+        SolwedLogger::stripe('Contract ' . $suscripcion->id . ' canceled due to full refund');
 
         // Also deactivate service access
-        if ($contrato->idcontacto && $contrato->idservicio) {
-            $acceso = AccesoServicio::getByClienteServicio($contrato->idcontacto, $contrato->idservicio);
+        if ($suscripcion->idcontacto && $suscripcion->idservicio) {
+            $acceso = AccesoServicio::getByClienteServicio($suscripcion->idcontacto, $suscripcion->idservicio);
             if ($acceso) {
                 $acceso->activo = false;
                 $acceso->save();
@@ -1005,18 +1005,18 @@ class StripeWebhook extends Controller
         SolwedLogger::stripe('=== HANDLING customer.subscription.deleted ===');
         SolwedLogger::stripe('Subscription ID: ' . $subscription->id);
 
-        // Find ContratServicio by subscription ID
-        $contrato = ContratServicio::getByStripeSubscriptionId($subscription->id);
+        // Find Suscripcion by subscription ID
+        $suscripcion = Suscripcion::getByStripeSubscriptionId($subscription->id);
 
-        if (!$contrato) {
-            SolwedLogger::stripe('No ContratServicio found for subscription: ' . $subscription->id);
+        if (!$suscripcion) {
+            SolwedLogger::stripe('No Suscripcion found for subscription: ' . $subscription->id);
             return ['success' => true, 'message' => 'Contract not found locally'];
         }
 
         // Check if this is a domain subscription
-        $dominios = $contrato->getDominios();
+        $dominios = $suscripcion->getDominios();
         if (!empty($dominios)) {
-            SolwedLogger::stripe('This is a domain subscription for contract: ' . $contrato->id);
+            SolwedLogger::stripe('This is a domain subscription for contract: ' . $suscripcion->id);
 
             // Update each linked domain
             foreach ($dominios as $dominio) {
@@ -1025,12 +1025,12 @@ class StripeWebhook extends Controller
                 $dominio->save();
             }
 
-            SolwedLogger::stripe('Domain auto-renewal canceled for contract: ' . $contrato->id);
+            SolwedLogger::stripe('Domain auto-renewal canceled for contract: ' . $suscripcion->id);
         }
 
         // Desactivar acceso al servicio
-        if ($contrato->idservicio && $contrato->idcontacto) {
-            $acceso = AccesoServicio::getByClienteServicio($contrato->idcontacto, $contrato->idservicio);
+        if ($suscripcion->idservicio && $suscripcion->idcontacto) {
+            $acceso = AccesoServicio::getByClienteServicio($suscripcion->idcontacto, $suscripcion->idservicio);
             if ($acceso) {
                 $acceso->activo = false;
                 $acceso->save();
@@ -1039,15 +1039,15 @@ class StripeWebhook extends Controller
         }
 
         // Marcar contrato como cancelado
-        $contrato->estado = ContratServicio::ESTADO_CANCELADO;
-        $contrato->save();
+        $suscripcion->estado = Suscripcion::ESTADO_CANCELADO;
+        $suscripcion->save();
 
         SolwedLogger::stripe('Subscription canceled: ' . $subscription->id);
-        SolwedLogger::stripe('ContratServicio canceled: ' . $contrato->id);
+        SolwedLogger::stripe('Suscripcion canceled: ' . $suscripcion->id);
 
         return [
             'success' => true,
-            'contrato_id' => $contrato->id
+            'contrato_id' => $suscripcion->id
         ];
     }
 
@@ -1056,9 +1056,9 @@ class StripeWebhook extends Controller
      */
     private function handleSubscriptionUpdated(object $subscription): array
     {
-        $contrato = ContratServicio::getByStripeSubscriptionId($subscription->id);
-        if (!$contrato) {
-            SolwedLogger::stripe('No ContratServicio found for subscription: ' . $subscription->id);
+        $suscripcion = Suscripcion::getByStripeSubscriptionId($subscription->id);
+        if (!$suscripcion) {
+            SolwedLogger::stripe('No Suscripcion found for subscription: ' . $subscription->id);
             return ['success' => true, 'message' => 'Contract not found locally'];
         }
 
@@ -1067,20 +1067,20 @@ class StripeWebhook extends Controller
         SolwedLogger::stripe('Status: ' . $subscription->status);
 
         // Map Stripe status using StripeUtils
-        $contrato->estado = StripeUtils::mapStripeStatusToContrato($subscription->status);
+        $suscripcion->estado = StripeUtils::mapStripeStatusToSuscripcion($subscription->status);
 
         // Update dates using StripeUtils for robust calculation across API versions
         $fechaVencimiento = StripeUtils::getSubscriptionEndDate($subscription);
-        $contrato->fecha_vencimiento = $fechaVencimiento;
-        $contrato->fecha_proximo_pago = $fechaVencimiento;
-        SolwedLogger::stripe('Updated dates: ' . $contrato->fecha_vencimiento);
+        $suscripcion->fecha_vencimiento = $fechaVencimiento;
+        $suscripcion->fecha_proximo_pago = $fechaVencimiento;
+        SolwedLogger::stripe('Updated dates: ' . $suscripcion->fecha_vencimiento);
 
-        $contrato->auto_renovar = !($subscription->cancel_at_period_end ?? false);
-        $contrato->importe = StripeUtils::formatAmount(
+        $suscripcion->auto_renovar = !($subscription->cancel_at_period_end ?? false);
+        $suscripcion->importe = StripeUtils::formatAmount(
             $subscription->items->data[0]->price->unit_amount ?? 0,
             $subscription->currency ?? 'eur'
         );
-        SolwedLogger::stripe('Updated importe: ' . $contrato->importe);
+        SolwedLogger::stripe('Updated importe: ' . $suscripcion->importe);
 
         // Detectar cambio de plan
         if (isset($subscription->items->data[0]->price->id)) {
@@ -1106,28 +1106,28 @@ class StripeWebhook extends Controller
                 }
             }
 
-            if ($newServiceId && $newServiceId !== $contrato->idservicio) {
-                $oldServiceId = $contrato->idservicio;
-                $contrato->idservicio = $newServiceId;
+            if ($newServiceId && $newServiceId !== $suscripcion->idservicio) {
+                $oldServiceId = $suscripcion->idservicio;
+                $suscripcion->idservicio = $newServiceId;
 
                 SolwedLogger::stripe(sprintf(
                     'Plan changed: %s from service %d to %d',
                     $subscription->id,
                     $oldServiceId,
-                    $contrato->idservicio
+                    $suscripcion->idservicio
                 ));
 
                 // Actualizar acceso al servicio
-                $this->updateServiceAccess($contrato->idcontacto, $oldServiceId, $contrato->idservicio);
+                $this->updateServiceAccess($suscripcion->idcontacto, $oldServiceId, $suscripcion->idservicio);
             }
         }
 
-        $contrato->save();
-        SolwedLogger::stripe('ContratServicio updated on subscription.updated: ' . $contrato->id);
+        $suscripcion->save();
+        SolwedLogger::stripe('Suscripcion updated on subscription.updated: ' . $suscripcion->id);
 
         return [
             'success' => true,
-            'contrato_id' => $contrato->id
+            'contrato_id' => $suscripcion->id
         ];
     }
 
@@ -1164,15 +1164,15 @@ class StripeWebhook extends Controller
         $pago->markAsFailed();
         SolwedLogger::stripe('Payment marked as failed: ' . $pago->id);
 
-        // Actualizar ContratServicio si aplica
+        // Actualizar Suscripcion si aplica
         if (!empty($invoice->subscription)) {
-            $contrato = ContratServicio::getByStripeSubscriptionId($invoice->subscription);
-            if ($contrato) {
-                $contrato->estado = ContratServicio::ESTADO_SUSPENDIDO;
-                $contrato->save();
-                SolwedLogger::stripe('ContratServicio suspended on payment_failed: ' . $contrato->id);
+            $suscripcion = Suscripcion::getByStripeSubscriptionId($invoice->subscription);
+            if ($suscripcion) {
+                $suscripcion->estado = Suscripcion::ESTADO_SUSPENDIDO;
+                $suscripcion->save();
+                SolwedLogger::stripe('Suscripcion suspended on payment_failed: ' . $suscripcion->id);
 
-                $contacto = $contrato->getContacto();
+                $contacto = $suscripcion->getContacto();
                 if ($contacto) {
                     SolwedLogger::error(sprintf(
                         'Payment failed for subscription %s - Contact: %s',
@@ -1191,7 +1191,7 @@ class StripeWebhook extends Controller
     /**
      * Crea factura desde invoice de Stripe
      */
-    private function createFacturaFromInvoice(object $invoice, ?Contacto $contacto, ?ContratServicio $contrato): ?FacturaCliente
+    private function createFacturaFromInvoice(object $invoice, ?Contacto $contacto, ?Suscripcion $suscripcion): ?FacturaCliente
     {
         SolwedLogger::stripe('--- createFacturaFromInvoice START ---');
 
@@ -1199,8 +1199,8 @@ class StripeWebhook extends Controller
         $cliente = null;
         $servicio = null;
 
-        if ($contrato) {
-            $servicio = $contrato->getServicio();
+        if ($suscripcion) {
+            $servicio = $suscripcion->getServicio();
         }
 
         if ($contacto && !empty($contacto->codcliente)) {
@@ -1984,7 +1984,7 @@ class StripeWebhook extends Controller
      * Handles WordPress hosting subscription checkout completion
      *
      * This is called when a customer purchases a WordPress hosting plan.
-     * Creates ContratServicio, provisions hosting via Plesk, and sends credentials.
+     * Creates Suscripcion, provisions hosting via Plesk, and sends credentials.
      */
     private function handleWordPressHostingCheckout(object $session): array
     {
@@ -2036,7 +2036,7 @@ class StripeWebhook extends Controller
         // Check if contract already exists for this subscription
         if ($subscriptionId) {
             SolwedLogger::stripe('DEBUG [WP-6]: Checking for existing contract with subscription: ' . $subscriptionId);
-            $existingContrato = ContratServicio::getByStripeSubscriptionId($subscriptionId);
+            $existingContrato = Suscripcion::getByStripeSubscriptionId($subscriptionId);
             if ($existingContrato) {
                 SolwedLogger::stripe('DEBUG [WP-6a]: Contract already exists: ' . $existingContrato->id);
                 return ['success' => true, 'message' => 'Already configured'];
@@ -2076,31 +2076,31 @@ class StripeWebhook extends Controller
         $this->db->beginTransaction();
 
         try {
-            // 1. Create ContratServicio with pending provisioning status
-            SolwedLogger::stripe('DEBUG [WP-11]: Creating ContratServicio');
-            $contrato = new ContratServicio();
-            $contrato->idcontacto = (int)$idcontacto;
-            $contrato->idservicio = $idservicio ? (int)$idservicio : null;
-            $contrato->estado = ContratServicio::ESTADO_PENDIENTE;
-            $contrato->provisioning_status = ContratServicio::PROV_PENDING;
-            $contrato->fecha_inicio = $fechaInicio;
-            $contrato->fecha_vencimiento = $fechaVencimiento;
-            $contrato->fecha_ultimo_pago = $session->payment_status === 'paid' ? date('Y-m-d') : null;
-            $contrato->fecha_proximo_pago = $fechaVencimiento;
-            $contrato->metodo_pago = ContratServicio::METODO_STRIPE;
-            $contrato->referencia_externa = $subscriptionId;
-            $contrato->stripe_customer_id = $session->customer;
-            $contrato->auto_renovar = !($stripeSubscription->cancel_at_period_end ?? false);
-            $contrato->importe = $stripeSubscription
+            // 1. Create Suscripcion with pending provisioning status
+            SolwedLogger::stripe('DEBUG [WP-11]: Creating Suscripcion');
+            $suscripcion = new Suscripcion();
+            $suscripcion->idcontacto = (int)$idcontacto;
+            $suscripcion->idservicio = $idservicio ? (int)$idservicio : null;
+            $suscripcion->estado = Suscripcion::ESTADO_PENDIENTE;
+            $suscripcion->provisioning_status = Suscripcion::PROV_PENDING;
+            $suscripcion->fecha_inicio = $fechaInicio;
+            $suscripcion->fecha_vencimiento = $fechaVencimiento;
+            $suscripcion->fecha_ultimo_pago = $session->payment_status === 'paid' ? date('Y-m-d') : null;
+            $suscripcion->fecha_proximo_pago = $fechaVencimiento;
+            $suscripcion->metodo_pago = Suscripcion::METODO_STRIPE;
+            $suscripcion->referencia_externa = $subscriptionId;
+            $suscripcion->stripe_customer_id = $session->customer;
+            $suscripcion->auto_renovar = !($stripeSubscription->cancel_at_period_end ?? false);
+            $suscripcion->importe = $stripeSubscription
                 ? (($stripeSubscription->items->data[0]->price->unit_amount ?? 0) / 100)
                 : (($session->amount_total ?? 0) / 100);
-            $contrato->notas = "WordPress Hosting: {$domain} (Plan: {$plan})";
+            $suscripcion->notas = "WordPress Hosting: {$domain} (Plan: {$plan})";
 
-            if (!$contrato->save()) {
-                throw new Exception('Failed to create ContratServicio');
+            if (!$suscripcion->save()) {
+                throw new Exception('Failed to create Suscripcion');
             }
 
-            SolwedLogger::stripe('DEBUG [WP-11a]: ContratServicio created with ID: ' . $contrato->id);
+            SolwedLogger::stripe('DEBUG [WP-11a]: Suscripcion created with ID: ' . $suscripcion->id);
 
             // 2. Create PagoStripe record
             SolwedLogger::stripe('DEBUG [WP-12]: Creating PagoStripe');
@@ -2129,7 +2129,7 @@ class StripeWebhook extends Controller
             // 3. Attempt provisioning (synchronous)
             SolwedLogger::stripe('DEBUG [WP-13]: Starting WordPress provisioning');
             SolwedLogger::stripe("DEBUG [WP-13a]: Calling WordPressProvisioner::provision({$domain}, {$plan})");
-            $provisionResult = WordPressProvisioner::provision($contrato, $contacto, $domain, $plan);
+            $provisionResult = WordPressProvisioner::provision($suscripcion, $contacto, $domain, $plan);
             SolwedLogger::stripe('DEBUG [WP-13b]: Provisioning result: ' . ($provisionResult->success ? 'SUCCESS' : 'FAILED'));
             if (!$provisionResult->success) {
                 SolwedLogger::stripe('DEBUG [WP-13c]: Provisioning error: ' . ($provisionResult->error ?? 'Unknown'));
@@ -2155,24 +2155,24 @@ class StripeWebhook extends Controller
 
                 // 5a. Update contract to active
                 SolwedLogger::stripe('DEBUG [WP-15]: Updating contract status to ACTIVO');
-                $contrato->provisioning_status = ContratServicio::PROV_COMPLETED;
-                $contrato->estado = ContratServicio::ESTADO_ACTIVO;
-                $contrato->save();
+                $suscripcion->provisioning_status = Suscripcion::PROV_COMPLETED;
+                $suscripcion->estado = Suscripcion::ESTADO_ACTIVO;
+                $suscripcion->save();
 
                 SolwedLogger::stripe('DEBUG [WP-15a]: Contract updated successfully');
 
             } else {
                 // 4b. Provisioning failed - keep contract as pending
                 SolwedLogger::stripe('DEBUG [WP-16]: Provisioning FAILED - updating contract status');
-                $contrato->provisioning_status = ContratServicio::PROV_FAILED;
-                $contrato->estado = ContratServicio::ESTADO_PENDIENTE;
-                $contrato->notas .= "\n\nProvisioning failed: " . $provisionResult->error;
-                $contrato->save();
+                $suscripcion->provisioning_status = Suscripcion::PROV_FAILED;
+                $suscripcion->estado = Suscripcion::ESTADO_PENDIENTE;
+                $suscripcion->notas .= "\n\nProvisioning failed: " . $provisionResult->error;
+                $suscripcion->save();
 
                 // 5b. Alert admin
                 SolwedLogger::stripe('DEBUG [WP-17]: Sending failure alert to admin');
                 $alertSent = EmailManager::sendProvisioningFailureAlert(
-                    $contrato,
+                    $suscripcion,
                     $contacto,
                     $domain,
                     $provisionResult->error ?? 'Unknown error'
@@ -2190,7 +2190,7 @@ class StripeWebhook extends Controller
             $result = [
                 'success' => true,
                 'provisioned' => $provisionResult->success,
-                'contrato_id' => $contrato->id,
+                'contrato_id' => $suscripcion->id,
                 'pago_id' => $pago->id,
                 'provisioning_error' => $provisionResult->success ? null : $provisionResult->error
             ];
@@ -2210,7 +2210,7 @@ class StripeWebhook extends Controller
      * Handles domain auto-renewal subscription checkout completion
      *
      * This is called when a user sets up auto-renewal for a domain.
-     * Creates a ContratServicio and links it to the domain.
+     * Creates a Suscripcion and links it to the domain.
      */
     private function handleDomainAutoRenewalCheckout(object $session): array
     {
@@ -2246,7 +2246,7 @@ class StripeWebhook extends Controller
         }
 
         // Check if contract already exists for this subscription
-        $existingContrato = ContratServicio::getByStripeSubscriptionId($subscriptionId);
+        $existingContrato = Suscripcion::getByStripeSubscriptionId($subscriptionId);
         if ($existingContrato) {
             SolwedLogger::stripe('Contract already exists for this subscription');
             return ['success' => true, 'message' => 'Already configured'];
@@ -2289,38 +2289,38 @@ class StripeWebhook extends Controller
             $fechaVencimiento = date('Y-m-d', strtotime('+1 year', $stripeSubscription->billing_cycle_anchor));
         }
 
-        // Create ContratServicio for domain auto-renewal
-        $contrato = new ContratServicio();
-        $contrato->idcontacto = $idcontacto;
-        $contrato->estado = ContratServicio::ESTADO_ACTIVO;
-        $contrato->fecha_inicio = $fechaInicio;
-        $contrato->fecha_vencimiento = $fechaVencimiento;
-        $contrato->fecha_ultimo_pago = $session->payment_status === 'paid' ? date('Y-m-d') : null;
-        $contrato->fecha_proximo_pago = $fechaVencimiento;
-        $contrato->metodo_pago = ContratServicio::METODO_STRIPE;
-        $contrato->referencia_externa = $subscriptionId;
-        $contrato->stripe_customer_id = $session->customer;
-        $contrato->auto_renovar = true;
-        $contrato->importe = ($stripeSubscription->items->data[0]->price->unit_amount ?? 0) / 100;
-        $contrato->notas = 'Auto-renovación dominio: ' . $dominio->getNombreCompleto();
+        // Create Suscripcion for domain auto-renewal
+        $suscripcion = new Suscripcion();
+        $suscripcion->idcontacto = $idcontacto;
+        $suscripcion->estado = Suscripcion::ESTADO_ACTIVO;
+        $suscripcion->fecha_inicio = $fechaInicio;
+        $suscripcion->fecha_vencimiento = $fechaVencimiento;
+        $suscripcion->fecha_ultimo_pago = $session->payment_status === 'paid' ? date('Y-m-d') : null;
+        $suscripcion->fecha_proximo_pago = $fechaVencimiento;
+        $suscripcion->metodo_pago = Suscripcion::METODO_STRIPE;
+        $suscripcion->referencia_externa = $subscriptionId;
+        $suscripcion->stripe_customer_id = $session->customer;
+        $suscripcion->auto_renovar = true;
+        $suscripcion->importe = ($stripeSubscription->items->data[0]->price->unit_amount ?? 0) / 100;
+        $suscripcion->notas = 'Auto-renovación dominio: ' . $dominio->getNombreCompleto();
 
-        if (!$contrato->save()) {
-            SolwedLogger::error('Failed to create ContratServicio for domain auto-renewal');
+        if (!$suscripcion->save()) {
+            SolwedLogger::error('Failed to create Suscripcion for domain auto-renewal');
             return ['success' => false, 'error' => 'Could not save contract'];
         }
 
-        SolwedLogger::stripe('ContratServicio created for domain auto-renewal: ' . $contrato->id);
+        SolwedLogger::stripe('Suscripcion created for domain auto-renewal: ' . $suscripcion->id);
 
         // Link domain to contract
-        $dominio->idcontrato = $contrato->id;
+        $dominio->idcontrato = $suscripcion->id;
         $dominio->observaciones = ($dominio->observaciones ?? '') .
-            "\n[" . date('Y-m-d') . "] Auto-renovación activada (Contrato: " . $contrato->id . ")";
+            "\n[" . date('Y-m-d') . "] Auto-renovación activada (Contrato: " . $suscripcion->id . ")";
         $dominio->save();
 
         SolwedLogger::stripe(sprintf(
             'Domain %s linked to contract %d',
             $dominio->getNombreCompleto(),
-            $contrato->id
+            $suscripcion->id
         ));
 
         // Create PagoStripe record for the initial payment
@@ -2343,7 +2343,7 @@ class StripeWebhook extends Controller
             'type' => 'domain_auto_renewal',
             'domain' => $dominio->getNombreCompleto(),
             'iddominio' => $dominio->id,
-            'idcontrato' => $contrato->id,
+            'idcontrato' => $suscripcion->id,
             'subscription_id' => $subscriptionId
         ]);
 
@@ -2353,7 +2353,7 @@ class StripeWebhook extends Controller
         $result = [
             'success' => true,
             'domain_id' => $dominio->id,
-            'contrato_id' => $contrato->id,
+            'contrato_id' => $suscripcion->id,
             'subscription_id' => $subscriptionId,
             'pago_id' => $pago->id
         ];
@@ -2383,16 +2383,16 @@ class StripeWebhook extends Controller
         SolwedLogger::stripe('Subscription ID: ' . $subscriptionId);
 
         // Find contract by subscription ID
-        $contrato = ContratServicio::getByStripeSubscriptionId($subscriptionId);
-        if (!$contrato) {
+        $suscripcion = Suscripcion::getByStripeSubscriptionId($subscriptionId);
+        if (!$suscripcion) {
             SolwedLogger::stripe('No contract found for subscription: ' . $subscriptionId);
             return ['success' => true, 'message' => 'Not a domain subscription'];
         }
 
         // Get linked domain(s)
-        $dominios = $contrato->getDominios();
+        $dominios = $suscripcion->getDominios();
         if (empty($dominios)) {
-            SolwedLogger::stripe('No domains linked to contract: ' . $contrato->id);
+            SolwedLogger::stripe('No domains linked to contract: ' . $suscripcion->id);
             return ['success' => true, 'message' => 'No domains linked'];
         }
 

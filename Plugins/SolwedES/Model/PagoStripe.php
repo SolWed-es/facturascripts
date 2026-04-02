@@ -219,26 +219,16 @@ class PagoStripe extends ModelClass
     }
 
     /**
-     * @deprecated SuscripcionStripe has been replaced by ContratServicio.
-     * Use getContrato() or look up ContratServicio by referencia_externa instead.
-     * @return null Always returns null as SuscripcionStripe no longer exists
+     * Gets the associated Suscripcion (if linked via stripe_customer_id)
      */
-    public function getSuscripcion()
-    {
-        return null;
-    }
-
-    /**
-     * Gets the associated ContratServicio (if linked via stripe_customer_id)
-     */
-    public function getContrato(): ?ContratServicio
+    public function getSuscripcion(): ?Suscripcion
     {
         if (empty($this->stripe_customer_id)) {
             return null;
         }
 
-        $contratos = ContratServicio::getByStripeCustomerId($this->stripe_customer_id);
-        return !empty($contratos) ? $contratos[0] : null;
+        $suscripciones = Suscripcion::getByStripeCustomerId($this->stripe_customer_id);
+        return !empty($suscripciones) ? $suscripciones[0] : null;
     }
 
     /**

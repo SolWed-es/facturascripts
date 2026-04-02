@@ -62,7 +62,7 @@
                     <values source="albaranescli" fieldcode="idalbaran" fieldtitle="codigo"/>
                 </widget>
             </column>
-            <!-- idsuscripcion is deprecated - SuscripcionStripe replaced by ContratServicio -->
+            <!-- idsuscripcion links to solwedes_suscripciones -->
             <column name="idsuscripcion" numcolumns="6" order="130">
                 <widget type="number" fieldname="idsuscripcion" readonly="true"/>
             </column>

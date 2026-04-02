@@ -11,7 +11,7 @@ namespace FacturaScripts\Plugins\SolwedES\Lib;
 use Exception;
 use FacturaScripts\Core\Tools;
 use FacturaScripts\Dinamic\Model\Contacto;
-use FacturaScripts\Plugins\SolwedES\Model\ContratServicio;
+use FacturaScripts\Plugins\SolwedES\Model\Suscripcion;
 use FacturaScripts\Plugins\SolwedES\Model\Servicio;
 use Stripe\BillingPortal\Session as BillingPortalSession;
 use Stripe\Checkout\Session;
@@ -288,11 +288,11 @@ class StripeSubscriptionManager
                 ]);
             }
 
-            // Actualizar ContratServicio
-            $contrato = ContratServicio::getByStripeSubscriptionId($subscriptionId);
-            if ($contrato) {
-                $contrato->estado = ContratServicio::ESTADO_CANCELADO;
-                $contrato->save();
+            // Actualizar Suscripcion
+            $suscripcion = Suscripcion::getByStripeSubscriptionId($subscriptionId);
+            if ($suscripcion) {
+                $suscripcion->estado = Suscripcion::ESTADO_CANCELADO;
+                $suscripcion->save();
             }
 
             return true;
@@ -339,28 +339,28 @@ class StripeSubscriptionManager
                 $fechaVencimiento = date('Y-m-d', $sub->current_period_end);
             }
 
-            // Crear ContratServicio (modelo unificado)
-            $contrato = new ContratServicio();
-            $contrato->idcontacto = (int)$idcontacto;
-            $contrato->idservicio = (int)$idservicio;
-            $contrato->estado = ContratServicio::ESTADO_ACTIVO;
-            $contrato->fecha_inicio = $fechaInicio;
-            $contrato->fecha_vencimiento = $fechaVencimiento;
-            $contrato->fecha_ultimo_pago = date('Y-m-d');
-            $contrato->fecha_proximo_pago = $fechaVencimiento;
-            $contrato->metodo_pago = ContratServicio::METODO_STRIPE;
-            $contrato->referencia_externa = $sub->id;
-            $contrato->stripe_customer_id = $session->customer->id;
-            $contrato->auto_renovar = !($sub->cancel_at_period_end ?? false);
-            $contrato->importe = ($sub->items->data[0]->price->unit_amount ?? 0) / 100;
+            // Crear Suscripcion
+            $suscripcion = new Suscripcion();
+            $suscripcion->idcontacto = (int)$idcontacto;
+            $suscripcion->idservicio = (int)$idservicio;
+            $suscripcion->estado = Suscripcion::ESTADO_ACTIVO;
+            $suscripcion->fecha_inicio = $fechaInicio;
+            $suscripcion->fecha_vencimiento = $fechaVencimiento;
+            $suscripcion->fecha_ultimo_pago = date('Y-m-d');
+            $suscripcion->fecha_proximo_pago = $fechaVencimiento;
+            $suscripcion->metodo_pago = Suscripcion::METODO_STRIPE;
+            $suscripcion->referencia_externa = $sub->id;
+            $suscripcion->stripe_customer_id = $session->customer->id;
+            $suscripcion->auto_renovar = !($sub->cancel_at_period_end ?? false);
+            $suscripcion->importe = ($sub->items->data[0]->price->unit_amount ?? 0) / 100;
 
-            if (!$contrato->save()) {
+            if (!$suscripcion->save()) {
                 return ['success' => false, 'error' => 'Could not save contract'];
             }
 
             return [
                 'success' => true,
-                'contrato' => $contrato,
+                'contrato' => $suscripcion,
                 'subscription_id' => $session->subscription->id
             ];
         } catch (Exception $e) {
@@ -425,17 +425,17 @@ class StripeSubscriptionManager
                 ]
             ]);
 
-            // Actualizar ContratServicio
-            $contrato = ContratServicio::getByStripeSubscriptionId($subscriptionId);
-            if ($contrato) {
-                $contrato->idservicio = $nuevoServicio->id;
+            // Actualizar Suscripcion
+            $suscripcion = Suscripcion::getByStripeSubscriptionId($subscriptionId);
+            if ($suscripcion) {
+                $suscripcion->idservicio = $nuevoServicio->id;
                 // Update dates if available
                 if (isset($updatedSubscription->current_period_end) && $updatedSubscription->current_period_end > 0) {
-                    $contrato->fecha_proximo_pago = date('Y-m-d', $updatedSubscription->current_period_end);
-                    $contrato->fecha_vencimiento = date('Y-m-d', $updatedSubscription->current_period_end);
+                    $suscripcion->fecha_proximo_pago = date('Y-m-d', $updatedSubscription->current_period_end);
+                    $suscripcion->fecha_vencimiento = date('Y-m-d', $updatedSubscription->current_period_end);
                 }
-                $contrato->importe = ($nuevoServicio->precio ?? 0);
-                $contrato->save();
+                $suscripcion->importe = ($nuevoServicio->precio ?? 0);
+                $suscripcion->save();
             }
 
             Tools::log('solwed')->info(sprintf(
@@ -859,8 +859,8 @@ class StripeSubscriptionManager
         }
 
         // Get contract linked to domain
-        $contrato = $dominio->getContrato();
-        if (!$contrato || empty($contrato->referencia_externa)) {
+        $suscripcion = $dominio->getSuscripcion();
+        if (!$suscripcion || empty($suscripcion->referencia_externa)) {
             // No contract or no Stripe subscription
             $dominio->observaciones = ($dominio->observaciones ?? '') .
                 "\n[" . date('Y-m-d') . "] Auto-renovación desactivada (sin suscripción)";
@@ -868,7 +868,7 @@ class StripeSubscriptionManager
             return ['success' => true, 'message' => 'Auto-renewal disabled'];
         }
 
-        $subscriptionId = $contrato->referencia_externa;
+        $subscriptionId = $suscripcion->referencia_externa;
 
         try {
             $subscription = Subscription::retrieve($subscriptionId);
@@ -883,18 +883,18 @@ class StripeSubscriptionManager
 
             // Update contract
             if ($immediately) {
-                $contrato->estado = ContratServicio::ESTADO_CANCELADO;
-                $contrato->auto_renovar = false;
-                $contrato->save();
+                $suscripcion->estado = Suscripcion::ESTADO_CANCELADO;
+                $suscripcion->auto_renovar = false;
+                $suscripcion->save();
 
-                $dominio->idcontrato = null;
+                $dominio->idsuscripcion = null;
                 $dominio->observaciones = ($dominio->observaciones ?? '') .
                     "\n[" . date('Y-m-d') . "] Auto-renovación cancelada inmediatamente";
                 $dominio->save();
             } else {
                 // Keep contract until period ends
-                $contrato->auto_renovar = false;
-                $contrato->save();
+                $suscripcion->auto_renovar = false;
+                $suscripcion->save();
 
                 $cancelDate = isset($subscription->current_period_end) && $subscription->current_period_end > 0
                     ? date('Y-m-d', $subscription->current_period_end)
@@ -907,7 +907,7 @@ class StripeSubscriptionManager
             Tools::log('solwed')->info(sprintf(
                 'Domain auto-renewal cancelled for %s (contract: %d, immediately: %s)',
                 $dominio->getNombreCompleto(),
-                $contrato->id,
+                $suscripcion->id,
                 $immediately ? 'yes' : 'no'
             ));
 

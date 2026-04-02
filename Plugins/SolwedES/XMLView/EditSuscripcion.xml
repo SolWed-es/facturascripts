@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ * Plugin SolwedES - Edicion de Suscripcion
+ *
+ * @author    Solwed Desarrollo
+ * @copyright 2025 Solwed
+-->
+<view>
+    <columns>
+        <group name="subscription-info" numcolumns="12" title="subscription-info">
+            <column name="idcontacto" numcolumns="6" order="100">
+                <widget type="autocomplete" fieldname="idcontacto" required="true" onclick="EditContacto">
+                    <values source="contactos" fieldcode="idcontacto" fieldtitle="nombre"/>
+                </widget>
+            </column>
+            <column name="idservicio" numcolumns="6" order="110">
+                <widget type="select" fieldname="idservicio" required="true" onclick="EditServicio">
+                    <values source="solwedes_servicios" fieldcode="id" fieldtitle="nombre"/>
+                </widget>
+            </column>
+            <column name="estado" numcolumns="3" order="120">
+                <widget type="select" fieldname="estado" required="true" translate="true">
+                    <values title="activo">activo</values>
+                    <values title="suspendido">suspendido</values>
+                    <values title="cancelado">cancelado</values>
+                    <values title="vencido">vencido</values>
+                    <values title="pendiente">pendiente</values>
+                </widget>
+            </column>
+            <column name="auto_renovar" numcolumns="3" order="130">
+                <widget type="checkbox" fieldname="auto_renovar"/>
+            </column>
+            <column name="dominio" numcolumns="3" order="140">
+                <widget type="text" fieldname="dominio" maxlength="255"/>
+            </column>
+            <column name="servidor" numcolumns="3" order="150">
+                <widget type="text" fieldname="servidor" maxlength="50"/>
+            </column>
+        </group>
+        <group name="dates" numcolumns="12" title="dates">
+            <column name="fecha_inicio" numcolumns="3" order="100">
+                <widget type="date" fieldname="fecha_inicio"/>
+            </column>
+            <column name="fecha_vencimiento" numcolumns="3" order="110">
+                <widget type="date" fieldname="fecha_vencimiento"/>
+            </column>
+            <column name="fecha_ultimo_pago" numcolumns="3" order="120">
+                <widget type="date" fieldname="fecha_ultimo_pago"/>
+            </column>
+            <column name="fecha_proximo_pago" numcolumns="3" order="130">
+                <widget type="date" fieldname="fecha_proximo_pago"/>
+            </column>
+        </group>
+        <group name="payment" numcolumns="12" title="payment">
+            <column name="metodo_pago" numcolumns="3" order="100">
+                <widget type="select" fieldname="metodo_pago" required="true" translate="true">
+                    <values title="stripe">stripe</values>
+                    <values title="transferencia">transferencia</values>
+                    <values title="domiciliacion">domiciliacion</values>
+                    <values title="manual">manual</values>
+                </widget>
+            </column>
+            <column name="importe" numcolumns="3" order="110">
+                <widget type="number" fieldname="importe" decimal="2"/>
+            </column>
+            <column name="moneda" numcolumns="2" order="115">
+                <widget type="text" fieldname="moneda" maxlength="5"/>
+            </column>
+            <column name="intervalo" numcolumns="2" order="116">
+                <widget type="select" fieldname="intervalo" translate="true">
+                    <values title="monthly">month</values>
+                    <values title="quarterly">trimestre</values>
+                    <values title="yearly">year</values>
+                </widget>
+            </column>
+            <column name="cancel_at_period_end" numcolumns="2" order="117">
+                <widget type="checkbox" fieldname="cancel_at_period_end"/>
+            </column>
+            <column name="referencia_externa" numcolumns="6" order="120">
+                <widget type="text" fieldname="referencia_externa" maxlength="255">
+                    <hint>ID de suscripcion Stripe, referencia bancaria, etc.</hint>
+                </widget>
+            </column>
+            <column name="stripe_customer_id" numcolumns="3" order="130">
+                <widget type="text" fieldname="stripe_customer_id" maxlength="255" readonly="dinamic"/>
+            </column>
+            <column name="stripe_price_id" numcolumns="3" order="135">
+                <widget type="text" fieldname="stripe_price_id" maxlength="255" readonly="dinamic"/>
+            </column>
+        </group>
+        <group name="impago" numcolumns="12" title="payment-status">
+            <column name="payment_failed_at" numcolumns="3" order="100">
+                <widget type="datetime" fieldname="payment_failed_at" readonly="dinamic"/>
+            </column>
+            <column name="payment_failed_count" numcolumns="2" order="110">
+                <widget type="number" fieldname="payment_failed_count" readonly="dinamic"/>
+            </column>
+            <column name="impago_alerta_sent" numcolumns="2" order="120">
+                <widget type="checkbox" fieldname="impago_alerta_sent" readonly="dinamic"/>
+            </column>
+            <column name="impago_suspended_at" numcolumns="3" order="130">
+                <widget type="datetime" fieldname="impago_suspended_at" readonly="dinamic"/>
+            </column>
+            <column name="canceled_at" numcolumns="2" order="140">
+                <widget type="datetime" fieldname="canceled_at" readonly="dinamic"/>
+            </column>
+        </group>
+        <group name="notes" numcolumns="12" title="notes">
+            <column name="notas" numcolumns="12" order="100">
+                <widget type="textarea" fieldname="notas" rows="4"/>
+            </column>
+        </group>
+        <group name="timestamps" numcolumns="12" title="dates">
+            <column name="creation_date" numcolumns="6" order="100">
+                <widget type="datetime" fieldname="creation_date" readonly="dinamic"/>
+            </column>
+            <column name="last_update" numcolumns="6" order="110">
+                <widget type="datetime" fieldname="last_update" readonly="dinamic"/>
+            </column>
+        </group>
+    </columns>
+</view>

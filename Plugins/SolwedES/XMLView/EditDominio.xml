@@ -54,10 +54,10 @@
                 <widget type="checkbox" fieldname="privacidad_whois"/>
             </column>
         </group>
-        <group name="contract" numcolumns="12" title="service-contract">
-            <column name="idcontrato" order="400" numcolumns="6" title="contract">
-                <widget type="autocomplete" fieldname="idcontrato" onclick="EditContratServicio">
-                    <values source="solwedes_contratos" fieldcode="id" fieldtitle="id"/>
+        <group name="subscription" numcolumns="12" title="subscription">
+            <column name="idsuscripcion" order="400" numcolumns="6" title="subscription">
+                <widget type="autocomplete" fieldname="idsuscripcion" onclick="EditSuscripcion">
+                    <values source="solwedes_suscripciones" fieldcode="id" fieldtitle="id"/>
                 </widget>
             </column>
         </group>

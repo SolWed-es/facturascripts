@@ -12,7 +12,7 @@ namespace FacturaScripts\Plugins\SolwedES\Lib;
 use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
 use FacturaScripts\Core\Tools;
 use FacturaScripts\Dinamic\Model\Contacto;
-use FacturaScripts\Plugins\SolwedES\Model\ContratServicio;
+use FacturaScripts\Plugins\SolwedES\Model\Suscripcion;
 use FacturaScripts\Plugins\SolwedES\Model\Servicio;
 use FacturaScripts\Plugins\SolwedES\Model\AccesoServicio;
 
@@ -21,11 +21,11 @@ use FacturaScripts\Plugins\SolwedES\Model\AccesoServicio;
  */
 class ClienteServiciosManager
 {
-    // Estados de servicio (mapped from ContratServicio)
-    public const ESTADO_ACTIVO = ContratServicio::ESTADO_ACTIVO;
+    // Estados de servicio (mapped from Suscripcion)
+    public const ESTADO_ACTIVO = Suscripcion::ESTADO_ACTIVO;
     public const ESTADO_POR_VENCER = 'por_vencer';
-    public const ESTADO_VENCIDO = ContratServicio::ESTADO_VENCIDO;
-    public const ESTADO_CANCELADO = ContratServicio::ESTADO_CANCELADO;
+    public const ESTADO_VENCIDO = Suscripcion::ESTADO_VENCIDO;
+    public const ESTADO_CANCELADO = Suscripcion::ESTADO_CANCELADO;
 
     // Días para considerar "próximo a vencer"
     public const DIAS_ALERTA_VENCIMIENTO = 30;
@@ -59,15 +59,15 @@ class ClienteServiciosManager
         }
 
         // Get all contracts for these contacts
-        $contratoModel = new ContratServicio();
+        $suscripcionModel = new Suscripcion();
         $where = [
             new DataBaseWhere('idcontacto', implode(',', $contactIds), 'IN'),
-            new DataBaseWhere('estado', ContratServicio::ESTADO_CANCELADO, '!=')
+            new DataBaseWhere('estado', Suscripcion::ESTADO_CANCELADO, '!=')
         ];
-        $contratos = $contratoModel->all($where, ['fecha_vencimiento' => 'ASC']);
+        $suscripciones = $suscripcionModel->all($where, ['fecha_vencimiento' => 'ASC']);
 
-        foreach ($contratos as $contrato) {
-            $servicioData = self::procesarContrato($contrato, $contactIds);
+        foreach ($suscripciones as $suscripcion) {
+            $servicioData = self::procesarSuscripcion($suscripcion, $contactIds);
             if ($servicioData) {
                 $servicios[] = $servicioData;
             }
@@ -79,20 +79,20 @@ class ClienteServiciosManager
     /**
      * Procesa un contrato y extrae información del servicio
      *
-     * @param ContratServicio $contrato
+     * @param Suscripcion $suscripcion
      * @param array $contactIds Array of contact IDs belonging to the client
      * @return array|null
      */
-    private static function procesarContrato(ContratServicio $contrato, array $contactIds = []): ?array
+    private static function procesarSuscripcion(Suscripcion $suscripcion, array $contactIds = []): ?array
     {
-        $servicio = $contrato->getServicio();
+        $servicio = $suscripcion->getServicio();
         if (!$servicio || empty($servicio->id)) {
             return null;
         }
 
         // Calcular estado y días restantes
-        $diasRestantes = self::getDiasRestantes($contrato);
-        $estado = self::getEstadoServicio($contrato, $diasRestantes);
+        $diasRestantes = self::getDiasRestantes($suscripcion);
+        $estado = self::getEstadoServicio($suscripcion, $diasRestantes);
 
         // Obtener acceso SSO si existe
         $accesoSSO = null;
@@ -107,49 +107,49 @@ class ClienteServiciosManager
         }
 
         // Get cliente code from contact
-        $contacto = $contrato->getContacto();
+        $contacto = $suscripcion->getContacto();
         $codcliente = $contacto->codcliente ?? '';
 
         return [
-            'id_contrato' => $contrato->id,
+            'id_suscripcion' => $suscripcion->id,
             'servicio' => $servicio,
             'nombre' => $servicio->nombre,
             'descripcion' => $servicio->descripcion ?? '',
             'categoria' => $servicio->categoria ?? 'General',
             'icono' => $servicio->icono ?? 'fa-solid fa-cube',
             'color' => $servicio->color ?? '#6c757d',
-            'precio' => $contrato->importe,
-            'periodo' => self::getDescripcionPeriodo($contrato),
-            'fecha_inicio' => $contrato->fecha_inicio,
-            'fecha_renovacion' => $contrato->fecha_vencimiento,
-            'fecha_fin' => $contrato->estado === ContratServicio::ESTADO_CANCELADO ? $contrato->fecha_vencimiento : null,
+            'precio' => $suscripcion->importe,
+            'periodo' => self::getDescripcionPeriodo($suscripcion),
+            'fecha_inicio' => $suscripcion->fecha_inicio,
+            'fecha_renovacion' => $suscripcion->fecha_vencimiento,
+            'fecha_fin' => $suscripcion->estado === Suscripcion::ESTADO_CANCELADO ? $suscripcion->fecha_vencimiento : null,
             'dias_restantes' => $diasRestantes,
             'estado' => $estado,
             'estado_label' => self::getEstadoLabel($estado),
             'estado_class' => self::getEstadoClass($estado),
-            'cancelable' => self::esCancelable($contrato),
+            'cancelable' => self::esCancelable($suscripcion),
             'upgradeable' => self::tieneUpgradesDisponibles($servicio),
             'acceso_sso' => $accesoSSO,
             'codcliente' => $codcliente,
-            'metodo_pago' => $contrato->metodo_pago,
-            'auto_renovar' => $contrato->auto_renovar
+            'metodo_pago' => $suscripcion->metodo_pago,
+            'auto_renovar' => $suscripcion->auto_renovar
         ];
     }
 
     /**
      * Calcula los días restantes hasta la próxima renovación
      *
-     * @param ContratServicio $contrato
+     * @param Suscripcion $suscripcion
      * @return int
      */
-    public static function getDiasRestantes(ContratServicio $contrato): int
+    public static function getDiasRestantes(Suscripcion $suscripcion): int
     {
-        if (empty($contrato->fecha_vencimiento)) {
+        if (empty($suscripcion->fecha_vencimiento)) {
             return -1;
         }
 
         $hoy = new \DateTime();
-        $vencimiento = new \DateTime($contrato->fecha_vencimiento);
+        $vencimiento = new \DateTime($suscripcion->fecha_vencimiento);
         $diff = $hoy->diff($vencimiento);
 
         return $diff->invert ? -$diff->days : $diff->days;
@@ -158,19 +158,19 @@ class ClienteServiciosManager
     /**
      * Determina el estado del servicio
      *
-     * @param ContratServicio $contrato
+     * @param Suscripcion $suscripcion
      * @param int|null $diasRestantes
      * @return string
      */
-    public static function getEstadoServicio(ContratServicio $contrato, ?int $diasRestantes = null): string
+    public static function getEstadoServicio(Suscripcion $suscripcion, ?int $diasRestantes = null): string
     {
         // If contract is already cancelled or suspended
-        if ($contrato->estado === ContratServicio::ESTADO_CANCELADO) {
+        if ($suscripcion->estado === Suscripcion::ESTADO_CANCELADO) {
             return self::ESTADO_CANCELADO;
         }
 
         if ($diasRestantes === null) {
-            $diasRestantes = self::getDiasRestantes($contrato);
+            $diasRestantes = self::getDiasRestantes($suscripcion);
         }
 
         // Si la fecha de renovación ya pasó
@@ -219,14 +219,14 @@ class ClienteServiciosManager
     /**
      * Obtiene descripción del período de facturación
      */
-    private static function getDescripcionPeriodo(ContratServicio $contrato): string
+    private static function getDescripcionPeriodo(Suscripcion $suscripcion): string
     {
-        if (empty($contrato->fecha_inicio) || empty($contrato->fecha_vencimiento)) {
+        if (empty($suscripcion->fecha_inicio) || empty($suscripcion->fecha_vencimiento)) {
             return '';
         }
 
-        $inicio = new \DateTime($contrato->fecha_inicio);
-        $fin = new \DateTime($contrato->fecha_vencimiento);
+        $inicio = new \DateTime($suscripcion->fecha_inicio);
+        $fin = new \DateTime($suscripcion->fecha_vencimiento);
         $diff = $inicio->diff($fin);
 
         if ($diff->y >= 1) {
@@ -244,9 +244,9 @@ class ClienteServiciosManager
     /**
      * Verifica si el servicio es cancelable
      */
-    private static function esCancelable(ContratServicio $contrato): bool
+    private static function esCancelable(Suscripcion $suscripcion): bool
     {
-        return $contrato->estado === ContratServicio::ESTADO_ACTIVO;
+        return $suscripcion->estado === Suscripcion::ESTADO_ACTIVO;
     }
 
     /**
@@ -278,14 +278,14 @@ class ClienteServiciosManager
     /**
      * Calcula el precio prorrateado para un upgrade
      */
-    public static function calcularProrrateoUpgrade(ContratServicio $contratoActual, Servicio $servicioNuevo): float
+    public static function calcularProrrateoUpgrade(Suscripcion $suscripcionActual, Servicio $servicioNuevo): float
     {
-        $diasRestantes = self::getDiasRestantes($contratoActual);
+        $diasRestantes = self::getDiasRestantes($suscripcionActual);
         if ($diasRestantes <= 0) {
             return $servicioNuevo->precio;
         }
 
-        $precioActual = $contratoActual->importe;
+        $precioActual = $suscripcionActual->importe;
         $diferenciaPrecio = $servicioNuevo->precio - $precioActual;
 
         if ($diferenciaPrecio <= 0) {
@@ -293,7 +293,7 @@ class ClienteServiciosManager
         }
 
         // Calcular días del período
-        $diasPeriodo = self::getDiasPeriodo($contratoActual);
+        $diasPeriodo = self::getDiasPeriodo($suscripcionActual);
         if ($diasPeriodo <= 0) {
             return $diferenciaPrecio;
         }
@@ -305,14 +305,14 @@ class ClienteServiciosManager
     /**
      * Obtiene los días del período de facturación
      */
-    private static function getDiasPeriodo(ContratServicio $contrato): int
+    private static function getDiasPeriodo(Suscripcion $suscripcion): int
     {
-        if (empty($contrato->fecha_inicio) || empty($contrato->fecha_vencimiento)) {
+        if (empty($suscripcion->fecha_inicio) || empty($suscripcion->fecha_vencimiento)) {
             return 30; // Default
         }
 
-        $inicio = new \DateTime($contrato->fecha_inicio);
-        $fin = new \DateTime($contrato->fecha_vencimiento);
+        $inicio = new \DateTime($suscripcion->fecha_inicio);
+        $fin = new \DateTime($suscripcion->fecha_vencimiento);
 
         return $inicio->diff($fin)->days;
     }
@@ -322,12 +322,12 @@ class ClienteServiciosManager
      */
     public static function getServiciosProximosAVencer(int $diasLimite = 30): array
     {
-        $contratos = ContratServicio::getProximosAVencer($diasLimite);
+        $suscripciones = Suscripcion::getProximosAVencer($diasLimite);
         $serviciosProximos = [];
 
-        foreach ($contratos as $contrato) {
-            $contactIds = [$contrato->idcontacto];
-            $servicioData = self::procesarContrato($contrato, $contactIds);
+        foreach ($suscripciones as $suscripcion) {
+            $contactIds = [$suscripcion->idcontacto];
+            $servicioData = self::procesarSuscripcion($suscripcion, $contactIds);
             if ($servicioData) {
                 $serviciosProximos[] = $servicioData;
             }
@@ -339,53 +339,53 @@ class ClienteServiciosManager
     /**
      * Obtiene información de un servicio específico por ID de contrato
      */
-    public static function getServicioInfo(int $idContrato, ?int $idcontacto = null): ?array
+    public static function getServicioInfo(int $idSuscripcion, ?int $idcontacto = null): ?array
     {
-        $contrato = new ContratServicio();
-        if (!$contrato->load($idContrato)) {
+        $suscripcion = new Suscripcion();
+        if (!$suscripcion->load($idSuscripcion)) {
             return null;
         }
 
-        $contactIds = $idcontacto !== null ? [$idcontacto] : [$contrato->idcontacto];
+        $contactIds = $idcontacto !== null ? [$idcontacto] : [$suscripcion->idcontacto];
 
-        return self::procesarContrato($contrato, $contactIds);
+        return self::procesarSuscripcion($suscripcion, $contactIds);
     }
 
     /**
      * Verifica si un contrato pertenece a un cliente
      */
-    public static function perteneceACliente(int $idContrato, string $codcliente): bool
+    public static function perteneceACliente(int $idSuscripcion, string $codcliente): bool
     {
-        $contrato = new ContratServicio();
-        if (!$contrato->load($idContrato)) {
+        $suscripcion = new Suscripcion();
+        if (!$suscripcion->load($idSuscripcion)) {
             return false;
         }
 
-        $contacto = $contrato->getContacto();
+        $contacto = $suscripcion->getContacto();
         return $contacto->codcliente === $codcliente;
     }
 
     /**
      * Cancela un servicio
      */
-    public static function cancelarServicio(int $idContrato, string $codcliente): bool
+    public static function cancelarServicio(int $idSuscripcion, string $codcliente): bool
     {
-        $contrato = new ContratServicio();
-        if (!$contrato->load($idContrato)) {
+        $suscripcion = new Suscripcion();
+        if (!$suscripcion->load($idSuscripcion)) {
             return false;
         }
 
         // Verificar que pertenece al cliente
-        $contacto = $contrato->getContacto();
+        $contacto = $suscripcion->getContacto();
         if ($contacto->codcliente !== $codcliente) {
             return false;
         }
 
-        $contrato->estado = ContratServicio::ESTADO_CANCELADO;
-        $contrato->auto_renovar = false;
+        $suscripcion->estado = Suscripcion::ESTADO_CANCELADO;
+        $suscripcion->auto_renovar = false;
 
-        if ($contrato->save()) {
-            SolwedLogger::stripe("Contrato cancelado: ID={$idContrato} Cliente={$codcliente}");
+        if ($suscripcion->save()) {
+            SolwedLogger::stripe("Suscripcion cancelada: ID={$idSuscripcion} Cliente={$codcliente}");
             return true;
         }
 

@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<table>
+    <column>
+        <name>id</name>
+        <type>serial</type>
+    </column>
+    <column>
+        <name>idcontacto</name>
+        <type>integer</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>idservicio</name>
+        <type>integer</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>estado</name>
+        <type>character varying(20)</type>
+        <default>'pendiente'</default>
+    </column>
+    <column>
+        <name>fecha_inicio</name>
+        <type>date</type>
+    </column>
+    <column>
+        <name>fecha_vencimiento</name>
+        <type>date</type>
+    </column>
+    <column>
+        <name>fecha_ultimo_pago</name>
+        <type>date</type>
+    </column>
+    <column>
+        <name>fecha_proximo_pago</name>
+        <type>date</type>
+    </column>
+    <column>
+        <name>metodo_pago</name>
+        <type>character varying(20)</type>
+        <default>'manual'</default>
+    </column>
+    <column>
+        <name>referencia_externa</name>
+        <type>character varying(255)</type>
+    </column>
+    <column>
+        <name>auto_renovar</name>
+        <type>boolean</type>
+        <default>true</default>
+    </column>
+    <column>
+        <name>importe</name>
+        <type>double precision</type>
+        <default>0</default>
+    </column>
+    <column>
+        <name>stripe_customer_id</name>
+        <type>character varying(255)</type>
+    </column>
+    <column>
+        <name>stripe_price_id</name>
+        <type>character varying(255)</type>
+    </column>
+    <column>
+        <name>dominio</name>
+        <type>character varying(255)</type>
+    </column>
+    <column>
+        <name>servidor</name>
+        <type>character varying(50)</type>
+    </column>
+    <column>
+        <name>moneda</name>
+        <type>character varying(5)</type>
+        <default>'EUR'</default>
+    </column>
+    <column>
+        <name>intervalo</name>
+        <type>character varying(20)</type>
+        <default>'month'</default>
+    </column>
+    <column>
+        <name>cancel_at_period_end</name>
+        <type>boolean</type>
+        <default>false</default>
+    </column>
+    <column>
+        <name>canceled_at</name>
+        <type>timestamp</type>
+    </column>
+    <column>
+        <name>payment_failed_at</name>
+        <type>timestamp</type>
+    </column>
+    <column>
+        <name>payment_failed_count</name>
+        <type>integer</type>
+        <default>0</default>
+    </column>
+    <column>
+        <name>impago_alerta_sent</name>
+        <type>boolean</type>
+        <default>false</default>
+    </column>
+    <column>
+        <name>impago_suspended_at</name>
+        <type>timestamp</type>
+    </column>
+    <column>
+        <name>notas</name>
+        <type>text</type>
+    </column>
+    <column>
+        <name>provisioning_status</name>
+        <type>character varying(20)</type>
+        <default>'not_required'</default>
+    </column>
+    <column>
+        <name>creation_date</name>
+        <type>timestamp</type>
+    </column>
+    <column>
+        <name>last_update</name>
+        <type>timestamp</type>
+    </column>
+    <constraint>
+        <name>solwedes_suscripciones_pkey</name>
+        <type>PRIMARY KEY (id)</type>
+    </constraint>
+    <constraint>
+        <name>solwedes_suscripciones_contacto_fk</name>
+        <type>FOREIGN KEY (idcontacto) REFERENCES contactos (idcontacto) ON DELETE CASCADE ON UPDATE CASCADE</type>
+    </constraint>
+    <constraint>
+        <name>solwedes_suscripciones_servicio_fk</name>
+        <type>FOREIGN KEY (idservicio) REFERENCES solwedes_servicios (id) ON DELETE CASCADE ON UPDATE CASCADE</type>
+    </constraint>
+</table>

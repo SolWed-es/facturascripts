@@ -809,14 +809,14 @@ HTML;
     /**
      * Sends provisioning failure alert to admin
      *
-     * @param \FacturaScripts\Plugins\SolwedES\Model\ContratServicio $contrato
+     * @param \FacturaScripts\Plugins\SolwedES\Model\Suscripcion $contrato
      * @param Contacto $contacto
      * @param string $domain
      * @param string $error Error message
      * @return bool
      */
     public static function sendProvisioningFailureAlert(
-        \FacturaScripts\Plugins\SolwedES\Model\ContratServicio $contrato,
+        \FacturaScripts\Plugins\SolwedES\Model\Suscripcion $suscripcion,
         Contacto $contacto,
         string $domain,
         string $error
@@ -827,7 +827,7 @@ HTML;
         $subject = "[ALERTA] Fallo en aprovisionamiento WordPress: {$domain}";
 
         $html = self::buildProvisioningFailureAlertHTML(
-            $contrato,
+            $suscripcion,
             $contacto,
             $domain,
             $error
@@ -1080,14 +1080,14 @@ HTML;
     /**
      * Builds HTML for provisioning failure alert
      *
-     * @param \FacturaScripts\Plugins\SolwedES\Model\ContratServicio $contrato
+     * @param \FacturaScripts\Plugins\SolwedES\Model\Suscripcion $contrato
      * @param Contacto $contacto
      * @param string $domain
      * @param string $error
      * @return string HTML content
      */
     private static function buildProvisioningFailureAlertHTML(
-        \FacturaScripts\Plugins\SolwedES\Model\ContratServicio $contrato,
+        \FacturaScripts\Plugins\SolwedES\Model\Suscripcion $suscripcion,
         Contacto $contacto,
         string $domain,
         string $error

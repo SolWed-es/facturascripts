@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view>
+    <columns>
+        <group name="google-oauth" numcolumns="12" title="google-oauth-config">
+            <column name="client_id" numcolumns="6" order="100">
+                <widget type="text" fieldname="client_id" maxlength="255">
+                    <hint>Google OAuth Client ID (from Google Cloud Console)</hint>
+                </widget>
+            </column>
+            <column name="client_secret" numcolumns="6" order="110">
+                <widget type="password" fieldname="client_secret" maxlength="255">
+                    <hint>Google OAuth Client Secret</hint>
+                </widget>
+            </column>
+            <column name="redirect_uri" numcolumns="6" order="120">
+                <widget type="text" fieldname="redirect_uri" maxlength="500">
+                    <hint>OAuth callback URL (ej: https://erp.solwed.es/ApiOAuth?action=callback&amp;provider=google)</hint>
+                </widget>
+            </column>
+        </group>
+    </columns>
+</view>

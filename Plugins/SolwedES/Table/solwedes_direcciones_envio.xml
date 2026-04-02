@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<table>
+    <column>
+        <name>id</name>
+        <type>serial</type>
+    </column>
+    <column>
+        <name>idcontacto</name>
+        <type>integer</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>label</name>
+        <type>character varying(50)</type>
+        <default>'Principal'</default>
+    </column>
+    <column>
+        <name>nombre_destinatario</name>
+        <type>character varying(200)</type>
+    </column>
+    <column>
+        <name>direccion</name>
+        <type>character varying(255)</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>ciudad</name>
+        <type>character varying(100)</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>provincia</name>
+        <type>character varying(100)</type>
+    </column>
+    <column>
+        <name>codpostal</name>
+        <type>character varying(10)</type>
+    </column>
+    <column>
+        <name>pais</name>
+        <type>character varying(5)</type>
+        <default>'ES'</default>
+    </column>
+    <column>
+        <name>telefono</name>
+        <type>character varying(20)</type>
+    </column>
+    <column>
+        <name>notas</name>
+        <type>text</type>
+    </column>
+    <column>
+        <name>is_default</name>
+        <type>boolean</type>
+        <default>false</default>
+    </column>
+    <column>
+        <name>creation_date</name>
+        <type>timestamp</type>
+    </column>
+    <column>
+        <name>last_update</name>
+        <type>timestamp</type>
+    </column>
+    <constraint>
+        <name>solwedes_direcciones_envio_pkey</name>
+        <type>PRIMARY KEY (id)</type>
+    </constraint>
+    <constraint>
+        <name>solwedes_direcciones_envio_contacto_fk</name>
+        <type>FOREIGN KEY (idcontacto) REFERENCES contactos (idcontacto) ON DELETE CASCADE ON UPDATE CASCADE</type>
+    </constraint>
+</table>

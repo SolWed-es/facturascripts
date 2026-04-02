@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin SolwedES - Listado de Contratos de Servicio
+ * Plugin SolwedES - Listado de Suscripciones
  *
  * @author    Solwed Desarrollo
  * @copyright 2025 Solwed
@@ -11,15 +11,15 @@ namespace FacturaScripts\Plugins\SolwedES\Controller;
 use FacturaScripts\Core\Lib\ExtendedController\ListController;
 
 /**
- * Controlador para listar contratos de servicio
+ * Controlador para listar suscripciones
  */
-class ListContratServicio extends ListController
+class ListSuscripcion extends ListController
 {
     public function getPageData(): array
     {
         $data = parent::getPageData();
         $data['menu'] = 'sales';
-        $data['title'] = 'service-contracts';
+        $data['title'] = 'subscriptions';
         $data['icon'] = 'fa-solid fa-file-contract';
 
         return $data;
@@ -27,23 +27,20 @@ class ListContratServicio extends ListController
 
     protected function createViews()
     {
-        $this->createViewContratos();
+        $this->createViewSuscripciones();
     }
 
-    protected function createViewContratos(string $viewName = 'ListContratServicio')
+    protected function createViewSuscripciones(string $viewName = 'ListSuscripcion')
     {
-        $this->addView($viewName, 'ContratServicio', 'service-contracts', 'fa-solid fa-file-contract');
+        $this->addView($viewName, 'Suscripcion', 'subscriptions', 'fa-solid fa-file-contract');
 
-        // Configurar búsqueda
-        $this->addSearchFields($viewName, ['referencia_externa', 'notas', 'stripe_customer_id']);
+        $this->addSearchFields($viewName, ['referencia_externa', 'notas', 'stripe_customer_id', 'dominio']);
 
-        // Añadir orden
         $this->addOrderBy($viewName, ['id'], 'id', 2);
         $this->addOrderBy($viewName, ['fecha_inicio'], 'start-date');
         $this->addOrderBy($viewName, ['fecha_vencimiento'], 'expiration');
         $this->addOrderBy($viewName, ['creation_date'], 'date');
 
-        // Añadir filtros
         $estados = [
             '' => '------',
             'activo' => 'Activo',
@@ -58,7 +55,7 @@ class ListContratServicio extends ListController
             '' => '------',
             'stripe' => 'Stripe',
             'transferencia' => 'Transferencia',
-            'domiciliacion' => 'Domiciliación',
+            'domiciliacion' => 'Domiciliacion',
             'manual' => 'Manual'
         ];
         $this->addFilterSelect($viewName, 'metodo_pago', 'payment-method', 'metodo_pago', $metodos);

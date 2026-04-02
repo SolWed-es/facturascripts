@@ -54,7 +54,7 @@
         <type>character varying(50)</type>
     </column>
     <column>
-        <name>idcontrato</name>
+        <name>idsuscripcion</name>
         <type>integer</type>
     </column>
     <column>
@@ -78,8 +78,8 @@
         <type>FOREIGN KEY (idcontacto) REFERENCES contactos (idcontacto) ON DELETE CASCADE ON UPDATE CASCADE</type>
     </constraint>
     <constraint>
-        <name>solwedes_dominios_contrato_fk</name>
-        <type>FOREIGN KEY (idcontrato) REFERENCES solwedes_contratos (id) ON DELETE SET NULL ON UPDATE CASCADE</type>
+        <name>solwedes_dominios_suscripcion_fk</name>
+        <type>FOREIGN KEY (idsuscripcion) REFERENCES solwedes_suscripciones (id) ON DELETE SET NULL ON UPDATE CASCADE</type>
     </constraint>
     <constraint>
         <name>solwedes_dominios_nombre_tld_unique</name>

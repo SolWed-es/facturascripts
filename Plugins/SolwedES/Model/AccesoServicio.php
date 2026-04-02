@@ -50,6 +50,9 @@ class AccesoServicio extends ModelClass
     /** @var string|null Fecha de expiración del token */
     public $token_expires_at;
 
+    /** @var string|null API key para acceder al servicio (e.g., FS REST API key) */
+    public $api_key;
+
     /** @var bool Estado activo/inactivo */
     public $activo;
 

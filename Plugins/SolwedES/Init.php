@@ -40,11 +40,20 @@ class Init extends InitClass
         // Registrar modelos SolwedES como recursos API REST
         ApiRoot::addCustomResource('servicios');
         ApiRoot::addCustomResource('servicioprecios');
-        ApiRoot::addCustomResource('contratservicios');
         ApiRoot::addCustomResource('accesoservicios');
         ApiRoot::addCustomResource('dominios');
         ApiRoot::addCustomResource('pagostripes');
         ApiRoot::addCustomResource('suscripciones');
+        ApiRoot::addCustomResource('direccionenvios');
+
+        // Custom API endpoints
+        Kernel::addRoute('/ApiSuscripcion', 'ApiSuscripcion', -1);
+        Kernel::addRoute('/ApiStripe', 'ApiStripe', -1);
+        Kernel::addRoute('/ApiDireccionEnvio', 'ApiDireccionEnvio', -1);
+        Kernel::addRoute('/ApiOAuth', 'ApiOAuth', -1);
+        Kernel::addRoute('/ApiContactSearch', 'ApiContactSearch', -1);
+        Kernel::addRoute('/ApiAccesoServicio', 'ApiAccesoServicio', -1);
+        Kernel::addRoute('/ApiServicio', 'ApiServicio', -1);
     }
 
     public function update(): void
@@ -54,6 +63,9 @@ class Init extends InitClass
 
         // Configurar valores por defecto de Stripe
         $this->setupStripeSettings();
+
+        // Configurar valores por defecto de Google OAuth
+        $this->setupGoogleSettings();
 
         // Configurar valores por defecto de DonDominio
         $this->setupDonDominioSettings();
@@ -106,6 +118,18 @@ class Init extends InitClass
         }
 
         Tools::settingsSave();
+    }
+
+    /**
+     * Configura valores por defecto para Google OAuth
+     */
+    private function setupGoogleSettings(): void
+    {
+        if (empty(Tools::settings('google', 'redirect_uri'))) {
+            $baseUrl = Tools::settings('default', 'site_url', 'https://erp.solwed.es');
+            Tools::settingsSet('google', 'redirect_uri', rtrim($baseUrl, '/') . '/ApiOAuth?action=callback&provider=google');
+            Tools::settingsSave();
+        }
     }
 
     /**

@@ -24,9 +24,9 @@
         <column name="fecha_expiracion" order="140" title="expiration">
             <widget type="date" fieldname="fecha_expiracion"/>
         </column>
-        <column name="idcontrato" order="150" title="contract">
-            <widget type="autocomplete" fieldname="idcontrato" onclick="EditContratServicio">
-                <values source="solwedes_contratos" fieldcode="id" fieldtitle="id"/>
+        <column name="idsuscripcion" order="150" title="subscription">
+            <widget type="autocomplete" fieldname="idsuscripcion" onclick="EditSuscripcion">
+                <values source="solwedes_suscripciones" fieldcode="id" fieldtitle="id"/>
             </widget>
         </column>
         <column name="gestionado_solwed" display="center" order="160" title="managed">

@@ -18,7 +18,7 @@ use FacturaScripts\Core\Tools;
 use FacturaScripts\Plugins\SolwedES\Lib\StripeHelper;
 use FacturaScripts\Plugins\SolwedES\Lib\DonDominioHelper;
 use FacturaScripts\Plugins\SolwedES\Model\PagoStripe;
-use FacturaScripts\Plugins\SolwedES\Model\ContratServicio;
+use FacturaScripts\Plugins\SolwedES\Model\Suscripcion;
 use FacturaScripts\Plugins\SolwedES\Model\Dominio;
 use FacturaScripts\Plugins\SolwedES\Model\Servicio;
 use FacturaScripts\Dinamic\Model\Contacto;
@@ -96,7 +96,7 @@ class DebugStripeWebhook extends Controller
             ],
             'counts' => [
                 'pagos' => $this->countRecords(new PagoStripe()),
-                'contratos' => $this->countRecords(new ContratServicio()),
+                'suscripciones' => $this->countRecords(new Suscripcion()),
                 'dominios' => $this->countRecords(new Dominio()),
                 'servicios' => $this->countRecords(new Servicio()),
             ]
@@ -141,12 +141,12 @@ class DebugStripeWebhook extends Controller
     {
         $limit = (int)$this->request->get('limit', 10);
 
-        $contrato = new ContratServicio();
-        $contratos = $contrato->all([], ['id' => 'DESC'], 0, $limit);
+        $suscripcion = new Suscripcion();
+        $suscripciones = $suscripcion->all([], ['id' => 'DESC'], 0, $limit);
 
         return [
             'action' => 'contracts',
-            'count' => count($contratos),
+            'count' => count($suscripciones),
             'contracts' => array_map(function($c) {
                 return [
                     'id' => $c->id,
@@ -159,7 +159,7 @@ class DebugStripeWebhook extends Controller
                     'fecha_inicio' => $c->fecha_inicio,
                     'fecha_proximo_pago' => $c->fecha_proximo_pago,
                 ];
-            }, $contratos)
+            }, $suscripciones)
         ];
     }
 

@@ -75,8 +75,8 @@ class ListDominio extends ListController
         $tlds = $this->codeModel->all('solwedes_dominios', 'tld', 'tld');
         $this->addFilterSelect($viewName, 'tld', 'tld', 'tld', $tlds);
 
-        // Filtro por contrato
-        $this->addFilterAutocomplete($viewName, 'idcontrato', 'contract', 'idcontrato', 'solwedes_contratos', 'id', 'id');
+        // Filtro por suscripcion
+        $this->addFilterAutocomplete($viewName, 'idsuscripcion', 'subscription', 'idsuscripcion', 'solwedes_suscripciones', 'id', 'id');
 
         // Filtro por contacto
         $this->addFilterAutocomplete($viewName, 'idcontacto', 'contact', 'idcontacto', 'contactos', 'idcontacto', 'nombre');

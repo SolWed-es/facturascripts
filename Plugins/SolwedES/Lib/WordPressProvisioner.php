@@ -14,7 +14,7 @@
 
 namespace FacturaScripts\Plugins\SolwedES\Lib;
 
-use FacturaScripts\Plugins\SolwedES\Model\ContratServicio;
+use FacturaScripts\Plugins\SolwedES\Model\Suscripcion;
 use FacturaScripts\Plugins\SolwedES\Model\PleskConfig;
 use FacturaScripts\Dinamic\Model\Contacto;
 
@@ -48,14 +48,14 @@ class WordPressProvisioner
     /**
      * Provisions a complete WordPress hosting setup
      *
-     * @param ContratServicio $contrato The service contract
+     * @param Suscripcion $suscripcion The service contract
      * @param Contacto $contacto The customer contact
      * @param string $domain Domain name for the hosting
      * @param string $plan Service plan (starter, pro, vps)
      * @return ProvisioningResult
      */
     public static function provision(
-        ContratServicio $contrato,
+        Suscripcion $suscripcion,
         Contacto $contacto,
         string $domain,
         string $plan = 'starter'
@@ -65,8 +65,8 @@ class WordPressProvisioner
 
         // Update contract to in_progress
         SolwedLogger::stripe('DEBUG [PROV-2]: Setting contract provisioning_status to IN_PROGRESS');
-        $contrato->provisioning_status = ContratServicio::PROV_IN_PROGRESS;
-        $contrato->save();
+        $suscripcion->provisioning_status = Suscripcion::PROV_IN_PROGRESS;
+        $suscripcion->save();
 
         try {
             // 1. Get Plesk configuration

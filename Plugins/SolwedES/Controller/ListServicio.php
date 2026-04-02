@@ -35,7 +35,7 @@ class ListServicio extends ListController
     protected function createViews()
     {
         $this->createViewServicio();
-        $this->createViewContratos();
+        $this->createViewSuscripciones();
     }
 
     /**
@@ -66,9 +66,9 @@ class ListServicio extends ListController
      *
      * @param string $viewName
      */
-    protected function createViewContratos(string $viewName = 'ListContratServicio')
+    protected function createViewSuscripciones(string $viewName = 'ListSuscripcion')
     {
-        $this->addView($viewName, 'ContratServicio', 'service-contracts', 'fa-solid fa-file-contract');
+        $this->addView($viewName, 'Suscripcion', 'subscriptions', 'fa-solid fa-file-contract');
 
         $this->addOrderBy($viewName, ['fecha_vencimiento'], 'expiration', 1);
         $this->addOrderBy($viewName, ['fecha_inicio'], 'start-date');

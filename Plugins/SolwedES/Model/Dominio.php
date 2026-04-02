@@ -29,7 +29,7 @@ class Dominio extends ModelClass
     const ESTADO_REDEMPTION = 'redemption';
     const ESTADO_INACTIVE = 'inactive';
 
-    // @deprecated - Use idcontrato to link domains to services via ContratServicio
+    // @deprecated - Use idsuscripcion to link domains to services via Suscripcion
     const USADO_WORDPRESS = 'wordpress';
     const USADO_EMAIL = 'email';
     const USADO_AMBOS = 'wordpress,email';
@@ -71,7 +71,7 @@ class Dominio extends ModelClass
     public $usado_por;
 
     /** @var int|null */
-    public $idcontrato;
+    public $idsuscripcion;
 
     /** @var string|null */
     public $observaciones;
@@ -111,22 +111,22 @@ class Dominio extends ModelClass
         return $contacto;
     }
 
-    public function getContrato(): ContratServicio
+    public function getSuscripcion(): Suscripcion
     {
-        $contrato = new ContratServicio();
-        $contrato->load($this->idcontrato);
-        return $contrato;
+        $suscripcion = new Suscripcion();
+        $suscripcion->load($this->idsuscripcion);
+        return $suscripcion;
     }
 
     public function hasAutoRenewal(): bool
     {
-        if (empty($this->idcontrato)) {
+        if (empty($this->idsuscripcion)) {
             return false;
         }
-        $contrato = $this->getContrato();
-        return $contrato->auto_renovar &&
-               $contrato->metodo_pago === ContratServicio::METODO_STRIPE &&
-               $contrato->isActivo();
+        $suscripcion = $this->getSuscripcion();
+        return $suscripcion->auto_renovar &&
+               $suscripcion->metodo_pago === Suscripcion::METODO_STRIPE &&
+               $suscripcion->isActivo();
     }
 
     public function getNombreCompleto(): string
@@ -195,28 +195,28 @@ class Dominio extends ModelClass
     }
 
     /**
-     * Checks if domain is linked to any active contract
+     * Checks if domain is linked to any active subscription
      */
-    public function hasActiveContract(): bool
+    public function hasActiveSuscripcion(): bool
     {
-        if (empty($this->idcontrato)) {
+        if (empty($this->idsuscripcion)) {
             return false;
         }
-        $contrato = $this->getContrato();
-        return $contrato->id && $contrato->isActivo();
+        $suscripcion = $this->getSuscripcion();
+        return $suscripcion->id && $suscripcion->isActivo();
     }
 
     /**
-     * Gets the service linked to this domain via its contract
+     * Gets the service linked to this domain via its subscription
      */
     public function getServicio(): ?Servicio
     {
-        if (empty($this->idcontrato)) {
+        if (empty($this->idsuscripcion)) {
             return null;
         }
-        $contrato = $this->getContrato();
-        if ($contrato->id) {
-            return $contrato->getServicio();
+        $suscripcion = $this->getSuscripcion();
+        if ($suscripcion->id) {
+            return $suscripcion->getServicio();
         }
         return null;
     }
@@ -309,7 +309,7 @@ class Dominio extends ModelClass
         $disponibles = [];
 
         foreach ($dominios as $dominio) {
-            if (!$dominio->hasActiveContract()) {
+            if (!$dominio->hasActiveSuscripcion()) {
                 $disponibles[] = $dominio;
             }
         }
@@ -317,10 +317,10 @@ class Dominio extends ModelClass
         return $disponibles;
     }
 
-    public static function getByContrato(int $idcontrato): array
+    public static function getBySuscripcion(int $idsuscripcion): array
     {
         $dominio = new self();
-        $where = [Where::column('idcontrato', $idcontrato)];
+        $where = [Where::column('idsuscripcion', $idsuscripcion)];
         return $dominio->all($where, ['nombre' => 'ASC']);
     }
 
@@ -374,17 +374,17 @@ class Dominio extends ModelClass
     {
         $dominio = new self();
         $where = [
-            Where::column('idcontrato', null, 'IS NOT'),
+            Where::column('idsuscripcion', null, 'IS NOT'),
             Where::column('estado', self::ESTADO_ACTIVE),
         ];
         $dominios = $dominio->all($where, ['fecha_expiracion' => 'ASC']);
 
         return array_filter($dominios, function ($d) {
-            if (empty($d->idcontrato)) {
+            if (empty($d->idsuscripcion)) {
                 return false;
             }
-            $contrato = $d->getContrato();
-            return $contrato->id && $contrato->auto_renovar && $contrato->isActivo();
+            $suscripcion = $d->getSuscripcion();
+            return $suscripcion->id && $suscripcion->auto_renovar && $suscripcion->isActivo();
         });
     }
 
