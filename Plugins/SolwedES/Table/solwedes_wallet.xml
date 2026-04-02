@@ -47,4 +47,8 @@
         <name>solwedes_wallet_pkey</name>
         <type>PRIMARY KEY (id)</type>
     </constraint>
+    <constraint>
+        <name>idx_wallet_codcliente</name>
+        <type>INDEX (codcliente)</type>
+    </constraint>
 </table>

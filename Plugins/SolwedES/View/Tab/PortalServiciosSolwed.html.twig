@@ -1,0 +1,587 @@
+{#
+ # Plugin SolwedES - Gestión de servicios SOLWED
+ # Vista unificada del portal: Programas SOLWED (servicios contratados y disponibles)
+ #
+ # @author    Solwed Desarrollo
+ # @copyright 2025 Solwed
+ #}
+
+<div class="container-fluid py-4">
+    <div class="text-center mb-5">
+        <h2><i class="fa-solid fa-briefcase me-2"></i>{{ i18n.trans('solwed-services') }}</h2>
+        <p class="text-muted">Soluciones tecnológicas para tu negocio</p>
+    </div>
+
+    {# ============================================= #}
+    {# SECCIÓN: MIS SERVICIOS CONTRATADOS           #}
+    {# ============================================= #}
+    {% if view.servicios_cliente is defined and view.servicios_cliente|length > 0 %}
+        <div class="mis-servicios-container mb-5">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h4 class="mb-0">
+                    <i class="fa-solid fa-clipboard-list me-2"></i>{{ i18n.trans('my-services') }}
+                </h4>
+                <div class="d-flex gap-2">
+                    {% if view.servicios_activos > 0 %}
+                        <span class="badge bg-success">{{ view.servicios_activos }} {{ i18n.trans('active') }}</span>
+                    {% endif %}
+                    {% if view.servicios_por_vencer > 0 %}
+                        <span class="badge bg-warning text-dark">{{ view.servicios_por_vencer }} {{ i18n.trans('expiring-soon') }}</span>
+                    {% endif %}
+                    {% if view.servicios_vencidos > 0 %}
+                        <span class="badge bg-danger">{{ view.servicios_vencidos }} {{ i18n.trans('expired') }}</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="row g-4">
+                {% for servicio_data in view.servicios_cliente %}
+                    {% set estado = servicio_data.estado %}
+                    {% set border_class = estado == 'activo' ? 'border-success' : (estado == 'por_vencer' ? 'border-warning' : 'border-danger') %}
+                    {% set badge_class = estado == 'activo' ? 'bg-success' : (estado == 'por_vencer' ? 'bg-warning text-dark' : 'bg-danger') %}
+                    {% set estado_label = estado == 'activo' ? i18n.trans('service-status-active') : (estado == 'por_vencer' ? i18n.trans('service-status-expiring') : i18n.trans('service-status-expired')) %}
+
+                    <div class="col-md-6 col-lg-4 col-xl-4 mb-4">
+                        <div class="card servicio-card h-100 {{ border_class }}">
+                            <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center">
+                                    <i class="{{ servicio_data.servicio.icono|default('fa-solid fa-cube') }} fa-2x me-3" style="color: {{ servicio_data.servicio.color|default('#6c757d') }};"></i>
+                                    <div>
+                                        <h5 class="mb-0">{{ servicio_data.nombre }}</h5>
+                                        <small class="text-muted">{{ servicio_data.servicio.categoria|default('') }}</small>
+                                    </div>
+                                </div>
+                                <span class="badge {{ badge_class }}">{{ estado_label }}</span>
+                            </div>
+
+                            <div class="card-body">
+                                {# Información de renovación #}
+                                <div class="row g-2 mb-3">
+                                    <div class="col-6">
+                                        <div class="info-item">
+                                            <small class="text-muted d-block">{{ i18n.trans('next-renewal') }}</small>
+                                            <strong>{{ servicio_data.fecha_siguiente|date('d/m/Y') }}</strong>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="info-item">
+                                            <small class="text-muted d-block">{{ i18n.trans('price') }}</small>
+                                            <strong>{{ servicio_data.precio|number_format(2, ',', '.') }} EUR</strong>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {# Mensaje según estado #}
+                                {% if estado == 'por_vencer' %}
+                                    <div class="alert alert-warning py-2 mb-3">
+                                        <small>
+                                            <i class="fa-solid fa-exclamation-triangle me-1"></i>
+                                            {{ i18n.trans('days-until-renewal')|replace({'%days%': servicio_data.dias_restantes}) }}
+                                        </small>
+                                    </div>
+                                {% elseif estado == 'vencido' %}
+                                    <div class="alert alert-danger py-2 mb-3">
+                                        <small>
+                                            <i class="fa-solid fa-exclamation-circle me-1"></i>
+                                            {{ i18n.trans('service-expired-message') }}
+                                        </small>
+                                    </div>
+                                {% endif %}
+
+                                {# Botón de acceso SSO si existe #}
+                                {% if servicio_data.acceso is defined and servicio_data.acceso %}
+                                    <button type="button"
+                                            class="btn btn-primary w-100 mb-2 btn-sso-access"
+                                            data-idacceso="{{ servicio_data.acceso.id }}">
+                                        <i class="{{ servicio_data.acceso.icono|default('fa-solid fa-right-to-bracket') }} me-2"></i>
+                                        {{ i18n.trans('access') }}
+                                    </button>
+                                {% endif %}
+                            </div>
+
+                            <div class="card-footer bg-transparent">
+                                <div class="d-flex gap-2 flex-wrap">
+                                    {% if estado == 'vencido' or estado == 'por_vencer' %}
+                                        <button type="button"
+                                                class="btn btn-success btn-sm flex-grow-1 btn-renew-service"
+                                                data-idrecurrencia="{{ servicio_data.id_recurrencia }}"
+                                                data-nombre="{{ servicio_data.nombre }}">
+                                            <i class="fa-solid fa-sync me-1"></i>{{ i18n.trans('renew') }}
+                                        </button>
+                                    {% endif %}
+
+                                    {% if servicio_data.puede_mejorar|default(false) %}
+                                        <button type="button"
+                                                class="btn btn-info btn-sm flex-grow-1 btn-upgrade-service"
+                                                data-idrecurrencia="{{ servicio_data.id_recurrencia }}"
+                                                data-idservicio="{{ servicio_data.servicio.id }}"
+                                                data-nombre="{{ servicio_data.nombre }}">
+                                            <i class="fa-solid fa-arrow-up me-1"></i>{{ i18n.trans('upgrade') }}
+                                        </button>
+                                    {% endif %}
+
+                                    <button type="button"
+                                            class="btn btn-outline-danger btn-sm btn-cancel-service"
+                                            data-idrecurrencia="{{ servicio_data.id_recurrencia }}"
+                                            data-nombre="{{ servicio_data.nombre }}">
+                                        <i class="fa-solid fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <hr class="my-5">
+    {% endif %}
+
+    {# ============================================= #}
+    {# SECCIÓN: SUSCRIPCIONES STRIPE                #}
+    {# ============================================= #}
+    {% if view.suscripciones_stripe is defined and view.suscripciones_stripe|length > 0 %}
+        <div class="suscripciones-stripe-container mb-5">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h4 class="mb-0">
+                    <i class="fa-brands fa-stripe me-2"></i>{{ i18n.trans('stripe-subscriptions') }}
+                </h4>
+            </div>
+
+            <div class="row g-4">
+                {% for suscripcion in view.suscripciones_stripe %}
+                    {% set servicio = suscripcion.getServicio() %}
+                    {% set is_active = suscripcion.estado == 'active' %}
+                    {% set is_past_due = suscripcion.estado == 'past_due' %}
+                    {% set border_class = is_active ? 'border-success' : (is_past_due ? 'border-warning' : 'border-secondary') %}
+                    {% set badge_class = is_active ? 'bg-success' : (is_past_due ? 'bg-warning text-dark' : 'bg-secondary') %}
+                    {% set estado_label = i18n.trans('subscription-' ~ suscripcion.estado) %}
+
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card h-100 {{ border_class }}">
+                            <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center">
+                                    {% if servicio %}
+                                        <i class="{{ servicio.icono|default('fa-solid fa-cube') }} fa-2x me-3"
+                                           style="color: {{ servicio.color|default('#6c757d') }};"></i>
+                                        <div>
+                                            <h5 class="mb-0">{{ servicio.nombre }}</h5>
+                                            <small class="text-muted">{{ servicio.categoria|default('') }}</small>
+                                        </div>
+                                    {% else %}
+                                        <i class="fa-solid fa-cube fa-2x me-3"></i>
+                                        <h5 class="mb-0">Suscripción #{{ suscripcion.id }}</h5>
+                                    {% endif %}
+                                </div>
+                                <span class="badge {{ badge_class }}">{{ estado_label }}</span>
+                            </div>
+
+                            <div class="card-body">
+                                <div class="row g-2 mb-3">
+                                    <div class="col-6">
+                                        <div class="info-item">
+                                            <small class="text-muted d-block">{{ i18n.trans('price') }}</small>
+                                            {% if servicio %}
+                                                <strong>{{ servicio.precio|number_format(2, ',', '.') }} EUR</strong>
+                                            {% else %}
+                                                <strong>-</strong>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="info-item">
+                                            <small class="text-muted d-block">{{ i18n.trans('next-charge') }}</small>
+                                            <strong>{{ suscripcion.fecha_proximo_cobro|date('d/m/Y') }}</strong>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row g-2 mb-3">
+                                    <div class="col-6">
+                                        <div class="info-item">
+                                            <small class="text-muted d-block">{{ i18n.trans('start-date') }}</small>
+                                            <span>{{ suscripcion.fecha_inicio|date('d/m/Y') }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="info-item">
+                                            <small class="text-muted d-block">{{ i18n.trans('billing-period') }}</small>
+                                            {% if servicio %}
+                                                <span>{{ servicio.periodo_facturacion|default('Mensual') }}</span>
+                                            {% else %}
+                                                <span>-</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {% if is_past_due %}
+                                    <div class="alert alert-warning py-2 mb-3">
+                                        <small>
+                                            <i class="fa-solid fa-exclamation-triangle me-1"></i>
+                                            {{ i18n.trans('subscription-past-due-message') }}
+                                        </small>
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="card-footer bg-transparent">
+                                <div class="d-flex gap-2 flex-wrap">
+                                    {# Botón gestionar (Stripe Billing Portal) #}
+                                    <a href="{{ fsc.url() }}&action=openStripeBillingPortal&idsuscripcion={{ suscripcion.id }}"
+                                       class="btn btn-outline-primary btn-sm flex-grow-1">
+                                        <i class="fa-solid fa-credit-card me-1"></i>
+                                        {{ i18n.trans('manage-payment') }}
+                                    </a>
+
+                                    {% if is_active %}
+                                        {# Botón upgrade #}
+                                        <button type="button"
+                                                class="btn btn-info btn-sm btn-stripe-upgrade"
+                                                data-idsuscripcion="{{ suscripcion.id }}"
+                                                data-servicio-actual="{{ servicio.nombre|default('') }}">
+                                            <i class="fa-solid fa-arrow-up me-1"></i>
+                                            {{ i18n.trans('upgrade') }}
+                                        </button>
+
+                                        {# Botón cancelar #}
+                                        <button type="button"
+                                                class="btn btn-outline-danger btn-sm btn-cancel-stripe"
+                                                data-idsuscripcion="{{ suscripcion.id }}"
+                                                data-nombre="{{ servicio.nombre|default('Suscripción') }}">
+                                            <i class="fa-solid fa-times"></i>
+                                        </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <hr class="my-5">
+    {% endif %}
+
+    {# ============================================= #}
+    {# SECCIÓN: SERVICIOS DISPONIBLES               #}
+    {# ============================================= #}
+    <div class="servicios-disponibles">
+        <div class="alert alert-info">DEBUG: view.servicios_agrupados tiene {{ view.servicios_agrupados|default([])|length }} categorías</div>
+        <h4 class="mb-4">
+            <i class="fa-solid fa-shopping-bag me-2"></i>Servicios Disponibles
+        </h4>
+
+        {% if view.servicios_agrupados is defined and view.servicios_agrupados|length > 0 %}
+            {% for categoria, servicios in view.servicios_agrupados %}
+                <div class="servicios-categoria mb-5">
+                    <div class="category-header">
+                        <i class="fa-solid fa-folder-open me-2"></i>{{ categoria }}
+                    </div>
+
+                    <div class="row servicios-grid justify-content-center">
+                        {% for servicio in servicios %}
+                            {% set is_contratado = view.servicios_contratados[servicio.id] is defined %}
+
+                            <div class="col-md-6 col-lg-4 col-xl-4 mb-4">
+                                <div class="card servicio-card h-100 {% if is_contratado %}contratado{% endif %}"
+                                     style="border-left: 4px solid {{ servicio.color }};">
+                                    <div class="card-body">
+                                        {# Badge de estado #}
+                                        {% if is_contratado %}
+                                            <span class="badge bg-success position-absolute top-0 end-0 m-2">
+                                                <i class="fa-solid fa-check me-1"></i>Activo
+                                            </span>
+                                        {% elseif servicio.metadata.destacado is defined and servicio.metadata.destacado %}
+                                            <span class="badge bg-warning text-dark position-absolute top-0 end-0 m-2">
+                                                <i class="fa-solid fa-star me-1"></i>{{ servicio.metadata.badge|default('Destacado') }}
+                                            </span>
+                                        {% endif %}
+
+                                        <div class="servicio-header text-center mb-3">
+                                            {% if servicio.imagen %}
+                                                <img src="{{ servicio.imagen }}"
+                                                     alt="{{ servicio.nombre }}"
+                                                     class="servicio-imagen img-fluid mb-3">
+                                            {% else %}
+                                                <div class="servicio-icon" style="color: {{ servicio.color }};">
+                                                    <i class="{{ servicio.icono }}"></i>
+                                                </div>
+                                            {% endif %}
+                                            <h5 class="card-title">{{ servicio.nombre }}</h5>
+                                        </div>
+
+                                        <p class="servicio-descripcion text-muted small">
+                                            {{ servicio.descripcion }}
+                                        </p>
+
+                                        {% if servicio.features is defined and servicio.features|length > 0 %}
+                                            <ul class="servicio-caracteristicas">
+                                                {% for feature in servicio.features %}
+                                                    <li>
+                                                        <i class="fa-solid fa-check text-success me-1"></i>
+                                                        {{ feature }}
+                                                    </li>
+                                                {% endfor %}
+                                            </ul>
+                                        {% endif %}
+
+                                        <div class="servicio-precio text-center mt-3">
+                                            <div class="precio-valor" style="color: {{ servicio.color }};">
+                                                {{ servicio.precio|number_format(2, ',', '.') }} EUR
+                                            </div>
+                                            <div class="precio-periodo text-muted">
+                                                {{ servicio.periodo_facturacion }}
+                                            </div>
+                                        </div>
+
+                                        {# Información de contratación si ya lo tiene #}
+                                        {% if is_contratado %}
+                                            <div class="mt-3 p-2 bg-light rounded">
+                                                <small class="text-muted d-block">
+                                                    <i class="fa-solid fa-calendar-check me-1"></i>
+                                                    Activo desde {{ view.servicios_contratados[servicio.id].fecha_inicio|date('d/m/Y') }}
+                                                </small>
+                                                <small class="text-muted d-block">
+                                                    <i class="fa-solid fa-calendar-alt me-1"></i>
+                                                    Próxima renovación: {{ view.servicios_contratados[servicio.id].fecha_siguiente|date('d/m/Y') }}
+                                                </small>
+                                            </div>
+
+                                            {# Botón de acceso SSO si está configurado #}
+                                            {% if view.accesos_servicios[servicio.id] is defined %}
+                                                <div class="service-access-section mt-3 border-top pt-3">
+                                                    <a href="{{ view.accesos_servicios[servicio.id].url }}"
+                                                       class="btn btn-sm btn-outline-primary w-100"
+                                                       target="_blank">
+                                                        <i class="{{ view.accesos_servicios[servicio.id].icon }} me-1"></i>
+                                                        {{ view.accesos_servicios[servicio.id].label }}
+                                                    </a>
+                                                </div>
+                                            {% endif %}
+                                        {% elseif servicio.comprable and view.pc_allow_buy and servicio.genera_suscripcion and servicio.stripe_price_id %}
+                                            {# Servicios con suscripci\u00f3n #}
+                                            <div class="mt-3">
+                                                <button type="button"
+                                                        class="btn btn-success w-100 btn-subscribe-service"
+                                                        data-servicio-id="{{ servicio.id }}"
+                                                        data-servicio-nombre="{{ servicio.nombre }}">
+                                                    <i class="fa-solid fa-check-circle me-2"></i>
+                                                    {{ i18n.trans('subscribe') }}
+                                                </button>
+                                            </div>
+                                        {% elseif servicio.comprable and view.pc_allow_buy and servicio.idproducto %}
+                                            {# Servicios con producto (carrito) #}
+                                            <div class="mt-3">
+                                                <button type="button"
+                                                        class="btn btn-primary w-100 btn-comprar-servicio"
+                                                        data-servicio-id="{{ servicio.id }}"
+                                                        data-servicio-nombre="{{ servicio.nombre }}"
+                                                        data-producto-id="{{ servicio.idproducto }}">
+                                                    <i class="fa-solid fa-cart-plus me-2"></i>
+                                                    {{ i18n.trans('add-to-cart') }}
+                                                </button>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="alert alert-info text-center">
+                <i class="fa-solid fa-info-circle me-2"></i>
+                No hay servicios disponibles en este momento.
+            </div>
+        {% endif %}
+    </div>
+
+    {# Sección de contacto - Solo email #}
+    <div class="card bg-light mt-5 shadow-sm">
+        <div class="card-body text-center py-4">
+            <h5 class="mb-3">
+                <i class="fa-solid fa-envelope me-2"></i>
+                ¿Necesitas un servicio personalizado?
+            </h5>
+            <p class="text-muted mb-4">
+                Contáctanos para recibir un presupuesto adaptado a tus necesidades
+            </p>
+            <a href="mailto:admin@solwed.es" class="btn btn-primary">
+                <i class="fa-solid fa-paper-plane me-2"></i>Contactar por Email
+            </a>
+        </div>
+    </div>
+</div>
+
+{# ============================================= #}
+{# MODALES                                       #}
+{# ============================================= #}
+
+{# Modal Cancelar Servicio #}
+<div class="modal fade" id="modalCancelarServicio" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fa-solid fa-exclamation-triangle me-2"></i>
+                    {{ i18n.trans('confirm-cancellation') }}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>{{ i18n.trans('cancel-service-warning') }}</p>
+                <p class="fw-bold" id="cancelServiceName"></p>
+                <div class="alert alert-warning">
+                    <small>{{ i18n.trans('cancellation-effective-end-period') }}</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    {{ i18n.trans('keep-service') }}
+                </button>
+                <button type="button" class="btn btn-danger" id="btnConfirmCancel">
+                    <i class="fa-solid fa-times me-1"></i>{{ i18n.trans('confirm-cancel') }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Modal Renovar Servicio #}
+<div class="modal fade" id="modalRenovarServicio" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    <i class="fa-solid fa-sync me-2"></i>
+                    {{ i18n.trans('renew-service') }}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>{{ i18n.trans('renew-service-message') }}</p>
+                <p class="fw-bold" id="renewServiceName"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    {{ i18n.trans('cancel') }}
+                </button>
+                <button type="button" class="btn btn-success" id="btnConfirmRenew">
+                    <i class="fa-solid fa-sync me-1"></i>{{ i18n.trans('renew-now') }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Modal Upgrade Servicio #}
+<div class="modal fade" id="modalUpgradeServicio" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title">
+                    <i class="fa-solid fa-arrow-up me-2"></i>
+                    {{ i18n.trans('upgrade-service') }}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>{{ i18n.trans('current-service') }}: <strong id="upgradeCurrentService"></strong></p>
+                <p>{{ i18n.trans('select-upgrade-plan') }}</p>
+                <div id="upgradeOptionsContainer">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-info" role="status">
+                            <span class="visually-hidden">{{ i18n.trans('loading') }}...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    {{ i18n.trans('cancel') }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Modal Cancelar Suscripción Stripe #}
+<div class="modal fade" id="modalCancelarStripe" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fa-solid fa-exclamation-triangle me-2"></i>
+                    {{ i18n.trans('cancel-stripe-subscription') }}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>{{ i18n.trans('cancel-subscription-warning') }}</p>
+                <p class="fw-bold" id="cancelStripeServiceName"></p>
+                <div class="alert alert-warning">
+                    <small>{{ i18n.trans('cancellation-effective-end-period') }}</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    {{ i18n.trans('keep-service') }}
+                </button>
+                <button type="button" class="btn btn-danger" id="btnConfirmCancelStripe">
+                    <i class="fa-solid fa-times me-1"></i>{{ i18n.trans('confirm-cancel') }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Modal Upgrade Suscripción Stripe #}
+<div class="modal fade" id="modalStripeUpgrade" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title">
+                    <i class="fa-solid fa-arrow-up me-2"></i>
+                    {{ i18n.trans('upgrade-subscription') }}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>{{ i18n.trans('current-plan') }}: <strong id="stripeUpgradeCurrentPlan"></strong></p>
+                <p class="text-muted">{{ i18n.trans('select-new-plan') }}</p>
+
+                <div id="stripeUpgradeOptionsContainer">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-info" role="status">
+                            <span class="visually-hidden">{{ i18n.trans('loading') }}...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert alert-info mt-3" id="stripeProrationInfo" style="display: none;">
+                    <i class="fa-solid fa-info-circle me-1"></i>
+                    <span id="stripeProrationText"></span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    {{ i18n.trans('cancel') }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Toast notifications #}
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+    <div id="servicioToast" class="toast" role="alert">
+        <div class="toast-header">
+            <i class="fa-solid fa-check-circle text-success me-2"></i>
+            <strong class="me-auto">{{ i18n.trans('success') }}</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+        </div>
+        <div class="toast-body"></div>
+    </div>
+</div>

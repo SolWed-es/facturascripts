@@ -28,6 +28,8 @@ class Wallet extends ModelClass
     const TIPO_REGALO = 'regalo';
     const TIPO_REEMBOLSO = 'reembolso';
 
+    const VALID_TYPES = [self::TIPO_RECARGA, self::TIPO_GASTO, self::TIPO_REGALO, self::TIPO_REEMBOLSO];
+
     /** @var int */
     public $id;
 
@@ -84,7 +86,7 @@ class Wallet extends ModelClass
         $order = ['id' => 'DESC'];
         $items = $model->all($where, $order, 0, 1);
 
-        return count($items) > 0 ? (float)$items[0]->saldo_resultante : 0.0;
+        return count($items) > 0 ? round((float)$items[0]->saldo_resultante, 2) : 0.0;
     }
 
     /**
@@ -99,7 +101,8 @@ class Wallet extends ModelClass
     }
 
     /**
-     * Registra una transacción y actualiza el saldo
+     * Registra una transacción y actualiza el saldo.
+     * Uses DB transaction with row locking to prevent race conditions.
      *
      * @return self|null La transacción creada, o null si falla
      */
@@ -111,32 +114,54 @@ class Wallet extends ModelClass
         ?string $referenciaExterna = null,
         ?array $metadata = null
     ): ?self {
-        $currentBalance = self::getBalance($codcliente);
-
-        // Para gastos, la cantidad viene positiva pero se resta
-        $delta = in_array($tipo, [self::TIPO_GASTO]) ? -abs($cantidad) : abs($cantidad);
-        $newBalance = $currentBalance + $delta;
-
-        // No permitir saldo negativo en gastos
-        if ($newBalance < 0 && $tipo === self::TIPO_GASTO) {
-            return null; // Saldo insuficiente
+        // Validate tipo
+        if (!in_array($tipo, self::VALID_TYPES)) {
+            return null;
         }
 
-        $tx = new self();
-        $tx->codcliente = $codcliente;
-        $tx->tipo = $tipo;
-        $tx->cantidad = $delta;
-        $tx->saldo_resultante = $newBalance;
-        $tx->concepto = $concepto;
-        $tx->referencia_externa = $referenciaExterna;
-        $tx->metadata = $metadata ? json_encode($metadata) : null;
-        $tx->creation_date = Tools::dateTime();
+        $db = self::getDatabase();
+        $db->beginTransaction();
 
-        if ($tx->save()) {
-            return $tx;
+        try {
+            // Lock the latest row for this client to prevent race conditions
+            $sql = "SELECT saldo_resultante FROM " . self::tableName()
+                 . " WHERE codcliente = " . $db->var2str($codcliente)
+                 . " ORDER BY id DESC LIMIT 1 FOR UPDATE";
+            $rows = $db->select($sql);
+            $currentBalance = !empty($rows) ? round((float)$rows[0]['saldo_resultante'], 2) : 0.0;
+
+            // Calculate delta
+            $delta = in_array($tipo, [self::TIPO_GASTO]) ? -abs($cantidad) : abs($cantidad);
+            $newBalance = round($currentBalance + $delta, 2);
+
+            // Prevent negative balance on spend
+            if ($newBalance < 0 && $tipo === self::TIPO_GASTO) {
+                $db->rollback();
+                return null; // Saldo insuficiente
+            }
+
+            $tx = new self();
+            $tx->codcliente = $codcliente;
+            $tx->tipo = $tipo;
+            $tx->cantidad = round($delta, 2);
+            $tx->saldo_resultante = $newBalance;
+            $tx->concepto = $concepto;
+            $tx->referencia_externa = $referenciaExterna;
+            $tx->metadata = $metadata ? json_encode($metadata) : null;
+            $tx->creation_date = Tools::dateTime();
+
+            if ($tx->save()) {
+                $db->commit();
+                return $tx;
+            }
+
+            $db->rollback();
+            return null;
+        } catch (\Exception $e) {
+            $db->rollback();
+            Tools::log('solwed')->error('Wallet transaction failed: ' . $e->getMessage());
+            return null;
         }
-
-        return null;
     }
 
     /**
@@ -147,5 +172,13 @@ class Wallet extends ModelClass
         $model = new self();
         $where = [Where::isEqual('codcliente', $codcliente)];
         return $model->count($where);
+    }
+
+    /**
+     * Get the FS database connection
+     */
+    private static function getDatabase()
+    {
+        return new \FacturaScripts\Core\Base\DataBase();
     }
 }

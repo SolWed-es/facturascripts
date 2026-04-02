@@ -90,7 +90,7 @@ class ApiWallet extends Controller
             }
         } catch (Exception $e) {
             SolwedLogger::error('ApiWallet error: ' . $e->getMessage());
-            $this->jsonResponse(['error' => $e->getMessage()], 500);
+            $this->jsonResponse(['error' => 'Error interno del servidor'], 500);
         }
     }
 

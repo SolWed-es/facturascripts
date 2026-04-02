@@ -1,0 +1,285 @@
+{#
+ * Plugin SolwedES - Gestión de servicios SOLWED
+ * Vista de "Mis Servicios" para el portal de cliente
+ *
+ * @author    Solwed Desarrollo
+ * @copyright 2025 Solwed
+ #}
+
+<div class="container-fluid mis-servicios-container">
+    {% if servicios_cliente is empty %}
+        <div class="alert alert-info">
+            <i class="fa-solid fa-info-circle me-2"></i>
+            {{ i18n.trans('no-services-contracted') }}
+            <a href="#PortalServiciosSolwed" class="alert-link ms-2">
+                {{ i18n.trans('view-available-services') }}
+            </a>
+        </div>
+    {% else %}
+        {# Resumen de servicios #}
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex flex-wrap gap-3">
+                    <div class="badge bg-success fs-6 p-2">
+                        <i class="fa-solid fa-check-circle me-1"></i>
+                        {{ servicios_activos }} {{ i18n.trans('active') }}
+                    </div>
+                    {% if servicios_por_vencer > 0 %}
+                        <div class="badge bg-warning text-dark fs-6 p-2">
+                            <i class="fa-solid fa-exclamation-triangle me-1"></i>
+                            {{ servicios_por_vencer }} {{ i18n.trans('expiring-soon') }}
+                        </div>
+                    {% endif %}
+                    {% if servicios_vencidos > 0 %}
+                        <div class="badge bg-danger fs-6 p-2">
+                            <i class="fa-solid fa-times-circle me-1"></i>
+                            {{ servicios_vencidos }} {{ i18n.trans('expired') }}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        {# Lista de servicios #}
+        <div class="row g-4">
+            {% for servicio in servicios_cliente %}
+                <div class="col-12 col-lg-6">
+                    <div class="card servicio-card h-100 border-{{ servicio.estado_class }}">
+                        <div class="card-header d-flex align-items-center justify-content-between"
+                             style="background-color: {{ servicio.color }}20; border-left: 4px solid {{ servicio.color }};">
+                            <div class="d-flex align-items-center">
+                                <i class="{{ servicio.icono }} fa-2x me-3" style="color: {{ servicio.color }};"></i>
+                                <div>
+                                    <h5 class="card-title mb-0">{{ servicio.nombre }}</h5>
+                                    <small class="text-muted">{{ servicio.categoria }}</small>
+                                </div>
+                            </div>
+                            <span class="badge bg-{{ servicio.estado_class }}">
+                                {{ servicio.estado_label }}
+                            </span>
+                        </div>
+
+                        <div class="card-body">
+                            {% if servicio.descripcion %}
+                                <p class="card-text text-muted small mb-3">{{ servicio.descripcion|slice(0, 100) }}{% if servicio.descripcion|length > 100 %}...{% endif %}</p>
+                            {% endif %}
+
+                            <div class="row g-2 mb-3">
+                                <div class="col-6">
+                                    <div class="info-item">
+                                        <small class="text-muted d-block">{{ i18n.trans('price') }}</small>
+                                        <strong class="text-primary">{{ fsc.toolBox().coins().format(servicio.precio) }}</strong>
+                                        <small class="text-muted">/ {{ servicio.periodo }}</small>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="info-item">
+                                        <small class="text-muted d-block">{{ i18n.trans('next-renewal') }}</small>
+                                        {% if servicio.fecha_renovacion %}
+                                            <strong>{{ servicio.fecha_renovacion }}</strong>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {# Indicador de días restantes #}
+                            {% if servicio.dias_restantes >= 0 %}
+                                <div class="progress mb-3" style="height: 8px;">
+                                    {% set porcentaje = 100 - ((servicio.dias_restantes / 30) * 100) %}
+                                    {% if porcentaje > 100 %}{% set porcentaje = 100 %}{% endif %}
+                                    {% if porcentaje < 0 %}{% set porcentaje = 0 %}{% endif %}
+                                    <div class="progress-bar bg-{{ servicio.estado_class }}"
+                                         role="progressbar"
+                                         style="width: {{ porcentaje }}%"
+                                         aria-valuenow="{{ porcentaje }}"
+                                         aria-valuemin="0"
+                                         aria-valuemax="100">
+                                    </div>
+                                </div>
+                                <p class="small mb-0">
+                                    {% if servicio.dias_restantes == 0 %}
+                                        <i class="fa-solid fa-clock text-warning me-1"></i>
+                                        {{ i18n.trans('renews-today') }}
+                                    {% elseif servicio.dias_restantes == 1 %}
+                                        <i class="fa-solid fa-clock text-warning me-1"></i>
+                                        {{ i18n.trans('renews-tomorrow') }}
+                                    {% else %}
+                                        <i class="fa-solid fa-calendar-alt me-1"></i>
+                                        {{ i18n.trans('days-until-renewal', {'%days%': servicio.dias_restantes}) }}
+                                    {% endif %}
+                                </p>
+                            {% elseif servicio.estado == 'vencido' %}
+                                <div class="alert alert-danger py-2 mb-0">
+                                    <i class="fa-solid fa-exclamation-circle me-1"></i>
+                                    {{ i18n.trans('service-expired-message') }}
+                                </div>
+                            {% endif %}
+
+                            {# Fecha de cancelación programada #}
+                            {% if servicio.fecha_fin and servicio.estado != 'cancelado' %}
+                                <div class="alert alert-secondary py-2 mt-2 mb-0">
+                                    <i class="fa-solid fa-calendar-times me-1"></i>
+                                    {{ i18n.trans('cancellation-scheduled', {'%date%': servicio.fecha_fin}) }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="card-footer bg-transparent">
+                            <div class="d-flex flex-wrap gap-2">
+                                {# Botón de acceso SSO #}
+                                {% if servicio.acceso_sso %}
+                                    <button type="button"
+                                            class="btn btn-primary btn-sm btn-sso-access"
+                                            data-idacceso="{{ servicio.acceso_sso.id }}"
+                                            title="{{ i18n.trans('access-service') }}">
+                                        <i class="fa-solid fa-external-link-alt me-1"></i>
+                                        {{ i18n.trans('access') }}
+                                    </button>
+                                {% endif %}
+
+                                {# Botón de renovar #}
+                                {% if servicio.estado in ['activo', 'por_vencer'] and fsc.contact.pc_allow_buy %}
+                                    <button type="button"
+                                            class="btn btn-success btn-sm btn-renew-service"
+                                            data-idrecurrencia="{{ servicio.id_recurrencia }}"
+                                            data-nombre="{{ servicio.nombre }}"
+                                            title="{{ i18n.trans('renew-now') }}">
+                                        <i class="fa-solid fa-redo me-1"></i>
+                                        {{ i18n.trans('renew') }}
+                                    </button>
+                                {% endif %}
+
+                                {# Botón de upgrade #}
+                                {% if servicio.upgradeable and fsc.contact.pc_allow_buy %}
+                                    <button type="button"
+                                            class="btn btn-info btn-sm btn-upgrade-service"
+                                            data-idrecurrencia="{{ servicio.id_recurrencia }}"
+                                            data-idservicio="{{ servicio.servicio.id }}"
+                                            data-nombre="{{ servicio.nombre }}"
+                                            title="{{ i18n.trans('upgrade-service') }}">
+                                        <i class="fa-solid fa-arrow-up me-1"></i>
+                                        {{ i18n.trans('upgrade') }}
+                                    </button>
+                                {% endif %}
+
+                                {# Botón de cancelar #}
+                                {% if servicio.cancelable and not servicio.fecha_fin %}
+                                    <button type="button"
+                                            class="btn btn-outline-danger btn-sm btn-cancel-service"
+                                            data-idrecurrencia="{{ servicio.id_recurrencia }}"
+                                            data-nombre="{{ servicio.nombre }}"
+                                            title="{{ i18n.trans('cancel-service') }}">
+                                        <i class="fa-solid fa-times me-1"></i>
+                                        {{ i18n.trans('cancel') }}
+                                    </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>
+
+{# Modal de confirmación de cancelación #}
+<div class="modal fade" id="modalCancelarServicio" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fa-solid fa-exclamation-triangle me-2"></i>
+                    {{ i18n.trans('confirm-cancellation') }}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>{{ i18n.trans('cancel-service-warning') }}</p>
+                <p class="mb-0">
+                    <strong>{{ i18n.trans('service') }}:</strong>
+                    <span id="cancelServiceName"></span>
+                </p>
+                <div class="alert alert-warning mt-3 mb-0">
+                    <i class="fa-solid fa-info-circle me-1"></i>
+                    {{ i18n.trans('cancellation-effective-end-period') }}
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    {{ i18n.trans('keep-service') }}
+                </button>
+                <button type="button" class="btn btn-danger" id="btnConfirmCancel">
+                    <i class="fa-solid fa-times me-1"></i>
+                    {{ i18n.trans('confirm-cancel') }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Modal de upgrade #}
+<div class="modal fade" id="modalUpgradeServicio" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title">
+                    <i class="fa-solid fa-arrow-up me-2"></i>
+                    {{ i18n.trans('upgrade-service') }}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>{{ i18n.trans('select-upgrade-plan') }}</p>
+                <p class="mb-3">
+                    <strong>{{ i18n.trans('current-service') }}:</strong>
+                    <span id="upgradeCurrentService"></span>
+                </p>
+                <div id="upgradeOptionsContainer">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-info" role="status">
+                            <span class="visually-hidden">{{ i18n.trans('loading') }}...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    {{ i18n.trans('cancel') }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Modal de renovación #}
+<div class="modal fade" id="modalRenovarServicio" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    <i class="fa-solid fa-redo me-2"></i>
+                    {{ i18n.trans('renew-service') }}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>{{ i18n.trans('renew-service-message') }}</p>
+                <p class="mb-0">
+                    <strong>{{ i18n.trans('service') }}:</strong>
+                    <span id="renewServiceName"></span>
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    {{ i18n.trans('cancel') }}
+                </button>
+                <button type="button" class="btn btn-success" id="btnConfirmRenew">
+                    <i class="fa-solid fa-redo me-1"></i>
+                    {{ i18n.trans('renew-now') }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
