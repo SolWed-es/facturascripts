@@ -61,6 +61,9 @@ class ApiSuscripcion extends Controller
                 case 'cancelar':
                     $this->handleCancelar();
                     break;
+                case 'activate':
+                    $this->handleActivate();
+                    break;
                 default:
                     $this->jsonResponse(['error' => 'Unknown action: ' . $action], 400);
             }
@@ -211,6 +214,26 @@ class ApiSuscripcion extends Controller
             'stripe_price_id' => $s->stripe_price_id,
             'creation_date' => $s->creation_date,
         ];
+    }
+
+    private function handleActivate(): void
+    {
+        $id = (int) $this->request->get('id', 0);
+        if ($id <= 0) {
+            $this->jsonResponse(['error' => 'id required'], 400);
+            return;
+        }
+
+        // Direct DB update — bypasses model validation that blocks estado changes
+        $db = new \FacturaScripts\Core\Base\DataBase();
+        $db->connect();
+        $result = $db->exec("UPDATE solwedes_suscripciones SET estado = 'activa', last_update = NOW() WHERE id = " . $id);
+
+        if ($result) {
+            $this->jsonResponse(['success' => true, 'id' => $id, 'estado' => 'activa']);
+        } else {
+            $this->jsonResponse(['error' => 'Failed to activate'], 500);
+        }
     }
 
     private function handleCancelar(): void
