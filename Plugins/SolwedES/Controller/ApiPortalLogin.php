@@ -48,9 +48,14 @@ class ApiPortalLogin extends Controller
             return;
         }
 
+        // Device info from App (forwarded headers)
+        $clientIp = $body['client_ip'] ?? $_SERVER['REMOTE_ADDR'] ?? '';
+        $userAgent = $body['user_agent'] ?? $_SERVER['HTTP_USER_AGENT'] ?? '';
+
         // 1. Try contactos (portal clients)
         $contact = $this->findContactByNick($nick);
         if ($contact && $contact->pc_active && $this->verifyPassword($password, $contact->pc_password)) {
+            $this->trackDevice($contact->idcontacto, $contact->pc_nick, $clientIp, $userAgent);
             $this->sendJsonResponse([
                 'success' => true,
                 'type' => 'contact',
@@ -85,6 +90,7 @@ class ApiPortalLogin extends Controller
 
             if ($linkedContact) {
                 $responseData['contact'] = $this->serializeContact($linkedContact);
+                $this->trackDevice($linkedContact->idcontacto, $user->nick, $clientIp, $userAgent);
             }
 
             $this->sendJsonResponse($responseData);
@@ -158,6 +164,62 @@ class ApiPortalLogin extends Controller
             'pc_active' => (bool) $c->pc_active,
             'langcode' => $c->langcode ?? '',
         ];
+    }
+
+    /**
+     * Track device on successful login: update contacto + insert log
+     */
+    private function trackDevice(int $idcontacto, string $nick, string $ip, string $userAgent): void
+    {
+        try {
+            $db = new \FacturaScripts\Core\Base\DataBase();
+            $db->connect();
+            $now = date('Y-m-d H:i:s');
+            $deviceName = $this->parseDeviceName($userAgent);
+
+            // Update contacto last device
+            $db->exec("UPDATE contactos SET pc_last_browser = " . $db->var2str($userAgent)
+                . ", pc_last_ip = " . $db->var2str($ip)
+                . ", pc_last_login = " . $db->var2str($now)
+                . " WHERE idcontacto = " . (int) $idcontacto);
+
+            // Insert login log
+            $context = json_encode(['user_agent' => $userAgent, 'device_name' => $deviceName]);
+            $db->exec("INSERT INTO logs (channel, idcontacto, ip, nick, level, message, context, time) VALUES ("
+                . $db->var2str('portal-login') . ", "
+                . (int) $idcontacto . ", "
+                . $db->var2str($ip) . ", "
+                . $db->var2str($nick) . ", "
+                . $db->var2str('info') . ", "
+                . $db->var2str('Portal login: ' . $deviceName) . ", "
+                . $db->var2str($context) . ", "
+                . $db->var2str($now) . ")");
+        } catch (\Throwable $e) {
+            // Non-fatal — don't block login
+        }
+    }
+
+    /**
+     * Parse User-Agent into human-readable device name
+     */
+    private function parseDeviceName(string $ua): string
+    {
+        $browser = 'Navegador';
+        $os = '';
+
+        if (stripos($ua, 'Chrome') !== false && stripos($ua, 'Edg') === false) $browser = 'Chrome';
+        elseif (stripos($ua, 'Firefox') !== false) $browser = 'Firefox';
+        elseif (stripos($ua, 'Safari') !== false && stripos($ua, 'Chrome') === false) $browser = 'Safari';
+        elseif (stripos($ua, 'Edg') !== false) $browser = 'Edge';
+
+        if (stripos($ua, 'Windows') !== false) $os = 'Windows';
+        elseif (stripos($ua, 'Mac') !== false) $os = 'Mac';
+        elseif (stripos($ua, 'Linux') !== false) $os = 'Linux';
+        elseif (stripos($ua, 'iPhone') !== false) $os = 'iPhone';
+        elseif (stripos($ua, 'Android') !== false) $os = 'Android';
+        elseif (stripos($ua, 'iPad') !== false) $os = 'iPad';
+
+        return $os ? "$browser en $os" : $browser;
     }
 
     private function sendJsonResponse(array $data, int $statusCode = 200): void

@@ -56,6 +56,7 @@ class Init extends InitClass
         Kernel::addRoute('/ApiServicio', 'ApiServicio', -1);
         Kernel::addRoute('/ApiHealth', 'ApiHealth', -1);
         Kernel::addRoute('/ApiProvision', 'ApiProvision', -1);
+        Kernel::addRoute('/ApiDevices', 'ApiDevices', -1);
     }
 
     public function update(): void
