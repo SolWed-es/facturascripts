@@ -33,12 +33,20 @@ class ApiSuscripcion extends Controller
         parent::publicCore($response);
         $this->setTemplate(false);
 
-        header('Access-Control-Allow-Origin: *');
+        $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+        $allowedOrigins = ['https://app.solwed.es', 'https://erp.solwed.es', 'https://mind.solwed.es'];
+        if (in_array($origin, $allowedOrigins)) {
+            header('Access-Control-Allow-Origin: ' . $origin);
+        }
         header('Access-Control-Allow-Methods: GET, POST, PUT, OPTIONS');
         header('Access-Control-Allow-Headers: Content-Type, Authorization, Token');
 
         if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
             http_response_code(204);
+            return;
+        }
+
+        if (!$this->validateToken()) {
             return;
         }
 
@@ -282,6 +290,23 @@ class ApiSuscripcion extends Controller
         } else {
             $this->jsonResponse(['error' => 'Failed to save subscription'], 500);
         }
+    }
+
+    private function validateToken(): bool
+    {
+        $token = $_SERVER['HTTP_TOKEN'] ?? '';
+        if (empty($token)) {
+            $this->jsonResponse(['error' => 'Token required'], 401);
+            return false;
+        }
+        $db = new \FacturaScripts\Core\Base\DataBase();
+        $db->connect();
+        $result = $db->select("SELECT 1 FROM api_keys WHERE apikey = " . $db->var2str($token) . " AND enabled = true LIMIT 1");
+        if (!empty($result)) {
+            return true;
+        }
+        $this->jsonResponse(['error' => 'Token inválido'], 401);
+        return false;
     }
 
     private function getJsonBody(): array

@@ -44,12 +44,20 @@ class APIDominio extends Controller
         $this->setTemplate(false);
 
         // CORS headers for Next.js portal
-        header('Access-Control-Allow-Origin: *');
+        $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+        $allowedOrigins = ['https://app.solwed.es', 'https://erp.solwed.es', 'https://mind.solwed.es'];
+        if (in_array($origin, $allowedOrigins)) {
+            header('Access-Control-Allow-Origin: ' . $origin);
+        }
         header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
         header('Access-Control-Allow-Headers: Content-Type, Authorization, Token');
 
         if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
             http_response_code(204);
+            return;
+        }
+
+        if (!$this->validateToken()) {
             return;
         }
 
@@ -249,6 +257,11 @@ class APIDominio extends Controller
             return;
         }
 
+        if (!$idcontacto) {
+            $this->sendJsonResponse(['error' => 'Missing idcontacto'], 400);
+            return;
+        }
+
         // Load domain
         $dominio = new Dominio();
         if (!$dominio->load($iddominio)) {
@@ -256,8 +269,8 @@ class APIDominio extends Controller
             return;
         }
 
-        // Verify ownership if idcontacto provided
-        if ($idcontacto && $dominio->idcontacto !== $idcontacto) {
+        // Verify ownership
+        if ($dominio->idcontacto !== $idcontacto) {
             $this->sendJsonResponse(['error' => 'Unauthorized'], 403);
             return;
         }
@@ -453,6 +466,23 @@ class APIDominio extends Controller
             SolwedLogger::error('Error creating renewal checkout: ' . $e->getMessage());
             $this->sendJsonResponse(['error' => $e->getMessage()], 500);
         }
+    }
+
+    private function validateToken(): bool
+    {
+        $token = $_SERVER['HTTP_TOKEN'] ?? '';
+        if (empty($token)) {
+            $this->sendJsonResponse(['error' => 'Token required'], 401);
+            return false;
+        }
+        $db = new \FacturaScripts\Core\Base\DataBase();
+        $db->connect();
+        $result = $db->select("SELECT 1 FROM api_keys WHERE apikey = " . $db->var2str($token) . " AND enabled = true LIMIT 1");
+        if (!empty($result)) {
+            return true;
+        }
+        $this->sendJsonResponse(['error' => 'Token inválido'], 401);
+        return false;
     }
 
     /**

@@ -137,10 +137,7 @@ class ApiPortalLogin extends Controller
         if (empty($hash)) {
             return false;
         }
-        if (password_verify($password, $hash)) {
-            return true;
-        }
-        return $password === $hash;
+        return password_verify($password, $hash);
     }
 
     private function serializeContact(Contacto $c): array
@@ -226,7 +223,10 @@ class ApiPortalLogin extends Controller
     {
         $this->response->setStatusCode($statusCode);
         $this->response->headers->set('Content-Type', 'application/json');
-        $this->response->headers->set('Access-Control-Allow-Origin', '*');
+        $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+        $allowedOrigins = ['https://app.solwed.es', 'https://erp.solwed.es', 'https://mind.solwed.es'];
+        $corsOrigin = in_array($origin, $allowedOrigins) ? $origin : 'https://app.solwed.es';
+        $this->response->headers->set('Access-Control-Allow-Origin', $corsOrigin);
         $this->response->headers->set('Access-Control-Allow-Methods', 'POST, OPTIONS');
         $this->response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Token');
         $this->response->setContent(json_encode($data));
