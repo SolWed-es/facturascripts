@@ -404,15 +404,13 @@ class APIDominio extends Controller
         $priceInCents = (int) ($price * $years * 100);
 
         try {
-            StripeHelper::initStripe();
-
-            // Find or create customer
+            // Find or create customer via bridge
             $customer = StripeHelper::findOrCreateCustomer(
                 $contacto->email,
                 $contacto->fullName(),
                 [
-                    'idcontacto' => $contacto->idcontacto,
-                    'codcliente' => $contacto->codcliente ?? ''
+                    'idcontacto' => (string)$contacto->idcontacto,
+                    'codcliente' => $contacto->codcliente ?? '',
                 ]
             );
 
@@ -421,45 +419,52 @@ class APIDominio extends Controller
                 return;
             }
 
-            // Create one-time checkout session
-            $session = \Stripe\Checkout\Session::create([
-                'customer' => $customer->id,
+            // Create one-time checkout session via bridge
+            $result = \FacturaScripts\Plugins\SolwedES\Lib\BridgeClient::post('/stripe/checkout-sessions', [
+                'customer' => $customer['id'],
                 'mode' => 'payment',
-                'automatic_tax' => ['enabled' => true],
+                'automatic_tax' => ['enabled' => 'true'],
                 'line_items' => [[
                     'price_data' => [
                         'currency' => 'eur',
-                        'unit_amount' => $priceInCents,
+                        'unit_amount' => (string)$priceInCents,
                         'product_data' => [
                             'name' => 'Renovación de dominio: ' . $dominio->getNombreCompleto(),
-                            'description' => sprintf('Renovación por %d año(s)', $years)
+                            'description' => sprintf('Renovación por %d año(s)', $years),
                         ],
-                        'tax_behavior' => 'exclusive'
+                        'tax_behavior' => 'exclusive',
                     ],
-                    'quantity' => 1
+                    'quantity' => '1',
                 ]],
                 'success_url' => $successUrl . (strpos($successUrl, '?') !== false ? '&' : '?') . 'session_id={CHECKOUT_SESSION_ID}',
                 'cancel_url' => $cancelUrl,
                 'metadata' => [
                     'type' => 'domain_renewal',
-                    'idcontacto' => $idcontacto,
-                    'iddominio' => $iddominio,
+                    'idcontacto' => (string)$idcontacto,
+                    'iddominio' => (string)$iddominio,
                     'domain' => $dominio->getNombreCompleto(),
-                    'years' => $years
-                ]
+                    'years' => (string)$years,
+                ],
             ]);
+
+            if (!($result['ok'] ?? false)) {
+                $this->sendJsonResponse(['error' => $result['error'] ?? 'Bridge error'], 500);
+                return;
+            }
+
+            $session = $result['data'] ?? [];
 
             SolwedLogger::stripe(sprintf(
                 'Domain renewal checkout created: %s for %s (%d years)',
-                $session->id,
+                $session['id'] ?? '',
                 $dominio->getNombreCompleto(),
                 $years
             ));
 
             $this->sendJsonResponse([
                 'success' => true,
-                'checkoutUrl' => $session->url,
-                'sessionId' => $session->id
+                'checkoutUrl' => $session['url'] ?? '',
+                'sessionId' => $session['id'] ?? '',
             ]);
 
         } catch (Exception $e) {

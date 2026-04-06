@@ -491,7 +491,7 @@ abstract class ModelClass
         $model_fields = $this->getModelFields();
 
         // Set Cast to Integer if field it's not
-        if (false === in_array($model_fields[$field]['type'], ['integer', 'int', 'serial'])) {
+        if (false === in_array($model_fields[$field]['type'], ['integer', 'int', 'serial', 'bigint', 'smallint', 'bigserial'])) {
             // Set Where to Integers values only
             $where[] = Where::regexp($field, '^-?[0-9]+$');
             $field = self::$dataBase->getEngine()->getSQL()->sql2Int($field);

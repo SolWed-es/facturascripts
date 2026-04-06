@@ -217,6 +217,7 @@ docker compose up -d
 
 - App: http://localhost:8080 (código montado desde host, cambios en vivo)
 - PostgreSQL: `localhost:5433`
+- Redis: `localhost:6379`
 
 El `docker-compose.yml` del repo monta `.:/var/www/html` para que cualquier cambio en Core/, Plugins/, views, etc. se refleje al instante sin rebuild.
 
@@ -245,8 +246,8 @@ Compose de producción en: `/opt/docker-solwed/docker-compose.yml`
 
 | Archivo | Propósito |
 |---------|-----------|
-| `Dockerfile` | Imagen dev: php:8.2-apache + extensiones + entrypoint |
-| `docker-compose.yml` | Dev: app + db, código montado como volumen |
+| `Dockerfile` | Imagen dev: php:8.2-apache + ext-redis + extensiones + entrypoint |
+| `docker-compose.yml` | Dev: app + db + redis, código montado como volumen |
 | `.docker/entrypoint.sh` | composer install + regenera Dinamic/ + permisos |
 | `.docker/apache.conf` | VirtualHost con AllowOverride All |
 | `.docker/php.ini` | 99M upload, 256M memory, 10000 input_vars |
@@ -265,13 +266,254 @@ docker compose restart
 
 ---
 
+## FSMaker — CLI para scaffolding de plugins
+
+Herramienta oficial de FacturaScripts para generar código de plugins.
+
+**Repo**: https://github.com/FacturaScripts/fsmaker
+**Version instalada**: 2.2.0 (en container dev)
+
+### Instalación (ya hecha en dev)
+
+```bash
+docker compose exec app bash
+composer global require facturascripts/fsmaker
+ln -sf /root/.composer/vendor/bin/fsmaker /usr/local/bin/fsmaker
+```
+
+### Comandos principales
+
+| Comando | Genera |
+|---------|--------|
+| `fsmaker plugin` | Estructura completa de nuevo plugin |
+| `fsmaker model` | Modelo + tabla XML + opcionalmente Edit/ListController + XMLView |
+| `fsmaker controller` | Controller (básico, List o Edit) |
+| `fsmaker worker` | Worker para cola de background + lo registra en Init.php |
+| `fsmaker cron` | Archivo Cron.php |
+| `fsmaker cronjob` | CronJob individual + lo registra en Cron.php |
+| `fsmaker api` | Endpoints API REST automáticos para modelos |
+| `fsmaker extension` | Extensión de tabla/modelo/controller/XMLView/vista |
+| `fsmaker mod` | Mod para modelos (Calculator, HTML Header, Line, Footer) |
+| `fsmaker migration` | Migración de base de datos |
+| `fsmaker test` | Test PHPUnit |
+| `fsmaker view` | Vista Twig |
+| `fsmaker upgrade` | Migra código legacy (ToolBox→Tools, fas→fa-solid, tipos retorno PHP 8) |
+| `fsmaker upgrade-bs5` | Migra Bootstrap 4→5 en XMLViews |
+| `fsmaker github-action` | GitHub Actions CI/CD |
+| `fsmaker gitignore` | .gitignore optimizado |
+| `fsmaker translations` | Descarga/actualiza traducciones |
+| `fsmaker zip` | ZIP del plugin para distribución |
+| `fsmaker run-tests [path]` | Ejecuta PHPUnit |
+
+### Uso con SolwedES
+
+Ejecutar siempre desde la raíz del plugin:
+
+```bash
+docker compose exec app bash
+cd /var/www/html/Plugins/SolwedES/
+
+# Crear nuevo worker
+fsmaker worker
+# → RedisSyncWorker (se registra automáticamente en Init.php)
+
+# Crear nuevo modelo con controllers
+fsmaker model
+# → Nombre, tabla, campos (interactivo) → genera Model/, Table/, Controller/, XMLView/
+
+# Crear cronjob
+fsmaker cronjob
+# → CleanExpiredTokens (se registra en Cron.php)
+
+# Generar API REST para modelos
+fsmaker api
+
+# Generar test
+fsmaker test
+
+# Migrar código tras upgrade de FS
+fsmaker upgrade
+fsmaker upgrade-bs5
+
+# Generar ZIP para release
+fsmaker zip
+```
+
+### Estructura que genera fsmaker
+
+```
+Plugin/
+├── facturascripts.ini
+├── Init.php                    # Workers registrados aquí
+├── Cron.php                    # CronJobs registrados aquí
+├── Controller/                 # Edit*, List*, Api*, custom
+├── CronJob/                    # Tareas programadas individuales
+├── Worker/                     # Workers de background
+├── Model/
+├── View/                       # Twig templates
+├── XMLView/                    # Definiciones XML de vistas
+├── Table/                      # Definiciones XML de tablas
+├── Extension/                  # Extensiones a core/otros plugins
+├── Assets/CSS/ JS/ Images/
+├── Data/Codpais/ Lang/
+├── Test/main/
+└── Translation/
+```
+
+---
+
+## Plugin SolwedES — Arquitectura
+
+### Servicios externos via Bridge + Redis
+
+SolwedES **no llama directamente a APIs externas**. Toda comunicación con servicios externos sigue este patrón:
+
+```
+┌──────────────────────────────────────────────┐
+│  SolwedES (PHP)                               │
+│  ┌──────────────┐  ┌───────────────────────┐ │
+│  │ RedisReader   │  │ BridgeClient          │ │
+│  │ (lecturas)    │  │ (escrituras HTTP)     │ │
+│  └──────┬───────┘  └──────────┬────────────┘ │
+└─────────┼──────────────────────┼──────────────┘
+          │                      │
+          ▼                      ▼
+  ┌───────────────┐    ┌──────────────────────┐
+  │ Redis :6379    │◄──│ solwed-bridge :3009   │
+  │ (compartido)   │   │ SyncWorkers → Redis   │
+  └───────────────┘    │ Providers → APIs ext.  │
+                       └──────────────────────┘
+```
+
+**LECTURA → Redis** (sub-ms). **ESCRITURA → BridgeClient** (bridge ejecuta en API externa e invalida cache).
+
+### Mapa de claves Redis
+
+**Datos de APIs externas** (bridge sync workers → Redis, cada 30 min):
+
+| Prefijo | Fuente | Claves |
+|---|---|---|
+| `dd:*` | DonDominio | `dd:domains`, `dd:domain:{name}` |
+| `plesk:*` | Plesk | `plesk:sites`, `plesk:site:{domain}`, `plesk:mail:{domain}`, `plesk:php:{domain}`, `plesk:ssl:{domain}` |
+| `kolab:*` | Kolab | `kolab:domains`, `kolab:users:{domain}`, `kolab:domain:{domain}` |
+| `cf:*` | Cloudflare | `cf:zones`, `cf:zone:{domain}`, `cf:dns:{zoneId}`, `cf:ssl:{zoneId}` |
+
+**Datos del ERP** (FacturaScriptsSync via Cron + Workers real-time):
+
+| Prefijo | Fuente | Claves |
+|---|---|---|
+| `fs:suscripciones` | Suscripcion model | Todas las activas/pendientes |
+| `fs:suscripcion:{id}` | Suscripcion model | Detalle individual |
+| `fs:pagos:recientes` | PagoStripe model | Últimos 100 pagos |
+| `fs:facturas:recientes` | FacturaCliente model | Últimas 100 facturas |
+| `fs:clientes` | Cliente model | Todos los clientes |
+| `fs:cliente:{codcliente}` | Cliente model | Detalle individual |
+| `fs:dominios` | Dominio model | Todos los dominios FS |
+| `fs:servicios` | Servicio model | Todos los servicios con precios |
+| `fs:servicios:catalogo` | Servicio model | Agrupado por categoría |
+| `fs:servicio:{id}` | Servicio model | Detalle individual con precios |
+| `fs:stats` | Calculado | MRR, totales, timestamp |
+
+### Workers (cola de background)
+
+Registrados en `Init.php` con `WorkQueue::addWorker()`:
+
+| Worker | Eventos | Función |
+|---|---|---|
+| `RedisSyncWorker` | `Model.Suscripcion.*`, `Model.PagoStripe.*`, `Model.Dominio.*`, `Model.Servicio.*`, `Model.Cliente.*`, `Model.FacturaCliente.*` | Sync real-time a Redis cuando cambia un modelo |
+| `WordPressProvisionWorker` | `solwed.provision.wordpress` | Provisioning WP en background (30-60s) |
+| `DomainSyncWorker` | `solwed.sync.domains` | Sync dominios Redis → modelo FS Dominio |
+| `ServiceExpiringWorker` | (manual dispatch) | Notificación email de servicios por vencer |
+
+### CronJobs
+
+Definidos en `Cron.php`, lógica en `CronJob/`:
+
+| CronJob | Frecuencia | Función |
+|---|---|---|
+| `CronJob/SyncDomains.php` | Cada 1h | Despacha DomainSyncWorker |
+| `CronJob/CheckExpiringServices.php` | Diario 8:00 | Log servicios por vencer |
+| `CronJob/SyncRedis.php` | Cada 30min | Full sync FS→Redis (safety net) |
+
+### APIs
+
+| Endpoint | Lee de | Función |
+|---|---|---|
+| `/ApiRedis?key=fs:*` | Redis | Endpoint genérico para cualquier clave Redis |
+| `/ApiRedis?action=sync` | DB→Redis | Fuerza sync FS→Redis |
+| `/ApiSuscripcion` | Redis → DB fallback | CRUD suscripciones |
+| `/ApiServicio` | Redis → DB fallback | Catálogo de servicios |
+| `/ApiStripe` | Bridge | Billing portal, payment intents, métodos de pago |
+| `/ApiDominio` | Redis + Bridge | Dominios, checkout renovación |
+| `/ApiOAuth` | DB (OAuthToken model) | OAuth flows (authorize, callback, tokens) |
+| `/ApiHealth` | Directo | Health check infraestructura |
+| `/ApiProvision` | Bridge | Provisioning de servicios |
+
+Las APIs de lectura (GET) intentan Redis primero, fallback a DB. La respuesta incluye `"source": "redis"` o `"source": "db"`.
+
+### Archivos clave del plugin
+
+```
+Plugins/SolwedES/
+├── Init.php                         # Rutas, extensiones, WorkQueue::addWorker()
+├── Cron.php                         # 3 jobs → delega a CronJob/
+├── Lib/
+│   ├── RedisReader.php              # Lee de Redis (ext-phpredis)
+│   ├── RedisWriter.php              # Escribe a Redis con TTL
+│   ├── BridgeClient.php             # HTTP client → solwed-bridge :3009
+│   ├── FacturaScriptsSync.php       # Vuelca FS data → Redis (7 tablas)
+│   ├── StripeHelper.php             # Stripe via BridgeClient (sin SDK)
+│   ├── StripeSubscriptionManager.php # Lógica negocio suscripciones (via Bridge)
+│   ├── StripeUtils.php              # Utilidades formato Stripe
+│   ├── DonDominioHelper.php         # Dominios via Redis + BridgeClient (sin SDK)
+│   ├── PleskApiClient.php           # Plesk via Redis + BridgeClient (sin SDK)
+│   ├── WordPressProvisioner.php     # Orquesta provisioning WP
+│   ├── EmailManager.php             # Emails con PDF (sistema interno FS)
+│   ├── AlbaranManager.php           # Gestión albaranes
+│   ├── ClienteServiciosManager.php  # Relación clientes-servicios
+│   ├── ServiceAccessManager.php     # Control acceso a servicios
+│   ├── ServiceUpgradeManager.php    # Upgrades/downgrades
+│   ├── PortalServiciosRenderer.php  # Renderizado portal
+│   ├── SolwedLogger.php             # Logging estructurado
+│   └── ProvisioningResult.php       # Result object provisioning
+├── Worker/
+│   ├── RedisSyncWorker.php          # Real-time sync Model.* → Redis
+│   ├── WordPressProvisionWorker.php # WP provisioning background
+│   ├── DomainSyncWorker.php         # Domain Redis → FS model
+│   └── ServiceExpiringWorker.php    # Email notificación vencimiento
+├── CronJob/
+│   ├── SyncDomains.php
+│   ├── SyncRedis.php
+│   └── CheckExpiringServices.php
+├── Controller/                      # ~30 controllers (API, Edit, List, Portal)
+├── Model/                           # 12 modelos
+├── View/                            # Twig templates
+├── XMLView/                         # 19 definiciones XML
+├── Table/                           # 13 definiciones de tablas
+├── Test/main/                       # 10 tests
+└── Translation/es_ES.json
+```
+
+### Settings del plugin
+
+Configurados en `Init.php::setupBridgeSettings()`:
+
+| Setting | Default | Uso |
+|---|---|---|
+| `solwed.bridge_url` | `http://solwed-bridge:3009` | URL del bridge |
+| `solwed.bridge_token` | (vacío) | Bearer token para auth al bridge |
+| `solwed.redis_host` | `redis` | Host Redis |
+| `solwed.redis_port` | `6379` | Puerto Redis |
+| `solwed.portal_url` | `https://app.solwed.es` | URL portal cliente |
+
+---
+
 ## Git config para commits SolWed
 
 ```bash
 git config user.name "Iván Moreno Quiros"
 git config user.email "dev@solwed.es"
 ```
-
 
 ---
 
@@ -294,4 +536,3 @@ error_log(json_encode([
 ```
 
 **Grafana:** `http://localhost:3002` (local), `grafana.solwed.es` (prod)
-

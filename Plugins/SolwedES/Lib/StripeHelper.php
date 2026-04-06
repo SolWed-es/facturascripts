@@ -1,7 +1,10 @@
 <?php
 
 /**
- * Plugin SolwedES - Helper para interactuar con Stripe API
+ * Plugin SolwedES - Helper para interactuar con Stripe API via Bridge
+ *
+ * All Stripe API calls go through solwed-bridge.
+ * Webhook signature verification uses native PHP hash_hmac.
  *
  * @author    Solwed Desarrollo
  * @copyright 2025 Solwed
@@ -12,41 +15,18 @@ namespace FacturaScripts\Plugins\SolwedES\Lib;
 use Exception;
 use FacturaScripts\Core\Tools;
 
-/**
- * Helper para centralizar interacción con Stripe API
- * Usa Tools::settings('stripe', ...) como fuente de credenciales
- */
 class StripeHelper
 {
-    /**
-     * Obtiene un valor de configuración de Stripe
-     *
-     * @param string $key Clave de configuración
-     * @param mixed $default Valor por defecto
-     * @return mixed
-     */
     public static function getSetting(string $key, $default = '')
     {
         return Tools::settings('stripe', $key, $default);
     }
 
-    /**
-     * Verifica si la configuración de Stripe está completa
-     *
-     * @return bool
-     */
     public static function isConfigured(): bool
     {
-        $secretKey = self::getSetting('stripe_secret_key');
-        $webhookSecret = self::getSetting('stripe_webhook_secret');
-        return !empty($secretKey) && !empty($webhookSecret);
+        return !empty(Tools::settings('solwed', 'bridge_url'));
     }
 
-    /**
-     * Verifica si estamos en modo test
-     *
-     * @return bool
-     */
     public static function isTestMode(): bool
     {
         $secretKey = self::getSetting('stripe_secret_key', '');
@@ -54,318 +34,191 @@ class StripeHelper
     }
 
     /**
-     * Inicializa Stripe SDK con las credenciales configuradas
-     *
-     * @return bool True si se inicializó correctamente
-     */
-    public static function initStripe(): bool
-    {
-        $secretKey = self::getSetting('stripe_secret_key');
-
-        if (empty($secretKey)) {
-            Tools::log('solwed')->error('Stripe secret key not configured');
-            return false;
-        }
-
-        try {
-            \Stripe\Stripe::setApiKey($secretKey);
-            \Stripe\Stripe::setApiVersion('2025-12-15.clover');
-            #\Stripe\Stripe::setApiVersion('2023-10-16');
-            return true;
-        } catch (Exception $e) {
-            Tools::log('solwed')->error('Error initializing Stripe: ' . $e->getMessage());
-            return false;
-        }
-    }
-
-    /**
      * Obtiene detalles del método de pago desde un PaymentIntent
-     *
-     * @param string $paymentIntentId ID del PaymentIntent de Stripe
-     * @return array Detalles del método de pago
      */
     public static function getPaymentMethodDetails(string $paymentIntentId): array
     {
-        if (!self::initStripe()) {
-            return [
-                'success' => false,
-                'error' => 'Stripe not initialized'
-            ];
+        $result = BridgeClient::get('/stripe/payment-intents/' . $paymentIntentId);
+        if (!($result['ok'] ?? false)) {
+            return ['success' => false, 'error' => $result['error'] ?? 'Bridge error'];
         }
 
-        try {
-            $paymentIntent = \Stripe\PaymentIntent::retrieve($paymentIntentId, [
-                'expand' => ['payment_method']
-            ]);
+        $pi = $result['data'] ?? [];
+        $pm = $pi['payment_method'] ?? null;
 
-            if (!$paymentIntent->payment_method) {
-                return [
-                    'success' => true,
-                    'type' => 'unknown',
-                    'brand' => 'Desconocido',
-                    'last4' => 'N/A',
-                    'fecha' => date('Y-m-d H:i:s', $paymentIntent->created),
-                    'amount' => $paymentIntent->amount / 100,
-                    'currency' => strtoupper($paymentIntent->currency)
-                ];
-            }
+        $response = [
+            'success' => true,
+            'type' => $pm['type'] ?? 'unknown',
+            'fecha' => isset($pi['created']) ? date('Y-m-d H:i:s', $pi['created']) : date('Y-m-d H:i:s'),
+            'amount' => ($pi['amount'] ?? 0) / 100,
+            'currency' => strtoupper($pi['currency'] ?? 'eur'),
+        ];
 
-            $pm = $paymentIntent->payment_method;
-            $result = [
-                'success' => true,
-                'type' => $pm->type,
-                'fecha' => date('Y-m-d H:i:s', $paymentIntent->created),
-                'amount' => $paymentIntent->amount / 100,
-                'currency' => strtoupper($paymentIntent->currency)
-            ];
-
-            if ($pm->type === 'card' && $pm->card) {
-                $result['brand'] = ucfirst($pm->card->brand);
-                $result['last4'] = $pm->card->last4;
-                $result['exp_month'] = $pm->card->exp_month;
-                $result['exp_year'] = $pm->card->exp_year;
-                $result['country'] = $pm->card->country;
-            } elseif ($pm->type === 'sepa_debit' && $pm->sepa_debit) {
-                $result['brand'] = 'SEPA';
-                $result['last4'] = $pm->sepa_debit->last4;
-                $result['country'] = $pm->sepa_debit->country;
-            } else {
-                $result['brand'] = ucfirst($pm->type);
-                $result['last4'] = 'N/A';
-            }
-
-            Tools::log('solwed')->info(sprintf(
-                'Payment method details retrieved: %s **** %s',
-                $result['brand'] ?? 'unknown',
-                $result['last4'] ?? 'N/A'
-            ));
-
-            return $result;
-        } catch (Exception $e) {
-            Tools::log('solwed')->error('Error getting payment method details: ' . $e->getMessage());
-            return [
-                'success' => false,
-                'error' => $e->getMessage()
-            ];
+        if (!$pm) {
+            $response['brand'] = 'Desconocido';
+            $response['last4'] = 'N/A';
+            return $response;
         }
+
+        if (($pm['type'] ?? '') === 'card' && !empty($pm['card'])) {
+            $response['brand'] = ucfirst($pm['card']['brand'] ?? 'unknown');
+            $response['last4'] = $pm['card']['last4'] ?? 'N/A';
+            $response['exp_month'] = $pm['card']['exp_month'] ?? null;
+            $response['exp_year'] = $pm['card']['exp_year'] ?? null;
+            $response['country'] = $pm['card']['country'] ?? null;
+        } elseif (($pm['type'] ?? '') === 'sepa_debit' && !empty($pm['sepa_debit'])) {
+            $response['brand'] = 'SEPA';
+            $response['last4'] = $pm['sepa_debit']['last4'] ?? 'N/A';
+            $response['country'] = $pm['sepa_debit']['country'] ?? null;
+        } else {
+            $response['brand'] = ucfirst($pm['type'] ?? 'unknown');
+            $response['last4'] = 'N/A';
+        }
+
+        return $response;
     }
 
     /**
-     * Verifica la firma del webhook de Stripe
+     * Verifica la firma del webhook de Stripe usando hash_hmac nativo
+     * No necesita el SDK de Stripe.
      *
-     * @param string $payload Payload del webhook (body raw)
-     * @param string $signature Firma del header HTTP_STRIPE_SIGNATURE
-     * @return object Evento de Stripe verificado
      * @throws Exception Si la firma no es válida
      */
-    public static function verifyWebhookSignature(string $payload, string $signature): object
+    public static function verifyWebhookSignature(string $payload, string $signatureHeader): object
     {
         $webhookSecret = self::getSetting('stripe_webhook_secret');
-
         if (empty($webhookSecret)) {
             throw new Exception('Webhook secret not configured');
         }
 
-        try {
-            $event = \Stripe\Webhook::constructEvent(
-                $payload,
-                $signature,
-                $webhookSecret
-            );
+        // Parse the Stripe-Signature header
+        $parts = [];
+        foreach (explode(',', $signatureHeader) as $item) {
+            $kv = explode('=', trim($item), 2);
+            if (count($kv) === 2) {
+                $parts[$kv[0]] = $kv[1];
+            }
+        }
 
-            Tools::log('solwed')->info('Webhook signature verified successfully');
-            return $event;
-        } catch (\Stripe\Exception\SignatureVerificationException $e) {
-            Tools::log('solwed')->error('Invalid webhook signature: ' . $e->getMessage());
+        $timestamp = $parts['t'] ?? '';
+        $signature = $parts['v1'] ?? '';
+
+        if (empty($timestamp) || empty($signature)) {
+            throw new Exception('Invalid signature header format');
+        }
+
+        // Tolerance: 5 minutes
+        if (abs(time() - (int)$timestamp) > 300) {
+            throw new Exception('Webhook timestamp too old');
+        }
+
+        // Compute expected signature
+        $signedPayload = $timestamp . '.' . $payload;
+        $expected = hash_hmac('sha256', $signedPayload, $webhookSecret);
+
+        if (!hash_equals($expected, $signature)) {
             throw new Exception('Invalid webhook signature');
         }
+
+        // Return parsed event object
+        $event = json_decode($payload);
+        if (!$event || empty($event->type)) {
+            throw new Exception('Invalid event payload');
+        }
+
+        Tools::log('solwed')->info('Webhook signature verified successfully');
+        return $event;
     }
 
     /**
      * Obtiene el Tax ID (CIF/NIF) del cliente de Stripe
-     *
-     * @param string $customerId ID del cliente en Stripe
-     * @return string|null
      */
     public static function getCustomerTaxId(string $customerId): ?string
     {
-        if (empty($customerId) || !self::initStripe()) {
+        if (empty($customerId)) {
             return null;
         }
 
-        try {
-            $taxIds = \Stripe\Customer::allTaxIds($customerId, ["limit" => 1]);
-            if (!empty($taxIds->data)) {
-                return $taxIds->data[0]->value;
-            }
-            return null;
-        } catch (Exception $e) {
-            Tools::log('solwed')->warning('Could not get customer tax ID: ' . $e->getMessage());
+        $result = BridgeClient::get("/stripe/customers/{$customerId}/tax-ids");
+        if (!($result['ok'] ?? false)) {
             return null;
         }
+
+        $taxIds = $result['data'] ?? [];
+        return !empty($taxIds[0]['value']) ? $taxIds[0]['value'] : null;
     }
 
     /**
      * Busca o crea un cliente en Stripe
-     *
-     * @param string $email Email del cliente
-     * @param string $name Nombre del cliente
-     * @param array $metadata Metadatos adicionales
-     * @return \Stripe\Customer|null
      */
-    public static function findOrCreateCustomer(string $email, string $name = '', array $metadata = []): ?\Stripe\Customer
+    public static function findOrCreateCustomer(string $email, string $name = '', array $metadata = []): ?array
     {
-        if (!self::initStripe()) {
+        // Search by email
+        $result = BridgeClient::post('/stripe/customers/search', ['email' => $email]);
+        if (($result['ok'] ?? false) && !empty($result['data'])) {
+            return $result['data'];
+        }
+
+        // Create new customer
+        $result = BridgeClient::post('/stripe/customers', [
+            'name' => $name ?: $email,
+            'email' => $email,
+            'metadata' => $metadata,
+        ]);
+
+        if (!($result['ok'] ?? false)) {
+            Tools::log('solwed')->error('Error with Stripe customer: ' . ($result['error'] ?? 'unknown'));
             return null;
         }
 
-        try {
-            // Buscar por email
-            $search = \Stripe\Customer::search([
-                'query' => 'email:"' . $email . '"',
-                'limit' => 1
-            ]);
-
-            if (!empty($search->data)) {
-                return $search->data[0];
-            }
-
-            // Crear nuevo cliente
-            return \Stripe\Customer::create([
-                'name' => $name ?: $email,
-                'email' => $email,
-                'metadata' => $metadata
-            ]);
-        } catch (Exception $e) {
-            Tools::log('solwed')->error('Error with Stripe customer: ' . $e->getMessage());
-            return null;
-        }
+        return $result['data'] ?? null;
     }
 
     /**
      * Crea un Tax ID para un cliente de Stripe
-     *
-     * @param string $customerId ID del cliente en Stripe
-     * @param string $taxId CIF/NIF/VAT del cliente
-     * @param string $country Código de país (ES, FR, etc.)
-     * @return bool
      */
     public static function createCustomerTaxId(string $customerId, string $taxId, string $country = 'ES'): bool
     {
-        if (empty($customerId) || empty($taxId) || !self::initStripe()) {
+        if (empty($customerId) || empty($taxId)) {
             return false;
         }
 
-        try {
-            // Determinar el tipo de Tax ID según el país y formato
-            $taxIdType = self::determineTaxIdType($taxId, $country);
-
-            if (empty($taxIdType)) {
-                Tools::log('solwed')->warning(sprintf(
-                    'Could not determine tax ID type for: %s (country: %s)',
-                    $taxId,
-                    $country
-                ));
-                return false;
-            }
-
-            // Limpiar el tax ID (quitar espacios y guiones)
-            $cleanTaxId = preg_replace('/[\s\-]/', '', $taxId);
-
-            \Stripe\Customer::createTaxId($customerId, [
-                'type' => $taxIdType,
-                'value' => $cleanTaxId
-            ]);
-
-            Tools::log('solwed')->info(sprintf(
-                'Tax ID created for customer %s: %s (%s)',
-                $customerId,
-                $cleanTaxId,
-                $taxIdType
-            ));
-
-            return true;
-        } catch (Exception $e) {
-            // No es crítico si falla la creación del Tax ID
-            Tools::log('solwed')->warning('Error creating tax ID: ' . $e->getMessage());
+        $taxIdType = self::determineTaxIdType($taxId, $country);
+        if (empty($taxIdType)) {
             return false;
         }
+
+        $cleanTaxId = preg_replace('/[\s\-]/', '', $taxId);
+        $result = BridgeClient::post("/stripe/customers/{$customerId}/tax-ids", [
+            'type' => $taxIdType,
+            'value' => $cleanTaxId,
+        ]);
+
+        return ($result['ok'] ?? false);
     }
 
-    /**
-     * Determina el tipo de Tax ID según el formato y país
-     *
-     * @param string $taxId Tax ID a analizar
-     * @param string $country Código de país
-     * @return string|null Tipo de Tax ID para Stripe o null si no se puede determinar
-     */
     private static function determineTaxIdType(string $taxId, string $country): ?string
     {
         $country = strtoupper($country);
         $taxId = strtoupper(preg_replace('/[\s\-]/', '', $taxId));
 
-        // España
         if ($country === 'ES') {
-            // CIF (empresas): empieza con letra, 7 dígitos, letra/dígito
-            if (preg_match('/^[ABCDEFGHJKLMNPQRSUVW]\d{7}[0-9A-J]$/', $taxId)) {
-                return 'es_cif';
-            }
-            // NIF (personas): 8 dígitos + letra
-            if (preg_match('/^\d{8}[A-Z]$/', $taxId)) {
-                return 'es_cif'; // Stripe usa es_cif para ambos
-            }
-            // NIE (extranjeros): X/Y/Z + 7 dígitos + letra
-            if (preg_match('/^[XYZ]\d{7}[A-Z]$/', $taxId)) {
+            if (preg_match('/^[ABCDEFGHJKLMNPQRSUVW]\d{7}[0-9A-J]$/', $taxId) ||
+                preg_match('/^\d{8}[A-Z]$/', $taxId) ||
+                preg_match('/^[XYZ]\d{7}[A-Z]$/', $taxId)) {
                 return 'es_cif';
             }
         }
 
-        // Países de la UE - VAT
-        $euCountries = [
-            'AT',
-            'BE',
-            'BG',
-            'CY',
-            'CZ',
-            'DE',
-            'DK',
-            'EE',
-            'EL',
-            'FI',
-            'FR',
-            'HR',
-            'HU',
-            'IE',
-            'IT',
-            'LT',
-            'LU',
-            'LV',
-            'MT',
-            'NL',
-            'PL',
-            'PT',
-            'RO',
-            'SE',
-            'SI',
-            'SK'
-        ];
-
+        $euCountries = ['AT','BE','BG','CY','CZ','DE','DK','EE','EL','FI','FR','HR','HU','IE','IT','LT','LU','LV','MT','NL','PL','PT','RO','SE','SI','SK'];
         if (in_array($country, $euCountries)) {
-            // VAT europeo: código país + número
-            if (preg_match('/^[A-Z]{2}/', $taxId)) {
-                return 'eu_vat';
-            }
-            // Si no tiene prefijo de país, añadirlo mentalmente para validar
             return 'eu_vat';
         }
 
-        // Reino Unido
         if ($country === 'GB') {
             return 'gb_vat';
         }
 
-        // Por defecto, intentar con eu_vat para países europeos
         return null;
     }
-
 }

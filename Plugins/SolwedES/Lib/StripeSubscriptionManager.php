@@ -1,6 +1,10 @@
 <?php
+
 /**
  * Plugin SolwedES - Gestión de Suscripciones Stripe
+ *
+ * Business logic for managing subscriptions stays here.
+ * All Stripe API calls go through BridgeClient → solwed-bridge.
  *
  * @author    Solwed Desarrollo
  * @copyright 2025 Solwed
@@ -13,52 +17,22 @@ use FacturaScripts\Core\Tools;
 use FacturaScripts\Dinamic\Model\Contacto;
 use FacturaScripts\Plugins\SolwedES\Model\Suscripcion;
 use FacturaScripts\Plugins\SolwedES\Model\Servicio;
-use Stripe\BillingPortal\Session as BillingPortalSession;
-use Stripe\Checkout\Session;
-use Stripe\Customer;
-use Stripe\Invoice;
-use Stripe\Price;
-use Stripe\Product;
-use Stripe\Subscription;
 use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
 use FacturaScripts\Plugins\SolwedES\Model\Dominio;
 
-/**
- * Gestiona suscripciones de servicios con Stripe
- * Usa StripeHelper como fuente única de credenciales
- */
 class StripeSubscriptionManager
 {
     /**
-     * Inicializa Stripe con las credenciales de Settings
-     * Delega a StripeHelper para usar configuración unificada
-     */
-    private static function init(): bool
-    {
-        return StripeHelper::initStripe();
-    }
-
-    /**
      * Sincroniza un servicio con Stripe (crea Product y Price)
-     *
-     * - Si el producto no existe, lo crea
-     * - Si el precio cambió, archiva el anterior y crea uno nuevo
-     * - Los precios en Stripe son inmutables, por eso se archivan
      */
     public static function syncProductToStripe(Servicio $servicio): bool
     {
-        if (!self::init()) {
-            return false;
-        }
-
-        // Validar que tenga recurrencia válida
         if ($servicio->meses_recurrencia <= 0) {
             Tools::log('solwed')->warning('Servicio sin recurrencia válida, no se sincroniza con Stripe');
             return false;
         }
 
         try {
-            // Determinar intervalo según meses_recurrencia
             $interval = 'month';
             $intervalCount = 1;
             if ($servicio->meses_recurrencia >= 12) {
@@ -68,78 +42,59 @@ class StripeSubscriptionManager
                 $intervalCount = $servicio->meses_recurrencia;
             }
 
-            // Crear o actualizar producto en Stripe
+            // Create or update product
             if (empty($servicio->stripe_product_id)) {
-                $product = Product::create([
+                $result = BridgeClient::post('/stripe/products', [
                     'name' => $servicio->nombre,
                     'description' => $servicio->descripcion ?? '',
                     'metadata' => [
-                        'servicio_id' => $servicio->id,
-                        'categoria' => $servicio->categoria
-                    ]
+                        'servicio_id' => (string)$servicio->id,
+                        'categoria' => $servicio->categoria ?? '',
+                    ],
                 ]);
-                $servicio->stripe_product_id = $product->id;
-                Tools::log('solwed')->info(sprintf('Producto Stripe creado: %s', $product->id));
+                if (!($result['ok'] ?? false)) {
+                    Tools::log('solwed')->error('Failed to create Stripe product: ' . ($result['error'] ?? ''));
+                    return false;
+                }
+                $servicio->stripe_product_id = $result['data']['id'] ?? '';
             } else {
-                Product::update($servicio->stripe_product_id, [
+                BridgeClient::put('/stripe/products/' . $servicio->stripe_product_id, [
                     'name' => $servicio->nombre,
-                    'description' => $servicio->descripcion ?? ''
+                    'description' => $servicio->descripcion ?? '',
                 ]);
             }
 
-            // Calcular nuevo monto en céntimos
             $newAmount = (int)($servicio->precio * 100);
             $needNewPrice = true;
 
-            // Si ya existe un precio, verificar si cambió
+            // Check if existing price needs updating
             if (!empty($servicio->stripe_price_id)) {
-                try {
-                    $oldPrice = Price::retrieve($servicio->stripe_price_id);
-
-                    // Comparar monto e intervalo
-                    $sameAmount = $oldPrice->unit_amount === $newAmount;
-                    $sameInterval = $oldPrice->recurring->interval === $interval;
-                    $sameIntervalCount = $oldPrice->recurring->interval_count === $intervalCount;
-
-                    if ($sameAmount && $sameInterval && $sameIntervalCount) {
-                        // No hay cambios, no crear nuevo precio
-                        $needNewPrice = false;
-                        Tools::log('solwed')->info('Precio sin cambios, no se crea nuevo');
-                    } else {
-                        // Archivar precio anterior
-                        Price::update($servicio->stripe_price_id, ['active' => false]);
-                        Tools::log('solwed')->info(sprintf(
-                            'Precio anterior archivado: %s (cambio de %d a %d céntimos)',
-                            $servicio->stripe_price_id,
-                            $oldPrice->unit_amount,
-                            $newAmount
-                        ));
-                    }
-                } catch (Exception $e) {
-                    // Precio no existe o error, crear nuevo
-                    Tools::log('solwed')->warning('Precio anterior no encontrado: ' . $e->getMessage());
-                }
+                // We can't easily retrieve a price via bridge without a dedicated endpoint,
+                // so we always create a new price if the amount changed.
+                // Archive old price
+                BridgeClient::post('/stripe/prices/' . $servicio->stripe_price_id . '/archive', []);
             }
 
-            // Crear nuevo precio si es necesario
-            // IMPORTANTE: tax_behavior=exclusive para que el IVA se añada al precio base
             if ($needNewPrice) {
-                $price = Price::create([
+                $result = BridgeClient::post('/stripe/prices', [
                     'product' => $servicio->stripe_product_id,
-                    'unit_amount' => $newAmount,
+                    'unit_amount' => (string)$newAmount,
                     'currency' => 'eur',
                     'tax_behavior' => 'exclusive',
                     'recurring' => [
                         'interval' => $interval,
-                        'interval_count' => $intervalCount
+                        'interval_count' => (string)$intervalCount,
                     ],
                     'metadata' => [
-                        'servicio_id' => $servicio->id,
-                        'servicio_nombre' => $servicio->nombre
-                    ]
+                        'servicio_id' => (string)$servicio->id,
+                        'servicio_nombre' => $servicio->nombre,
+                    ],
                 ]);
-                $servicio->stripe_price_id = $price->id;
-                Tools::log('solwed')->info(sprintf('Nuevo precio Stripe creado: %s', $price->id));
+                if (!($result['ok'] ?? false)) {
+                    Tools::log('solwed')->error('Failed to create Stripe price: ' . ($result['error'] ?? ''));
+                    return false;
+                }
+                $servicio->stripe_price_id = $result['data']['id'] ?? '';
             }
 
             return $servicio->save();
@@ -154,64 +109,54 @@ class StripeSubscriptionManager
      */
     public static function createCheckoutSession(int $idcontacto, Servicio $servicio, string $successUrl, string $cancelUrl): array
     {
-        if (!self::init()) {
-            return ['success' => false, 'error' => 'Stripe not configured'];
-        }
-
         try {
             $contacto = new Contacto();
             if (!$contacto->load($idcontacto)) {
                 return ['success' => false, 'error' => 'Contact not found'];
             }
-
             if (empty($contacto->email)) {
                 return ['success' => false, 'error' => 'Contact email required'];
             }
 
-            // Buscar o crear cliente en Stripe
             $customer = self::findOrCreateCustomer($contacto);
             if (!$customer) {
                 return ['success' => false, 'error' => 'Could not create Stripe customer'];
             }
 
-            // Verificar que el servicio tenga precio en Stripe
             if (empty($servicio->stripe_price_id)) {
-                // Intentar sincronizar
                 if (!self::syncProductToStripe($servicio)) {
                     return ['success' => false, 'error' => 'Service not synced with Stripe'];
                 }
             }
 
-            // Crear sesión de checkout para suscripción
-            // IMPORTANTE: automatic_tax SIEMPRE activado para aplicar IVA (21% España)
-            $session = Session::create([
-                'customer' => $customer->id,
+            $result = BridgeClient::post('/stripe/checkout-sessions', [
+                'customer' => $customer['id'],
                 'mode' => 'subscription',
-                'automatic_tax' => ['enabled' => true],
-                'line_items' => [[
-                    'price' => $servicio->stripe_price_id,
-                    'quantity' => 1
-                ]],
+                'automatic_tax' => ['enabled' => 'true'],
+                'line_items' => [['price' => $servicio->stripe_price_id, 'quantity' => '1']],
                 'success_url' => $successUrl . '?session_id={CHECKOUT_SESSION_ID}',
                 'cancel_url' => $cancelUrl,
                 'metadata' => [
-                    'idcontacto' => $idcontacto,
-                    'idservicio' => $servicio->id,
-                    'servicio_nombre' => $servicio->nombre
+                    'idcontacto' => (string)$idcontacto,
+                    'idservicio' => (string)$servicio->id,
+                    'servicio_nombre' => $servicio->nombre,
                 ],
                 'subscription_data' => [
-                    'automatic_tax' => ['enabled' => true],
                     'metadata' => [
-                        'idcontacto' => $idcontacto,
-                        'idservicio' => $servicio->id
-                    ]
-                ]
+                        'idcontacto' => (string)$idcontacto,
+                        'idservicio' => (string)$servicio->id,
+                    ],
+                ],
             ]);
+
+            if (!($result['ok'] ?? false)) {
+                return ['success' => false, 'error' => $result['error'] ?? 'Bridge error'];
+            }
 
             return [
                 'success' => true,
-                'session_id' => $session->id,
-                'url' => $session->url
+                'session_id' => $result['data']['id'] ?? '',
+                'url' => $result['data']['url'] ?? '',
             ];
         } catch (Exception $e) {
             Tools::log('solwed')->error('Error creating checkout session: ' . $e->getMessage());
@@ -220,51 +165,12 @@ class StripeSubscriptionManager
     }
 
     /**
-     * Busca o crea un cliente en Stripe
-     */
-    private static function findOrCreateCustomer(Contacto $contacto): ?Customer
-    {
-        try {
-            // Buscar por email
-            $search = Customer::search([
-                'query' => 'email:"' . $contacto->email . '"',
-                'limit' => 1
-            ]);
-
-            if (!empty($search->data)) {
-                return $search->data[0];
-            }
-
-            // Crear nuevo cliente
-            return Customer::create([
-                'name' => $contacto->fullName(),
-                'email' => $contacto->email,
-                'metadata' => [
-                    'idcontacto' => $contacto->idcontacto,
-                    'codcliente' => $contacto->codcliente ?? ''
-                ]
-            ]);
-        } catch (Exception $e) {
-            Tools::log('solwed')->error('Error with Stripe customer: ' . $e->getMessage());
-            return null;
-        }
-    }
-
-    /**
      * Obtiene una suscripción de Stripe
      */
-    public static function getSubscription(string $subscriptionId): ?Subscription
+    public static function getSubscription(string $subscriptionId): ?array
     {
-        if (!self::init()) {
-            return null;
-        }
-
-        try {
-            return Subscription::retrieve($subscriptionId);
-        } catch (Exception $e) {
-            Tools::log('solwed')->error('Error retrieving subscription: ' . $e->getMessage());
-            return null;
-        }
+        $result = BridgeClient::get('/stripe/subscriptions/' . $subscriptionId);
+        return ($result['ok'] ?? false) ? ($result['data'] ?? null) : null;
     }
 
     /**
@@ -272,23 +178,15 @@ class StripeSubscriptionManager
      */
     public static function cancelSubscription(string $subscriptionId, bool $immediately = false): bool
     {
-        if (!self::init()) {
-            return false;
-        }
-
         try {
-            $subscription = Subscription::retrieve($subscriptionId);
+            $result = BridgeClient::post('/stripe/subscriptions/' . $subscriptionId . '/cancel', [
+                'immediately' => $immediately,
+            ]);
 
-            if ($immediately) {
-                $subscription->cancel();
-            } else {
-                // Cancelar al final del período
-                $subscription->update($subscriptionId, [
-                    'cancel_at_period_end' => true
-                ]);
+            if (!($result['ok'] ?? false)) {
+                return false;
             }
 
-            // Actualizar Suscripcion
             $suscripcion = Suscripcion::getByStripeSubscriptionId($subscriptionId);
             if ($suscripcion) {
                 $suscripcion->estado = Suscripcion::ESTADO_CANCELADO;
@@ -307,39 +205,36 @@ class StripeSubscriptionManager
      */
     public static function processCompletedCheckout(string $sessionId): array
     {
-        if (!self::init()) {
-            return ['success' => false, 'error' => 'Stripe not configured'];
-        }
-
         try {
-            $session = Session::retrieve($sessionId, [
-                'expand' => ['subscription', 'customer']
-            ]);
+            $result = BridgeClient::get('/stripe/checkout-sessions/' . $sessionId);
+            if (!($result['ok'] ?? false)) {
+                return ['success' => false, 'error' => $result['error'] ?? 'Bridge error'];
+            }
 
-            if ($session->payment_status !== 'paid') {
+            $session = $result['data'] ?? [];
+
+            if (($session['payment_status'] ?? '') !== 'paid') {
                 return ['success' => false, 'error' => 'Payment not completed'];
             }
 
-            $idcontacto = $session->metadata->idcontacto ?? null;
-            $idservicio = $session->metadata->idservicio ?? null;
+            $idcontacto = $session['metadata']['idcontacto'] ?? null;
+            $idservicio = $session['metadata']['idservicio'] ?? null;
 
             if (!$idcontacto || !$idservicio) {
                 return ['success' => false, 'error' => 'Missing metadata'];
             }
 
-            // Calculate dates - handle API versions that may not include current_period_end
-            $sub = $session->subscription;
+            $sub = $session['subscription'] ?? [];
             $fechaInicio = date('Y-m-d');
             $fechaVencimiento = date('Y-m-d', strtotime('+1 month'));
 
-            if (isset($sub->current_period_start) && $sub->current_period_start > 0) {
-                $fechaInicio = date('Y-m-d', $sub->current_period_start);
+            if (!empty($sub['current_period_start']) && $sub['current_period_start'] > 0) {
+                $fechaInicio = date('Y-m-d', $sub['current_period_start']);
             }
-            if (isset($sub->current_period_end) && $sub->current_period_end > 0) {
-                $fechaVencimiento = date('Y-m-d', $sub->current_period_end);
+            if (!empty($sub['current_period_end']) && $sub['current_period_end'] > 0) {
+                $fechaVencimiento = date('Y-m-d', $sub['current_period_end']);
             }
 
-            // Crear Suscripcion
             $suscripcion = new Suscripcion();
             $suscripcion->idcontacto = (int)$idcontacto;
             $suscripcion->idservicio = (int)$idservicio;
@@ -349,10 +244,10 @@ class StripeSubscriptionManager
             $suscripcion->fecha_ultimo_pago = date('Y-m-d');
             $suscripcion->fecha_proximo_pago = $fechaVencimiento;
             $suscripcion->metodo_pago = Suscripcion::METODO_STRIPE;
-            $suscripcion->referencia_externa = $sub->id;
-            $suscripcion->stripe_customer_id = $session->customer->id;
-            $suscripcion->auto_renovar = !($sub->cancel_at_period_end ?? false);
-            $suscripcion->importe = ($sub->items->data[0]->price->unit_amount ?? 0) / 100;
+            $suscripcion->referencia_externa = $sub['id'] ?? '';
+            $suscripcion->stripe_customer_id = $session['customer']['id'] ?? $session['customer'] ?? '';
+            $suscripcion->auto_renovar = !($sub['cancel_at_period_end'] ?? false);
+            $suscripcion->importe = ($sub['items']['data'][0]['price']['unit_amount'] ?? 0) / 100;
 
             if (!$suscripcion->save()) {
                 return ['success' => false, 'error' => 'Could not save contract'];
@@ -361,7 +256,7 @@ class StripeSubscriptionManager
             return [
                 'success' => true,
                 'contrato' => $suscripcion,
-                'subscription_id' => $session->subscription->id
+                'subscription_id' => $sub['id'] ?? '',
             ];
         } catch (Exception $e) {
             Tools::log('solwed')->error('Error processing checkout: ' . $e->getMessage());
@@ -369,87 +264,62 @@ class StripeSubscriptionManager
         }
     }
 
-
-    // =========================================================================
-    // MÉTODOS PARA UPGRADES/DOWNGRADES
-    // =========================================================================
-
     /**
      * Actualiza una suscripción a un nuevo plan (upgrade/downgrade)
-     *
-     * @param string $subscriptionId ID de suscripción Stripe
-     * @param Servicio $nuevoServicio Nuevo servicio/plan
-     * @param bool $prorate Aplicar prorrateo (default: true)
-     * @return array ['success' => bool, 'subscription' => Subscription|null, 'error' => string|null]
      */
     public static function updateSubscriptionPlan(
         string $subscriptionId,
         Servicio $nuevoServicio,
         bool $prorate = true
     ): array {
-        if (!self::init()) {
-            return ['success' => false, 'error' => 'Stripe not configured'];
-        }
-
         try {
-            // Sincronizar nuevo servicio si no tiene precio en Stripe
             if (empty($nuevoServicio->stripe_price_id)) {
                 if (!self::syncProductToStripe($nuevoServicio)) {
                     return ['success' => false, 'error' => 'Could not sync new service to Stripe'];
                 }
-                // Recargar para obtener IDs actualizados
                 $nuevoServicio->load($nuevoServicio->id);
             }
 
-            // Obtener suscripción actual
-            $subscription = Subscription::retrieve($subscriptionId);
+            // Get current subscription to find item ID
+            $subData = self::getSubscription($subscriptionId);
+            if (!$subData) {
+                return ['success' => false, 'error' => 'Subscription not found'];
+            }
 
-            // Obtener el item de la suscripción (asumimos 1 item)
-            $items = $subscription->items->data;
+            $items = $subData['items']['data'] ?? [];
             if (empty($items)) {
                 return ['success' => false, 'error' => 'Subscription has no items'];
             }
-            $itemId = $items[0]->id;
+            $itemId = $items[0]['id'];
 
-            // Actualizar suscripción con nuevo precio
-            $updatedSubscription = Subscription::update($subscriptionId, [
-                'items' => [[
-                    'id' => $itemId,
-                    'price' => $nuevoServicio->stripe_price_id,
-                ]],
+            $result = BridgeClient::put('/stripe/subscriptions/' . $subscriptionId, [
+                'items' => [['id' => $itemId, 'price' => $nuevoServicio->stripe_price_id]],
                 'proration_behavior' => $prorate ? 'create_prorations' : 'none',
                 'metadata' => [
-                    'idservicio' => $nuevoServicio->id,
+                    'idservicio' => (string)$nuevoServicio->id,
                     'servicio_nombre' => $nuevoServicio->nombre,
-                    'upgrade_date' => date('Y-m-d H:i:s')
-                ]
+                    'upgrade_date' => date('Y-m-d H:i:s'),
+                ],
             ]);
 
-            // Actualizar Suscripcion
+            if (!($result['ok'] ?? false)) {
+                return ['success' => false, 'error' => $result['error'] ?? 'Bridge error'];
+            }
+
+            // Update local record
             $suscripcion = Suscripcion::getByStripeSubscriptionId($subscriptionId);
             if ($suscripcion) {
                 $suscripcion->idservicio = $nuevoServicio->id;
-                // Update dates if available
-                if (isset($updatedSubscription->current_period_end) && $updatedSubscription->current_period_end > 0) {
-                    $suscripcion->fecha_proximo_pago = date('Y-m-d', $updatedSubscription->current_period_end);
-                    $suscripcion->fecha_vencimiento = date('Y-m-d', $updatedSubscription->current_period_end);
+                $updatedSub = $result['data'] ?? [];
+                if (!empty($updatedSub['current_period_end']) && $updatedSub['current_period_end'] > 0) {
+                    $suscripcion->fecha_proximo_pago = date('Y-m-d', $updatedSub['current_period_end']);
+                    $suscripcion->fecha_vencimiento = date('Y-m-d', $updatedSub['current_period_end']);
                 }
-                $suscripcion->importe = ($nuevoServicio->precio ?? 0);
+                $suscripcion->importe = $nuevoServicio->precio ?? 0;
                 $suscripcion->save();
             }
 
-            Tools::log('solwed')->info(sprintf(
-                'Subscription %s upgraded to service %s (%s)',
-                $subscriptionId,
-                $nuevoServicio->id,
-                $nuevoServicio->nombre
-            ));
-
-            return [
-                'success' => true,
-                'subscription' => $updatedSubscription,
-                'proration_amount' => self::getProrationAmount($subscriptionId)
-            ];
+            return ['success' => true, 'subscription' => $result['data'] ?? null];
         } catch (Exception $e) {
             Tools::log('solwed')->error('Error updating subscription: ' . $e->getMessage());
             return ['success' => false, 'error' => $e->getMessage()];
@@ -458,40 +328,27 @@ class StripeSubscriptionManager
 
     /**
      * Obtiene el monto de prorrateo pendiente para una suscripción
-     *
-     * @param string $subscriptionId ID de suscripción Stripe
-     * @return float Monto en EUR (puede ser positivo o negativo)
      */
     public static function getProrationAmount(string $subscriptionId): float
     {
-        if (!self::init()) {
+        // Bridge generic proxy for upcoming invoice
+        $result = BridgeClient::get('/stripe/invoices/upcoming', ['subscription' => $subscriptionId]);
+        if (!($result['ok'] ?? false)) {
             return 0;
         }
 
-        try {
-            $upcomingInvoice = Invoice::upcoming([
-                'subscription' => $subscriptionId
-            ]);
-
-            $prorationAmount = 0;
-            foreach ($upcomingInvoice->lines->data as $line) {
-                if ($line->proration) {
-                    $prorationAmount += $line->amount;
-                }
+        $prorationAmount = 0;
+        foreach (($result['data']['lines']['data'] ?? []) as $line) {
+            if ($line['proration'] ?? false) {
+                $prorationAmount += $line['amount'] ?? 0;
             }
-
-            return $prorationAmount / 100; // Convertir de céntimos a EUR
-        } catch (Exception $e) {
-            Tools::log('solwed')->warning('Could not get proration amount: ' . $e->getMessage());
-            return 0;
         }
+
+        return $prorationAmount / 100;
     }
 
     /**
-     * Obtiene opciones de upgrade/downgrade disponibles para una suscripción
-     *
-     * @param int $idservicioActual ID del servicio actual
-     * @return array ['upgrades' => [...], 'downgrades' => [...]]
+     * Obtiene opciones de upgrade/downgrade disponibles
      */
     public static function getUpgradeOptions(int $idservicioActual): array
     {
@@ -500,21 +357,18 @@ class StripeSubscriptionManager
             return ['upgrades' => [], 'downgrades' => []];
         }
 
-        // Obtener servicios de la misma categoría con suscripción Stripe
         $servicioModel = new Servicio();
         $where = [
             new DataBaseWhere('activo', true),
             new DataBaseWhere('genera_suscripcion', true),
-            new DataBaseWhere('id', $idservicioActual, '!=')
+            new DataBaseWhere('id', $idservicioActual, '!='),
         ];
 
-        // Si tiene categoría, filtrar por ella
         if (!empty($servicioActual->categoria)) {
             $where[] = new DataBaseWhere('categoria', $servicioActual->categoria);
         }
 
         $servicios = $servicioModel->all($where, ['precio' => 'ASC']);
-
         $upgrades = [];
         $downgrades = [];
 
@@ -527,7 +381,7 @@ class StripeSubscriptionManager
                 'diferencia_precio' => round($servicio->precio - $servicioActual->precio, 2),
                 'icono' => $servicio->icono,
                 'color' => $servicio->color,
-                'caracteristicas' => $servicio->getCaracteristicas()
+                'caracteristicas' => $servicio->getCaracteristicas(),
             ];
 
             if ($servicio->precio > $servicioActual->precio) {
@@ -540,117 +394,64 @@ class StripeSubscriptionManager
         return ['upgrades' => $upgrades, 'downgrades' => $downgrades];
     }
 
-    // =========================================================================
-    // MÉTODOS PARA BILLING PORTAL
-    // =========================================================================
-
     /**
      * Crea una sesión del portal de facturación de Stripe
-     *
-     * @param string $stripeCustomerId ID del cliente en Stripe
-     * @param string $returnUrl URL de retorno después de gestionar
-     * @return array ['success' => bool, 'url' => string|null, 'error' => string|null]
      */
-    public static function createBillingPortalSession(
-        string $stripeCustomerId,
-        string $returnUrl
-    ): array {
-        if (!self::init()) {
-            return ['success' => false, 'error' => 'Stripe not configured'];
+    public static function createBillingPortalSession(string $stripeCustomerId, string $returnUrl): array
+    {
+        $result = BridgeClient::post('/stripe/billing-portal', [
+            'customerId' => $stripeCustomerId,
+            'returnUrl' => $returnUrl,
+        ]);
+
+        if (!($result['ok'] ?? false)) {
+            return ['success' => false, 'error' => $result['error'] ?? 'Bridge error'];
         }
 
-        try {
-            $session = BillingPortalSession::create([
-                'customer' => $stripeCustomerId,
-                'return_url' => $returnUrl,
-            ]);
-
-            Tools::log('solwed')->info(sprintf(
-                'Billing portal session created for customer %s',
-                $stripeCustomerId
-            ));
-
-            return [
-                'success' => true,
-                'url' => $session->url
-            ];
-        } catch (Exception $e) {
-            Tools::log('solwed')->error('Error creating billing portal session: ' . $e->getMessage());
-            return ['success' => false, 'error' => $e->getMessage()];
-        }
+        return ['success' => true, 'url' => $result['data']['url'] ?? ''];
     }
 
     /**
-     * Obtiene información detallada de una suscripción para mostrar en el portal
-     *
-     * @param string $subscriptionId ID de suscripción Stripe
-     * @return array Detalles de la suscripción
+     * Obtiene información detallada de una suscripción para el portal
      */
     public static function getSubscriptionDetails(string $subscriptionId): array
     {
-        if (!self::init()) {
-            return ['success' => false, 'error' => 'Stripe not configured'];
+        $subData = self::getSubscription($subscriptionId);
+        if (!$subData) {
+            return ['success' => false, 'error' => 'Subscription not found'];
         }
 
-        try {
-            $subscription = Subscription::retrieve($subscriptionId, [
-                'expand' => ['latest_invoice', 'customer', 'default_payment_method']
-            ]);
-
-            $paymentMethod = null;
-            if ($subscription->default_payment_method) {
-                $pm = $subscription->default_payment_method;
-                if ($pm->type === 'card' && $pm->card) {
-                    $paymentMethod = [
-                        'type' => 'card',
-                        'last4' => $pm->card->last4,
-                        'brand' => $pm->card->brand,
-                        'exp_month' => $pm->card->exp_month,
-                        'exp_year' => $pm->card->exp_year
-                    ];
-                } else {
-                    $paymentMethod = [
-                        'type' => $pm->type,
-                        'last4' => null,
-                        'brand' => null
-                    ];
-                }
+        $paymentMethod = null;
+        $pm = $subData['default_payment_method'] ?? null;
+        if ($pm) {
+            if (($pm['type'] ?? '') === 'card' && !empty($pm['card'])) {
+                $paymentMethod = [
+                    'type' => 'card',
+                    'last4' => $pm['card']['last4'] ?? null,
+                    'brand' => $pm['card']['brand'] ?? null,
+                    'exp_month' => $pm['card']['exp_month'] ?? null,
+                    'exp_year' => $pm['card']['exp_year'] ?? null,
+                ];
+            } else {
+                $paymentMethod = ['type' => $pm['type'] ?? 'unknown', 'last4' => null, 'brand' => null];
             }
-
-            return [
-                'success' => true,
-                'status' => $subscription->status,
-                'current_period_start' => isset($subscription->current_period_start) && $subscription->current_period_start > 0
-                    ? date('Y-m-d', $subscription->current_period_start)
-                    : date('Y-m-d'),
-                'current_period_end' => isset($subscription->current_period_end) && $subscription->current_period_end > 0
-                    ? date('Y-m-d', $subscription->current_period_end)
-                    : null,
-                'cancel_at_period_end' => $subscription->cancel_at_period_end ?? false,
-                'next_invoice_amount' => $subscription->latest_invoice
-                    ? $subscription->latest_invoice->amount_due / 100
-                    : null,
-                'payment_method' => $paymentMethod,
-                'created' => date('Y-m-d', $subscription->created)
-            ];
-        } catch (Exception $e) {
-            Tools::log('solwed')->error('Error getting subscription details: ' . $e->getMessage());
-            return ['success' => false, 'error' => $e->getMessage()];
         }
+
+        return [
+            'success' => true,
+            'status' => $subData['status'] ?? 'unknown',
+            'current_period_start' => !empty($subData['current_period_start']) ? date('Y-m-d', $subData['current_period_start']) : date('Y-m-d'),
+            'current_period_end' => !empty($subData['current_period_end']) ? date('Y-m-d', $subData['current_period_end']) : null,
+            'cancel_at_period_end' => $subData['cancel_at_period_end'] ?? false,
+            'payment_method' => $paymentMethod,
+            'created' => isset($subData['created']) ? date('Y-m-d', $subData['created']) : null,
+        ];
     }
 
-    // =========================================================================
-    // MÉTODOS PARA SUSCRIPCIONES DE DOMINIOS (AUTO-RENOVACIÓN)
-    // =========================================================================
+    // ─── Domain auto-renewal ─────────────────────────────────
 
     /**
-     * Crea una sesión de checkout para suscripción de auto-renovación de dominio
-     *
-     * @param Dominio $dominio El dominio a renovar automáticamente
-     * @param Contacto $contacto El contacto propietario
-     * @param string $successUrl URL de retorno en caso de éxito
-     * @param string $cancelUrl URL de retorno en caso de cancelación
-     * @return array ['success' => bool, 'url' => string|null, 'session_id' => string|null, 'error' => string|null]
+     * Crea una sesión de checkout para auto-renovación de dominio
      */
     public static function createDomainAutoRenewalCheckout(
         Dominio $dominio,
@@ -658,22 +459,16 @@ class StripeSubscriptionManager
         string $successUrl,
         string $cancelUrl
     ): array {
-        if (!self::init()) {
-            return ['success' => false, 'error' => 'Stripe not configured'];
-        }
-
         try {
             if (empty($contacto->email)) {
                 return ['success' => false, 'error' => 'Contact email required'];
             }
 
-            // Buscar o crear cliente en Stripe
             $customer = self::findOrCreateCustomer($contacto);
             if (!$customer) {
                 return ['success' => false, 'error' => 'Could not create Stripe customer'];
             }
 
-            // Obtener o crear el precio para renovación de dominio
             $priceId = self::getOrCreateDomainRenewalPrice($dominio);
             if (!$priceId) {
                 return ['success' => false, 'error' => 'Could not get domain renewal price'];
@@ -681,71 +476,56 @@ class StripeSubscriptionManager
 
             $nombreCompleto = $dominio->getNombreCompleto();
 
-            // Calcular billing_cycle_anchor alineado con la fecha de expiración del dominio
-            $billingAnchor = null;
+            // Calculate billing anchor
+            $subscriptionData = [
+                'metadata' => [
+                    'type' => 'domain_auto_renewal',
+                    'idcontacto' => (string)$contacto->idcontacto,
+                    'iddominio' => (string)$dominio->id,
+                    'domain' => $nombreCompleto,
+                ],
+            ];
+
             if (!empty($dominio->fecha_expiracion)) {
                 $expDate = new \DateTime($dominio->fecha_expiracion);
-                // Ajustar a 30 días antes de la expiración para dar margen
                 $expDate->sub(new \DateInterval('P30D'));
                 $billingAnchor = $expDate->getTimestamp();
 
-                // Si la fecha ya pasó, usar la fecha de expiración directamente
                 if ($billingAnchor < time()) {
                     $expDate = new \DateTime($dominio->fecha_expiracion);
                     $billingAnchor = $expDate->getTimestamp();
                 }
 
-                // Si aún está en el pasado, no usar anchor (cobro inmediato)
-                if ($billingAnchor < time()) {
-                    $billingAnchor = null;
+                if ($billingAnchor > time()) {
+                    $subscriptionData['billing_cycle_anchor'] = (string)$billingAnchor;
+                    $subscriptionData['proration_behavior'] = 'none';
                 }
             }
 
-            // Crear sesión de checkout para suscripción
-            $sessionParams = [
-                'customer' => $customer->id,
+            $result = BridgeClient::post('/stripe/checkout-sessions', [
+                'customer' => $customer['id'],
                 'mode' => 'subscription',
-                'automatic_tax' => ['enabled' => true],
-                'line_items' => [[
-                    'price' => $priceId,
-                    'quantity' => 1
-                ]],
+                'automatic_tax' => ['enabled' => 'true'],
+                'line_items' => [['price' => $priceId, 'quantity' => '1']],
                 'success_url' => $successUrl . (strpos($successUrl, '?') !== false ? '&' : '?') . 'session_id={CHECKOUT_SESSION_ID}',
                 'cancel_url' => $cancelUrl,
                 'metadata' => [
                     'type' => 'domain_auto_renewal',
-                    'idcontacto' => $contacto->idcontacto,
-                    'iddominio' => $dominio->id,
-                    'domain' => $nombreCompleto
+                    'idcontacto' => (string)$contacto->idcontacto,
+                    'iddominio' => (string)$dominio->id,
+                    'domain' => $nombreCompleto,
                 ],
-                'subscription_data' => [
-                    'metadata' => [
-                        'type' => 'domain_auto_renewal',
-                        'idcontacto' => $contacto->idcontacto,
-                        'iddominio' => $dominio->id,
-                        'domain' => $nombreCompleto
-                    ]
-                ]
-            ];
+                'subscription_data' => $subscriptionData,
+            ]);
 
-            // Añadir billing_cycle_anchor si está disponible
-            if ($billingAnchor) {
-                $sessionParams['subscription_data']['billing_cycle_anchor'] = $billingAnchor;
-                $sessionParams['subscription_data']['proration_behavior'] = 'none';
+            if (!($result['ok'] ?? false)) {
+                return ['success' => false, 'error' => $result['error'] ?? 'Bridge error'];
             }
-
-            $session = Session::create($sessionParams);
-
-            Tools::log('solwed')->info(sprintf(
-                'Domain auto-renewal checkout session created: %s for domain %s',
-                $session->id,
-                $nombreCompleto
-            ));
 
             return [
                 'success' => true,
-                'session_id' => $session->id,
-                'url' => $session->url
+                'session_id' => $result['data']['id'] ?? '',
+                'url' => $result['data']['url'] ?? '',
             ];
         } catch (Exception $e) {
             Tools::log('solwed')->error('Error creating domain auto-renewal checkout: ' . $e->getMessage());
@@ -754,114 +534,12 @@ class StripeSubscriptionManager
     }
 
     /**
-     * Obtiene o crea un precio de Stripe para renovación de dominio
-     *
-     * @param Dominio $dominio El dominio
-     * @return string|null El ID del precio de Stripe
-     */
-    private static function getOrCreateDomainRenewalPrice(Dominio $dominio): ?string
-    {
-        try {
-            // Obtener precio de renovación según TLD desde settings
-            $tld = ltrim($dominio->tld, '.');
-            $priceKey = 'domain_renewal_price_' . str_replace('.', '_', $tld);
-            $renewalPrice = (float) Tools::settings('dondominio', $priceKey, 0);
-
-            // Si no hay precio específico para el TLD, usar precio por defecto
-            if ($renewalPrice <= 0) {
-                $renewalPrice = (float) Tools::settings('dondominio', 'domain_renewal_price_default', 15.00);
-            }
-
-            // Convertir a céntimos
-            $priceInCents = (int) ($renewalPrice * 100);
-
-            // Buscar producto existente para renovaciones de dominio
-            $productId = Tools::settings('stripe', 'domain_renewal_product_id', '');
-
-            if (empty($productId)) {
-                // Crear producto para renovaciones de dominio
-                $product = Product::create([
-                    'name' => 'Renovación de Dominio',
-                    'description' => 'Renovación anual automática de dominio',
-                    'metadata' => [
-                        'type' => 'domain_renewal'
-                    ]
-                ]);
-                $productId = $product->id;
-                Tools::settingsSet('stripe', 'domain_renewal_product_id', $productId);
-                Tools::settingsSave();
-                Tools::log('solwed')->info('Domain renewal product created: ' . $productId);
-            }
-
-            // Buscar precio existente para este TLD
-            $priceIdKey = 'domain_renewal_stripe_price_' . str_replace('.', '_', $tld);
-            $existingPriceId = Tools::settings('stripe', $priceIdKey, '');
-
-            if (!empty($existingPriceId)) {
-                // Verificar que el precio existe y tiene el monto correcto
-                try {
-                    $existingPrice = Price::retrieve($existingPriceId);
-                    if ($existingPrice->active && $existingPrice->unit_amount === $priceInCents) {
-                        return $existingPriceId;
-                    }
-                    // Archivar precio anterior si el monto cambió
-                    Price::update($existingPriceId, ['active' => false]);
-                } catch (Exception $e) {
-                    // Precio no existe, crear uno nuevo
-                }
-            }
-
-            // Crear nuevo precio para este TLD
-            $price = Price::create([
-                'product' => $productId,
-                'unit_amount' => $priceInCents,
-                'currency' => 'eur',
-                'tax_behavior' => 'exclusive',
-                'recurring' => [
-                    'interval' => 'year',
-                    'interval_count' => 1
-                ],
-                'metadata' => [
-                    'type' => 'domain_renewal',
-                    'tld' => $tld
-                ]
-            ]);
-
-            // Guardar precio ID
-            Tools::settingsSet('stripe', $priceIdKey, $price->id);
-            Tools::settingsSave();
-
-            Tools::log('solwed')->info(sprintf(
-                'Domain renewal price created for .%s: %s (€%.2f/year)',
-                $tld,
-                $price->id,
-                $renewalPrice
-            ));
-
-            return $price->id;
-        } catch (Exception $e) {
-            Tools::log('solwed')->error('Error getting/creating domain renewal price: ' . $e->getMessage());
-            return null;
-        }
-    }
-
-    /**
      * Cancela la suscripción de auto-renovación de un dominio
-     *
-     * @param Dominio $dominio El dominio
-     * @param bool $immediately Si true, cancela inmediatamente; si false, al final del período
-     * @return array ['success' => bool, 'error' => string|null]
      */
     public static function cancelDomainAutoRenewal(Dominio $dominio, bool $immediately = false): array
     {
-        if (!self::init()) {
-            return ['success' => false, 'error' => 'Stripe not configured'];
-        }
-
-        // Get contract linked to domain
         $suscripcion = $dominio->getSuscripcion();
         if (!$suscripcion || empty($suscripcion->referencia_externa)) {
-            // No contract or no Stripe subscription
             $dominio->observaciones = ($dominio->observaciones ?? '') .
                 "\n[" . date('Y-m-d') . "] Auto-renovación desactivada (sin suscripción)";
             $dominio->save();
@@ -871,17 +549,14 @@ class StripeSubscriptionManager
         $subscriptionId = $suscripcion->referencia_externa;
 
         try {
-            $subscription = Subscription::retrieve($subscriptionId);
+            $result = BridgeClient::post('/stripe/subscriptions/' . $subscriptionId . '/cancel', [
+                'immediately' => $immediately,
+            ]);
 
-            if ($immediately) {
-                $subscription->cancel();
-            } else {
-                Subscription::update($subscriptionId, [
-                    'cancel_at_period_end' => true
-                ]);
+            if (!($result['ok'] ?? false)) {
+                return ['success' => false, 'error' => $result['error'] ?? 'Bridge error'];
             }
 
-            // Update contract
             if ($immediately) {
                 $suscripcion->estado = Suscripcion::ESTADO_CANCELADO;
                 $suscripcion->auto_renovar = false;
@@ -892,24 +567,15 @@ class StripeSubscriptionManager
                     "\n[" . date('Y-m-d') . "] Auto-renovación cancelada inmediatamente";
                 $dominio->save();
             } else {
-                // Keep contract until period ends
                 $suscripcion->auto_renovar = false;
                 $suscripcion->save();
 
-                $cancelDate = isset($subscription->current_period_end) && $subscription->current_period_end > 0
-                    ? date('Y-m-d', $subscription->current_period_end)
-                    : 'fecha de vencimiento';
+                $sub = $result['data'] ?? [];
+                $cancelDate = !empty($sub['current_period_end']) ? date('Y-m-d', $sub['current_period_end']) : 'fecha de vencimiento';
                 $dominio->observaciones = ($dominio->observaciones ?? '') .
                     "\n[" . date('Y-m-d') . "] Auto-renovación cancelada - se desactivará el " . $cancelDate;
                 $dominio->save();
             }
-
-            Tools::log('solwed')->info(sprintf(
-                'Domain auto-renewal cancelled for %s (contract: %d, immediately: %s)',
-                $dominio->getNombreCompleto(),
-                $suscripcion->id,
-                $immediately ? 'yes' : 'no'
-            ));
 
             return ['success' => true];
         } catch (Exception $e) {
@@ -920,20 +586,83 @@ class StripeSubscriptionManager
 
     /**
      * Obtiene el precio de renovación para un TLD
-     *
-     * @param string $tld TLD (ej: .com, .es)
-     * @return float Precio en EUR
      */
     public static function getDomainRenewalPrice(string $tld): float
     {
         $tld = ltrim($tld, '.');
         $priceKey = 'domain_renewal_price_' . str_replace('.', '_', $tld);
-        $price = (float) Tools::settings('dondominio', $priceKey, 0);
-
+        $price = (float)Tools::settings('dondominio', $priceKey, 0);
         if ($price <= 0) {
-            $price = (float) Tools::settings('dondominio', 'domain_renewal_price_default', 15.00);
+            $price = (float)Tools::settings('dondominio', 'domain_renewal_price_default', 15.00);
         }
-
         return $price;
+    }
+
+    // ─── Private helpers ─────────────────────────────────────
+
+    private static function findOrCreateCustomer(Contacto $contacto): ?array
+    {
+        return StripeHelper::findOrCreateCustomer(
+            $contacto->email,
+            $contacto->fullName(),
+            [
+                'idcontacto' => (string)$contacto->idcontacto,
+                'codcliente' => $contacto->codcliente ?? '',
+            ]
+        );
+    }
+
+    private static function getOrCreateDomainRenewalPrice(Dominio $dominio): ?string
+    {
+        try {
+            $tld = ltrim($dominio->tld, '.');
+            $renewalPrice = self::getDomainRenewalPrice($tld);
+            $priceInCents = (int)($renewalPrice * 100);
+
+            $productId = Tools::settings('stripe', 'domain_renewal_product_id', '');
+            if (empty($productId)) {
+                $result = BridgeClient::post('/stripe/products', [
+                    'name' => 'Renovación de Dominio',
+                    'description' => 'Renovación anual automática de dominio',
+                    'metadata' => ['type' => 'domain_renewal'],
+                ]);
+                if (!($result['ok'] ?? false)) {
+                    return null;
+                }
+                $productId = $result['data']['id'] ?? '';
+                Tools::settingsSet('stripe', 'domain_renewal_product_id', $productId);
+                Tools::settingsSave();
+            }
+
+            $priceIdKey = 'domain_renewal_stripe_price_' . str_replace('.', '_', $tld);
+            $existingPriceId = Tools::settings('stripe', $priceIdKey, '');
+
+            if (!empty($existingPriceId)) {
+                // Assume the price is still valid — bridge will error if not
+                return $existingPriceId;
+            }
+
+            $result = BridgeClient::post('/stripe/prices', [
+                'product' => $productId,
+                'unit_amount' => (string)$priceInCents,
+                'currency' => 'eur',
+                'tax_behavior' => 'exclusive',
+                'recurring' => ['interval' => 'year', 'interval_count' => '1'],
+                'metadata' => ['type' => 'domain_renewal', 'tld' => $tld],
+            ]);
+
+            if (!($result['ok'] ?? false)) {
+                return null;
+            }
+
+            $priceId = $result['data']['id'] ?? '';
+            Tools::settingsSet('stripe', $priceIdKey, $priceId);
+            Tools::settingsSave();
+
+            return $priceId;
+        } catch (Exception $e) {
+            Tools::log('solwed')->error('Error getting/creating domain renewal price: ' . $e->getMessage());
+            return null;
+        }
     }
 }

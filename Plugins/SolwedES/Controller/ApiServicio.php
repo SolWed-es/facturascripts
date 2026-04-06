@@ -5,6 +5,7 @@ namespace FacturaScripts\Plugins\SolwedES\Controller;
 use Exception;
 use FacturaScripts\Core\Base\Controller;
 use FacturaScripts\Plugins\SolwedES\Model\Servicio;
+use FacturaScripts\Plugins\SolwedES\Lib\RedisReader;
 
 /**
  * API for service catalog with business logic (pricing, categories).
@@ -66,6 +67,24 @@ class ApiServicio extends Controller
     private function handleCatalogo(): void
     {
         $soloComprables = (bool) $this->request->get('comprables', false);
+
+        // Try Redis first
+        $cached = RedisReader::getList('fs:servicios:catalogo');
+        if (!empty($cached)) {
+            if ($soloComprables) {
+                foreach ($cached as &$group) {
+                    $group['servicios'] = array_values(array_filter(
+                        $group['servicios'] ?? [],
+                        fn($s) => ($s['comprable'] ?? false)
+                    ));
+                }
+                $cached = array_values(array_filter($cached, fn($g) => !empty($g['servicios'])));
+            }
+            $this->jsonResponse(['success' => true, 'source' => 'redis', 'data' => $cached]);
+            return;
+        }
+
+        // Fallback to DB
         $grouped = Servicio::getServiciosAgrupadosPorCategoria();
 
         $result = [];
@@ -85,7 +104,7 @@ class ApiServicio extends Controller
             }
         }
 
-        $this->jsonResponse(['success' => true, 'data' => $result]);
+        $this->jsonResponse(['success' => true, 'source' => 'db', 'data' => $result]);
     }
 
     private function handleGet(): void
@@ -96,13 +115,21 @@ class ApiServicio extends Controller
             return;
         }
 
+        // Try Redis first
+        $cached = RedisReader::get("fs:servicio:{$id}");
+        if ($cached !== null) {
+            $this->jsonResponse(['success' => true, 'source' => 'redis', 'data' => $cached]);
+            return;
+        }
+
+        // Fallback to DB
         $servicio = new Servicio();
         if (!$servicio->load($id)) {
             $this->jsonResponse(['error' => 'Service not found'], 404);
             return;
         }
 
-        $this->jsonResponse(['success' => true, 'data' => $this->serializeWithPrecios($servicio)]);
+        $this->jsonResponse(['success' => true, 'source' => 'db', 'data' => $this->serializeWithPrecios($servicio)]);
     }
 
     private function serializeWithPrecios(Servicio $s): array

@@ -7,6 +7,7 @@ use FacturaScripts\Core\Base\Controller;
 use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
 use FacturaScripts\Plugins\SolwedES\Model\Suscripcion;
 use FacturaScripts\Plugins\SolwedES\Lib\StripeSubscriptionManager;
+use FacturaScripts\Plugins\SolwedES\Lib\RedisReader;
 use FacturaScripts\Plugins\SolwedES\Lib\SolwedLogger;
 
 /**
@@ -86,6 +87,24 @@ class ApiSuscripcion extends Controller
         $idcontacto = (int) $this->request->get('idcontacto', 0);
         $estado = $this->request->get('estado', '');
 
+        // Try Redis first
+        $cached = RedisReader::getList('fs:suscripciones');
+        if (!empty($cached)) {
+            $result = $cached;
+
+            // Filter in-memory
+            if ($idcontacto > 0) {
+                $result = array_values(array_filter($result, fn($s) => ($s['idcontacto'] ?? 0) == $idcontacto));
+            }
+            if (!empty($estado)) {
+                $result = array_values(array_filter($result, fn($s) => ($s['estado'] ?? '') === $estado));
+            }
+
+            $this->jsonResponse(['success' => true, 'source' => 'redis', 'data' => $result]);
+            return;
+        }
+
+        // Fallback to DB
         if ($idcontacto > 0) {
             if ($estado === 'activo') {
                 $items = Suscripcion::getActivosByContacto($idcontacto);
@@ -107,7 +126,7 @@ class ApiSuscripcion extends Controller
         }
 
         $result = array_map(fn($s) => $this->serializeSuscripcion($s), $items);
-        $this->jsonResponse(['success' => true, 'data' => $result]);
+        $this->jsonResponse(['success' => true, 'source' => 'db', 'data' => $result]);
     }
 
     private function handleGet(): void
@@ -118,13 +137,21 @@ class ApiSuscripcion extends Controller
             return;
         }
 
+        // Try Redis first
+        $cached = RedisReader::get("fs:suscripcion:{$id}");
+        if ($cached !== null) {
+            $this->jsonResponse(['success' => true, 'source' => 'redis', 'data' => $cached]);
+            return;
+        }
+
+        // Fallback to DB
         $suscripcion = new Suscripcion();
         if (!$suscripcion->load($id)) {
             $this->jsonResponse(['error' => 'Suscripcion not found'], 404);
             return;
         }
 
-        $this->jsonResponse(['success' => true, 'data' => $this->serializeSuscripcion($suscripcion)]);
+        $this->jsonResponse(['success' => true, 'source' => 'db', 'data' => $this->serializeSuscripcion($suscripcion)]);
     }
 
     private function handleCreate(): void

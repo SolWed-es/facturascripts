@@ -662,10 +662,10 @@ class StripeWebhook extends Controller
         $customerEmail = null;
         $customerId = $paymentIntent->customer ?? null;
 
-        if ($customerId && StripeHelper::initStripe()) {
+        if ($customerId) {
             try {
-                $stripeCustomer = \Stripe\Customer::retrieve($customerId);
-                $customerEmail = $stripeCustomer->email;
+                $customerResult = \FacturaScripts\Plugins\SolwedES\Lib\BridgeClient::get('/stripe/customers/' . $customerId);
+                $customerEmail = $customerResult['data']['email'] ?? null;
             } catch (Exception $e) {
                 SolwedLogger::stripe('Could not retrieve customer: ' . $e->getMessage());
             }
@@ -1593,16 +1593,17 @@ class StripeWebhook extends Controller
     {
         $items = [];
 
-        // Los line_items no vienen en el webhook, necesitamos obtenerlos de la API
-        if (!empty($session->id) && StripeHelper::initStripe()) {
+        // Los line_items no vienen en el webhook, necesitamos obtenerlos via bridge
+        if (!empty($session->id)) {
             try {
-                $lineItems = \Stripe\Checkout\Session::allLineItems($session->id, ['limit' => 10]);
-                foreach ($lineItems->data as $item) {
+                $result = \FacturaScripts\Plugins\SolwedES\Lib\BridgeClient::get('/stripe/checkout-sessions/' . $session->id);
+                $sessionData = $result['data'] ?? [];
+                foreach (($sessionData['line_items']['data'] ?? []) as $item) {
                     $items[] = [
-                        'name' => $item->description ?? 'Producto',
-                        'description' => $item->description ?? '',
-                        'quantity' => $item->quantity ?? 1,
-                        'amount' => ($item->amount_total ?? 0) / 100
+                        'name' => $item['description'] ?? 'Producto',
+                        'description' => $item['description'] ?? '',
+                        'quantity' => $item['quantity'] ?? 1,
+                        'amount' => ($item['amount_total'] ?? 0) / 100,
                     ];
                 }
             } catch (Exception $e) {

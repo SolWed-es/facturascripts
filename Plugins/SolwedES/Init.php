@@ -9,15 +9,11 @@
 
 namespace FacturaScripts\Plugins\SolwedES;
 
-// Load Composer dependencies (DonDominio SDK, etc.)
-if (file_exists(__DIR__ . '/vendor/autoload.php')) {
-    require_once __DIR__ . '/vendor/autoload.php';
-}
-
 use FacturaScripts\Core\Template\InitClass;
 use FacturaScripts\Core\Tools;
 use FacturaScripts\Core\Kernel;
 use FacturaScripts\Core\Controller\ApiRoot;
+use FacturaScripts\Core\WorkQueue;
 
 /**
  * Clase de inicialización del plugin SolwedES
@@ -28,6 +24,16 @@ class Init extends InitClass
     {
         // Cargar extensión de EditContacto (pestana Stripe)
         $this->loadExtension(new Extension\Controller\EditContacto());
+
+        // Register workers
+        WorkQueue::addWorker('RedisSyncWorker', 'Model.Suscripcion.*');
+        WorkQueue::addWorker('RedisSyncWorker', 'Model.PagoStripe.*');
+        WorkQueue::addWorker('RedisSyncWorker', 'Model.Dominio.*');
+        WorkQueue::addWorker('RedisSyncWorker', 'Model.Servicio.*');
+        WorkQueue::addWorker('RedisSyncWorker', 'Model.Cliente.*');
+        WorkQueue::addWorker('RedisSyncWorker', 'Model.FacturaCliente.*');
+        WorkQueue::addWorker('WordPressProvisionWorker', 'solwed.provision.wordpress');
+        WorkQueue::addWorker('DomainSyncWorker', 'solwed.sync.domains');
 
         // Registrar endpoint API para productos con imágenes
         Kernel::addRoute('/api/3/productos-con-imagenes', 'ApiProductosConImagenes', -1);
@@ -57,26 +63,38 @@ class Init extends InitClass
         Kernel::addRoute('/ApiHealth', 'ApiHealth', -1);
         Kernel::addRoute('/ApiProvision', 'ApiProvision', -1);
         Kernel::addRoute('/ApiDevices', 'ApiDevices', -1);
+        Kernel::addRoute('/ApiRedis', 'ApiRedis', -1);
     }
 
     public function update(): void
     {
-        // Configurar valores por defecto del portal
         $this->setupPortalSettings();
-
-        // Configurar valores por defecto de Stripe
+        $this->setupBridgeSettings();
         $this->setupStripeSettings();
-
-        // Configurar valores por defecto de Google OAuth
         $this->setupGoogleSettings();
-
-        // Configurar valores por defecto de DonDominio
         $this->setupDonDominioSettings();
     }
 
     public function uninstall(): void
     {
         // Lógica de desinstalación si es necesaria
+    }
+
+    /**
+     * Configura valores por defecto para Bridge + Redis
+     */
+    private function setupBridgeSettings(): void
+    {
+        if (empty(Tools::settings('solwed', 'bridge_url'))) {
+            Tools::settingsSet('solwed', 'bridge_url', 'http://solwed-bridge:3009');
+        }
+        if (empty(Tools::settings('solwed', 'redis_host'))) {
+            Tools::settingsSet('solwed', 'redis_host', 'redis');
+        }
+        if (empty(Tools::settings('solwed', 'redis_port'))) {
+            Tools::settingsSet('solwed', 'redis_port', '6379');
+        }
+        Tools::settingsSave();
     }
 
     /**
