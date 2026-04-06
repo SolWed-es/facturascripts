@@ -147,10 +147,16 @@ El repo `facturascripts` tiene actualmente ramas `plugin/*` y releases de plugin
 1. Clonar/editar en `SolwedPlugins-container/plugins/NombrePlugin/`
 2. Push a `main` → el workflow genera el ZIP y actualiza `plugin-list.json`
 
-### Actualizar el core
+### Actualizar el core o plugins del repo
 
 1. Trabajar en `solwed/production`
-2. `git tag v2025.XX && git push origin v2025.XX`
+2. `git push origin solwed/production`
+3. Deploy: `cd /opt/solwed/stack && ./deploy.sh deploy erp`
+
+### Crear release del core (ZIP para distribución)
+
+1. `git tag v2025.XX && git push origin v2025.XX`
+2. El workflow `release.yml` genera el ZIP automáticamente
 
 ### Sincronizar con upstream
 
@@ -173,64 +179,88 @@ MyFiles/erpsolwed/
 
 ---
 
-## Docker (desarrollo local)
+## Docker
 
-### Arranque
+### Arquitectura
+
+```
+┌─────────────────────────────────────────────┐
+│  Imagen (ghcr.io/solwed-es/erp-solwed)      │
+│  Core/ + Plugins/ + vendor/ (inmutable)     │
+└──────────────┬──────────────────────────────┘
+               │  docker compose up
+               ▼
+┌─────────────────────────────────────────────┐
+│  Container (erp-solwed)                      │
+│  Dinamic/ regenerado en cada arranque        │
+└──────────────┬──────────────────────────────┘
+               │  mount
+               ▼
+┌─────────────────────────────────────────────┐
+│  Volumen (erp-myfiles)                       │
+│  uploads, plugins.json, cache, routes.json   │
+└─────────────────────────────────────────────┘
+```
+
+| Qué | Dónde | Motivo |
+|-----|-------|--------|
+| Core + Plugins + vendor | **Imagen** | Se actualiza con cada deploy |
+| MyFiles (uploads, cache, plugins.json) | **Volumen** | Datos persistentes |
+| Dinamic/ | **Container** (efímero) | Regenerado por entrypoint |
+| config.php | **Bind mount** | Config específica por entorno |
+
+### Desarrollo local
 
 ```bash
 docker compose up -d
 ```
 
-- App: http://localhost:8080
-- PostgreSQL: `localhost:5432`
+- App: http://localhost:8080 (código montado desde host, cambios en vivo)
+- PostgreSQL: `localhost:5433`
 
-### Credenciales PostgreSQL por defecto
+El `docker-compose.yml` del repo monta `.:/var/www/html` para que cualquier cambio en Core/, Plugins/, views, etc. se refleje al instante sin rebuild.
 
-| Campo | Valor |
-|-------|-------|
-| Host | `db` (dentro de Docker) / `localhost` (desde host) |
-| Puerto | `5432` |
-| Base de datos | `facturascripts` |
-| Usuario | `postgres` |
-| Contraseña | `postgres` |
+### Producción (erp.solwed.es)
 
-### Instalación inicial
+Producción corre en Docker con nginx como reverse proxy → `127.0.0.1:8081`.
 
-**Opción A — Web installer** (primera vez sin config.php):
-1. `docker compose up -d`
-2. Acceder a http://localhost:8080 y seguir el instalador web
-
-**Opción B — Config automática**:
+Deploy:
 ```bash
-cp .docker/config.php config.php
-docker compose up -d
+cd /opt/solwed/stack
+./deploy.sh deploy erp    # build → push GHCR → pull en prod → restart
 ```
+
+El mismo comando sirve para cambios en Core o Plugins. No hay que copiar archivos manualmente.
+
+Compose de producción en: `/opt/docker-solwed/docker-compose.yml`
+
+### Credenciales PostgreSQL
+
+| Entorno | Host | Puerto | DB | User | Pass |
+|---------|------|--------|----|------|------|
+| Dev | `db` / `localhost` | `5433` | `facturascripts` | `postgres` | `postgres` |
+| Prod | `postgres` (container) | `5432` | `facturascripts` | `fs_user` | (ver config.prod.php) |
 
 ### Archivos Docker
 
 | Archivo | Propósito |
 |---------|-----------|
-| `Dockerfile` | php:8.2-apache + extensiones pgsql/gd/bcmath/zip |
-| `docker-compose.yml` | Servicios app + db (postgres:alpine) |
+| `Dockerfile` | Imagen dev: php:8.2-apache + extensiones + entrypoint |
+| `docker-compose.yml` | Dev: app + db, código montado como volumen |
+| `.docker/entrypoint.sh` | composer install + regenera Dinamic/ + permisos |
 | `.docker/apache.conf` | VirtualHost con AllowOverride All |
 | `.docker/php.ini` | 99M upload, 256M memory, 10000 input_vars |
-| `.docker/config.php` | Plantilla de config pre-configurada para Docker |
-| `.docker/entrypoint.sh` | Auto-composer + copia de config + chown www-data al arrancar |
+| `.docker/config.php` | Plantilla config para dev |
+| `stack/dockerfiles/Dockerfile.erp` | Imagen prod: COPY código + composer + npm |
 
-### Permisos (problema frecuente)
-
-Los archivos de `Core/`, `Plugins/`, `MyFiles/` pueden quedar en propiedad de `www-data` (Docker) o `ivan` (host):
+### Permisos (problema frecuente en dev)
 
 ```bash
-# Cuando git falla ("Permission denied") → arreglar en host:
+# git falla ("Permission denied") → arreglar en host:
 sudo chown -R ivan:ivan Core/ Plugins/
 
-# Cuando la app PHP falla ("Permission denied") → arreglar en contenedor:
-sudo docker exec facturascripts-app-1 bash -c \
-  "chown -R www-data:www-data /var/www/html/MyFiles /var/www/html/Core /var/www/html/Plugins; \
-   rm -rf /var/www/html/MyFiles/Cache/Twig/*"
-
-# docker compose restart también restaura permisos (el entrypoint hace el chown)
+# App PHP falla → restart regenera permisos via entrypoint:
+docker compose restart
 ```
 
 ---
@@ -241,3 +271,27 @@ sudo docker exec facturascripts-app-1 bash -c \
 git config user.name "Iván Moreno Quiros"
 git config user.email "dev@solwed.es"
 ```
+
+
+---
+
+## Logging & Observabilidad (Loki/Grafana)
+
+Los logs de Apache/PHP del container ERP son recogidos por Promtail via Docker socket y enviados a Loki.
+
+Filtrar en Grafana: `{container="erp-solwed"}`
+
+Para logs estructurados desde PHP (SolwedES plugin), escribir JSON a stderr:
+```php
+error_log(json_encode([
+    "timestamp" => date("c"),
+    "level" => "info",
+    "service" => "erp-solwed",
+    "scope" => "api",
+    "message" => "Contrato activado",
+    "idcontacto" => 42,
+]));
+```
+
+**Grafana:** `http://localhost:3002` (local), `grafana.solwed.es` (prod)
+

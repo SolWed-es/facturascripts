@@ -1,3 +1,6 @@
+# FacturaScripts - Desarrollo local
+# Monta el código fuente para cambios en vivo (hot reload)
+
 services:
   app:
     build:
@@ -6,10 +9,9 @@ services:
     ports:
       - "8080:80"
     volumes:
-      - .:/var/www/html
-      - vendor:/var/www/html/vendor
-      - dinamic:/var/www/html/Dinamic
-      - myfiles:/var/www/html/MyFiles
+      - .:/var/www/html                    # Código montado (cambios en vivo)
+      - vendor:/var/www/html/vendor        # vendor desde imagen (no se sobreescribe)
+      - myfiles:/var/www/html/MyFiles      # Datos persistentes
     depends_on:
       db:
         condition: service_healthy
@@ -35,5 +37,4 @@ services:
 volumes:
   pgdata:
   vendor:
-  dinamic:
   myfiles:
