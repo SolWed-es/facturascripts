@@ -74,11 +74,9 @@ class EditPleskConfig extends EditController
             return true;
         }
 
-        // Crear cliente API temporal
-        $apiClient = new \FacturaScripts\Plugins\SolwedES\Lib\PleskApiClient($config);
-
-        // Probar conexión
-        $success = $apiClient->testConnection();
+        // Test connection via bridge (bridge is the only thing that talks to Plesk)
+        $result = \FacturaScripts\Plugins\SolwedES\Lib\BridgeClient::get('/plesk/server');
+        $success = ($result['ok'] ?? false) && !empty($result['data']);
 
         if ($success) {
             $config->connection_status = 'success';

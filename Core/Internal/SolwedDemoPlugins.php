@@ -16,8 +16,8 @@ use FacturaScripts\Core\Http;
 class SolwedDemoPlugins
 {
     const CACHE_KEY = 'solwed_demo_plugin_list';
-    const LIST_URL  = 'https://demo.erpsolwed.es/SolwedPluginExport?action=list';
-    const BASE_URL  = 'https://demo.erpsolwed.es';
+    const LIST_URL  = 'https://demo2.erpsolwed.es/SolwedPluginExport?action=list';
+    const BASE_URL  = 'https://demo2.erpsolwed.es';
 
     /** Returns a name-indexed map of all plugins available on demo.erpsolwed.es. */
     public static function getPluginMap(): array

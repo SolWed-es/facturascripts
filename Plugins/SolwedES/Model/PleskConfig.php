@@ -87,8 +87,9 @@ class PleskConfig extends ModelClass
     public function testConnection(): bool
     {
         try {
-            $client = new \FacturaScripts\Plugins\SolwedES\Lib\PleskApiClient($this);
-            $result = $client->testConnection();
+            // Test via bridge (bridge is the only thing that talks to Plesk directly)
+            $res = \FacturaScripts\Plugins\SolwedES\Lib\BridgeClient::get('/plesk/server');
+            $result = ($res['ok'] ?? false) && !empty($res['data']);
 
             $this->connection_status = $result ? 'success' : 'failed';
             $this->last_connection_test = date('Y-m-d H:i:s');

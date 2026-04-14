@@ -18,28 +18,28 @@ class BridgeClient
 {
     private const TIMEOUT = 30;
 
-    public static function get(string $path, array $query = []): array
+    public static function get(string $path, array $query = [], int $timeout = self::TIMEOUT): array
     {
         $url = self::buildUrl($path, $query);
-        return self::request('GET', $url);
+        return self::request('GET', $url, null, $timeout);
     }
 
-    public static function post(string $path, array $data = []): array
+    public static function post(string $path, array $data = [], int $timeout = self::TIMEOUT): array
     {
         $url = self::buildUrl($path);
-        return self::request('POST', $url, $data);
+        return self::request('POST', $url, $data, $timeout);
     }
 
-    public static function put(string $path, array $data = []): array
+    public static function put(string $path, array $data = [], int $timeout = self::TIMEOUT): array
     {
         $url = self::buildUrl($path);
-        return self::request('PUT', $url, $data);
+        return self::request('PUT', $url, $data, $timeout);
     }
 
-    public static function delete(string $path, array $query = []): array
+    public static function delete(string $path, array $query = [], int $timeout = self::TIMEOUT): array
     {
         $url = self::buildUrl($path, $query);
-        return self::request('DELETE', $url);
+        return self::request('DELETE', $url, null, $timeout);
     }
 
     private static function buildUrl(string $path, array $query = []): string
@@ -52,7 +52,7 @@ class BridgeClient
         return $url;
     }
 
-    private static function request(string $method, string $url, ?array $body = null): array
+    private static function request(string $method, string $url, ?array $body = null, int $timeout = self::TIMEOUT): array
     {
         $token = Tools::settings('solwed', 'bridge_token', '');
 
@@ -65,7 +65,7 @@ class BridgeClient
         $ch = curl_init($url);
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT => self::TIMEOUT,
+            CURLOPT_TIMEOUT => $timeout,
             CURLOPT_CONNECTTIMEOUT => 5,
             CURLOPT_HTTPHEADER => $headers,
             CURLOPT_CUSTOMREQUEST => $method,

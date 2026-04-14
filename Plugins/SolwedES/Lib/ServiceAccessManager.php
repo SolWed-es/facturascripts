@@ -11,9 +11,8 @@ namespace FacturaScripts\Plugins\SolwedES\Lib;
 
 use FacturaScripts\Plugins\SolwedES\Model\AccesoServicio;
 use FacturaScripts\Plugins\SolwedES\Model\Servicio;
-use FacturaScripts\Plugins\SolwedES\Model\PleskConfig;
 use FacturaScripts\Plugins\SolwedES\Model\PleskCache;
-use FacturaScripts\Plugins\SolwedES\Lib\PleskApiClient;
+use FacturaScripts\Plugins\SolwedES\Lib\BridgeClient;
 use FacturaScripts\Core\Tools;
 
 /**
@@ -317,28 +316,13 @@ class ServiceAccessManager
             return $cached;
         }
 
-        // No hay caché válida, consultar API de Plesk
-        Tools::log()->info("[Plesk] Consultando API para acceso #{$acceso->id}");
+        // No hay caché válida, consultar bridge (que lee de Redis/Plesk directamente)
+        Tools::log()->info("[Plesk] Consultando bridge para acceso #{$acceso->id}");
 
         try {
-            // Obtener configuración activa de Plesk
-            $pleskConfig = PleskConfig::getActiveConfig();
-
-            if (!$pleskConfig) {
-                Tools::log()->warning("[Plesk] No hay configuración activa de Plesk");
-                return [
-                    'domains' => [],
-                    'applications' => [],
-                    'emails' => [],
-                    'facturascripts' => []
-                ];
-            }
-
-            // Crear cliente API
-            $apiClient = new PleskApiClient($pleskConfig);
-
-            // Obtener dominios
-            $domains = $apiClient->getDomains();
+            // Obtener dominios desde bridge (/plesk/sites — lee Redis populado por sync worker)
+            $domainsRes = BridgeClient::get('/plesk/sites');
+            $domains = ($domainsRes['ok'] ?? false) ? ($domainsRes['data'] ?? []) : [];
             Tools::log()->info("[Plesk] Dominios obtenidos: " . count($domains));
 
             // Obtener aplicaciones y correos para cada dominio
@@ -352,23 +336,48 @@ class ServiceAccessManager
                     continue;
                 }
 
-                // Obtener aplicaciones del dominio
-                $apps = $apiClient->getApplications($domainName);
-                foreach ($apps as $app) {
-                    $app['domain'] = $domainName;
-                    $allApplications[] = $app;
+                // Aplicaciones (requiere CLI, ejecutado por bridge)
+                $appsRes = BridgeClient::post('/plesk/cli', [
+                    'path' => '/usr/local/psa/bin/site',
+                    'params' => ['--list-apps', '-name', $domainName],
+                ]);
+                $apps = ($appsRes['ok'] ?? false) ? ($appsRes['data'] ?? []) : [];
+                if (is_array($apps)) {
+                    foreach ($apps as $app) {
+                        if (is_array($app)) {
+                            $app['domain'] = $domainName;
+                            $allApplications[] = $app;
+                        }
+                    }
                 }
 
-                // Obtener cuentas de correo del dominio
-                $emails = $apiClient->getEmailAccounts($domainName);
-                foreach ($emails as $email) {
-                    $email['domain'] = $domainName;
-                    $allEmails[] = $email;
+                // Cuentas de correo (bridge lee de Redis)
+                $emailsRes = BridgeClient::get("/plesk/sites/{$domainName}/mailboxes");
+                $emails = ($emailsRes['ok'] ?? false) ? ($emailsRes['data'] ?? []) : [];
+                if (is_array($emails)) {
+                    foreach ($emails as $email) {
+                        if (is_array($email)) {
+                            $email['domain'] = $domainName;
+                            $allEmails[] = $email;
+                        }
+                    }
                 }
             }
 
-            // Obtener instalaciones de FacturaScripts
-            $facturascripts = $apiClient->getFacturaScriptsInstances();
+            // Instalaciones FacturaScripts: filtrar apps por nombre/path que contenga "facturascripts"
+            $facturascripts = [];
+            foreach ($allApplications as $app) {
+                $path = strtolower($app['path'] ?? '');
+                $name = strtolower($app['name'] ?? '');
+                if (strpos($path, 'facturascripts') !== false || strpos($name, 'facturascripts') !== false) {
+                    $facturascripts[] = [
+                        'domain' => $app['domain'] ?? '',
+                        'path' => $app['path'] ?? '',
+                        'version' => $app['version'] ?? 'Unknown',
+                        'name' => $app['name'] ?? 'FacturaScripts',
+                    ];
+                }
+            }
             Tools::log()->info("[Plesk] Instancias FacturaScripts encontradas: " . count($facturascripts));
 
             // Construir resultado
