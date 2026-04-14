@@ -4,6 +4,6 @@
  * Class created by Core/Internal/PluginsDeploy
  * @author FacturaScripts <carlos@facturascripts.com>
  */
-class WidgetRadio extends \FacturaScripts\Core\Lib\Widget\WidgetRadio
+class WidgetRadio extends \FacturaScripts\Plugins\PlantillasPDF\Lib\Widget\WidgetRadio
 {
 }

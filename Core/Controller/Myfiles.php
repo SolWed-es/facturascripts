@@ -58,6 +58,11 @@ class Myfiles implements ControllerInterface
             return;
         }
 
+        // product images are public (served to the store)
+        if (strpos($url, '/MyFiles/Images/productos/') === 0) {
+            return;
+        }
+
         // get the myft parameter
         $fixedFilePath = substr(urldecode($url), 1);
         $token = filter_input(INPUT_GET, 'myft');
