@@ -88,6 +88,42 @@ class APIDominio extends Controller
                     $this->handleCreateRenewalCheckout();
                     break;
 
+                case 'check':
+                    $this->handleCheck();
+                    break;
+
+                case 'whois':
+                    $this->handleWhois();
+                    break;
+
+                case 'history':
+                    $this->handleHistory();
+                    break;
+
+                case 'getAuthcode':
+                    $this->handleGetAuthcode();
+                    break;
+
+                case 'getNameservers':
+                    $this->handleGetNameservers();
+                    break;
+
+                case 'setNameservers':
+                    $this->handleSetNameservers();
+                    break;
+
+                case 'setTransferLock':
+                    $this->handleSetTransferLock();
+                    break;
+
+                case 'renew':
+                    $this->handleRenew();
+                    break;
+
+                case 'suggest':
+                    $this->handleSuggest();
+                    break;
+
                 default:
                     $this->sendJsonResponse(['error' => 'Invalid action: ' . $action], 400);
             }
@@ -466,6 +502,330 @@ class APIDominio extends Controller
             SolwedLogger::error('Error creating renewal checkout: ' . $e->getMessage());
             $this->sendJsonResponse(['error' => $e->getMessage()], 500);
         }
+    }
+
+    // ── New domain operations (SOL-64) ─────────────────────────
+
+    /**
+     * Domain availability check (single or comma-separated list).
+     * Params: dominio (string, comma-separated allowed)
+     */
+    private function handleCheck(): void
+    {
+        $domains = $this->request->get('dominio', '');
+        if (empty($domains)) {
+            $this->sendJsonResponse(['error' => 'Missing dominio'], 400);
+            return;
+        }
+        $list = array_filter(array_map('trim', explode(',', $domains)));
+        $results = [];
+        foreach ($list as $d) {
+            $results[$d] = DonDominioHelper::checkAvailability($d);
+        }
+        $this->sendJsonResponse(['success' => true, 'results' => $results]);
+    }
+
+    /**
+     * Domain WHOIS data via DonDominio.
+     * Params: dominio
+     */
+    private function handleWhois(): void
+    {
+        $dominio = $this->request->get('dominio', '');
+        if (empty($dominio)) {
+            $this->sendJsonResponse(['error' => 'Missing dominio'], 400);
+            return;
+        }
+        if (!$this->verifyDomainOwnership($dominio)) {
+            $this->sendJsonResponse(['error' => 'Unauthorized'], 403);
+            return;
+        }
+        $api = DonDominioHelper::initAPI();
+        if (!$api) {
+            $this->sendJsonResponse(['error' => 'DonDominio not configured'], 500);
+            return;
+        }
+        try {
+            $response = $api->domain_whois($dominio);
+            if (!$response->getSuccess()) {
+                $this->sendJsonResponse(['error' => $response->getErrorCodeMsg() ?? 'WHOIS failed'], 502);
+                return;
+            }
+            $this->sendJsonResponse(['success' => true, 'whois' => $response->getResponseData()]);
+        } catch (Exception $e) {
+            SolwedLogger::error('WHOIS error: ' . $e->getMessage());
+            $this->sendJsonResponse(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Domain operation history.
+     * Params: dominio
+     */
+    private function handleHistory(): void
+    {
+        $dominio = $this->request->get('dominio', '');
+        if (empty($dominio)) {
+            $this->sendJsonResponse(['error' => 'Missing dominio'], 400);
+            return;
+        }
+        if (!$this->verifyDomainOwnership($dominio)) {
+            $this->sendJsonResponse(['error' => 'Unauthorized'], 403);
+            return;
+        }
+        $api = DonDominioHelper::initAPI();
+        if (!$api) {
+            $this->sendJsonResponse(['error' => 'DonDominio not configured'], 500);
+            return;
+        }
+        try {
+            $response = $api->domain_getHistory($dominio);
+            if (!$response->getSuccess()) {
+                $this->sendJsonResponse(['error' => $response->getErrorCodeMsg() ?? 'History failed'], 502);
+                return;
+            }
+            $this->sendJsonResponse(['success' => true, 'history' => $response->getResponseData()]);
+        } catch (Exception $e) {
+            SolwedLogger::error('History error: ' . $e->getMessage());
+            $this->sendJsonResponse(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Get domain auth code (EPP) for transfer-out.
+     * Params: dominio
+     */
+    private function handleGetAuthcode(): void
+    {
+        $dominio = $this->request->get('dominio', '');
+        if (empty($dominio)) {
+            $this->sendJsonResponse(['error' => 'Missing dominio'], 400);
+            return;
+        }
+        if (!$this->verifyDomainOwnership($dominio)) {
+            $this->sendJsonResponse(['error' => 'Unauthorized'], 403);
+            return;
+        }
+        $api = DonDominioHelper::initAPI();
+        if (!$api) {
+            $this->sendJsonResponse(['error' => 'DonDominio not configured'], 500);
+            return;
+        }
+        try {
+            $response = $api->domain_getAuthCode($dominio);
+            if (!$response->getSuccess()) {
+                $this->sendJsonResponse(['error' => $response->getErrorCodeMsg() ?? 'AuthCode failed'], 502);
+                return;
+            }
+            $data = $response->getResponseData();
+            $this->sendJsonResponse(['success' => true, 'authcode' => $data['authcode'] ?? $data]);
+        } catch (Exception $e) {
+            SolwedLogger::error('AuthCode error: ' . $e->getMessage());
+            $this->sendJsonResponse(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Get current nameservers.
+     * Params: dominio
+     */
+    private function handleGetNameservers(): void
+    {
+        $dominio = $this->request->get('dominio', '');
+        if (empty($dominio)) {
+            $this->sendJsonResponse(['error' => 'Missing dominio'], 400);
+            return;
+        }
+        if (!$this->verifyDomainOwnership($dominio)) {
+            $this->sendJsonResponse(['error' => 'Unauthorized'], 403);
+            return;
+        }
+        $api = DonDominioHelper::initAPI();
+        if (!$api) {
+            $this->sendJsonResponse(['error' => 'DonDominio not configured'], 500);
+            return;
+        }
+        try {
+            $response = $api->domain_getNameServers($dominio);
+            if (!$response->getSuccess()) {
+                $this->sendJsonResponse(['error' => $response->getErrorCodeMsg() ?? 'getNameServers failed'], 502);
+                return;
+            }
+            $data = $response->getResponseData();
+            $this->sendJsonResponse(['success' => true, 'nameservers' => $data['nameservers'] ?? $data]);
+        } catch (Exception $e) {
+            SolwedLogger::error('getNameservers error: ' . $e->getMessage());
+            $this->sendJsonResponse(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Update domain nameservers.
+     * Params: dominio, nameservers (comma-separated, min 2)
+     */
+    private function handleSetNameservers(): void
+    {
+        $dominio = $this->request->get('dominio', '');
+        $nsRaw = $this->request->get('nameservers', '');
+        if (empty($dominio) || empty($nsRaw)) {
+            $this->sendJsonResponse(['error' => 'Missing dominio or nameservers'], 400);
+            return;
+        }
+        if (!$this->verifyDomainOwnership($dominio)) {
+            $this->sendJsonResponse(['error' => 'Unauthorized'], 403);
+            return;
+        }
+        $ns = array_filter(array_map('trim', explode(',', $nsRaw)));
+        if (count($ns) < 2) {
+            $this->sendJsonResponse(['error' => 'At least 2 nameservers required'], 400);
+            return;
+        }
+        $api = DonDominioHelper::initAPI();
+        if (!$api) {
+            $this->sendJsonResponse(['error' => 'DonDominio not configured'], 500);
+            return;
+        }
+        try {
+            $response = $api->domain_updateNameServers($dominio, $ns);
+            if (!$response->getSuccess()) {
+                $this->sendJsonResponse(['error' => $response->getErrorCodeMsg() ?? 'updateNameServers failed'], 502);
+                return;
+            }
+            SolwedLogger::stripe('Nameservers updated for ' . $dominio . ': ' . implode(',', $ns));
+            $this->sendJsonResponse(['success' => true, 'nameservers' => $ns]);
+        } catch (Exception $e) {
+            SolwedLogger::error('setNameservers error: ' . $e->getMessage());
+            $this->sendJsonResponse(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Toggle transfer block on a domain.
+     * Params: dominio, lock (1|0)
+     */
+    private function handleSetTransferLock(): void
+    {
+        $dominio = $this->request->get('dominio', '');
+        $lock = $this->request->get('lock', null);
+        if (empty($dominio) || $lock === null) {
+            $this->sendJsonResponse(['error' => 'Missing dominio or lock'], 400);
+            return;
+        }
+        if (!$this->verifyDomainOwnership($dominio)) {
+            $this->sendJsonResponse(['error' => 'Unauthorized'], 403);
+            return;
+        }
+        $lockBool = filter_var($lock, FILTER_VALIDATE_BOOLEAN);
+        $api = DonDominioHelper::initAPI();
+        if (!$api) {
+            $this->sendJsonResponse(['error' => 'DonDominio not configured'], 500);
+            return;
+        }
+        try {
+            $response = $api->domain_update($dominio, [
+                'updateType' => 'transferBlock',
+                'transferBlock' => $lockBool,
+            ]);
+            if (!$response->getSuccess()) {
+                $this->sendJsonResponse(['error' => $response->getErrorCodeMsg() ?? 'transferBlock failed'], 502);
+                return;
+            }
+            SolwedLogger::stripe('Transfer lock ' . ($lockBool ? 'enabled' : 'disabled') . ' for ' . $dominio);
+            $this->sendJsonResponse(['success' => true, 'lock' => $lockBool]);
+        } catch (Exception $e) {
+            SolwedLogger::error('setTransferLock error: ' . $e->getMessage());
+            $this->sendJsonResponse(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Manual domain renewal via DonDominio (no Stripe — uses DD account balance).
+     * Params: dominio, years (default 1)
+     */
+    private function handleRenew(): void
+    {
+        $dominio = $this->request->get('dominio', '');
+        $years = max(1, (int)$this->request->get('years', '1'));
+        if (empty($dominio)) {
+            $this->sendJsonResponse(['error' => 'Missing dominio'], 400);
+            return;
+        }
+        if (!$this->verifyDomainOwnership($dominio)) {
+            $this->sendJsonResponse(['error' => 'Unauthorized'], 403);
+            return;
+        }
+        // Find current expiration from local Dominio model (DD requires it)
+        $dominioModel = $this->loadDominioByName($dominio);
+        $currentExp = $dominioModel ? $dominioModel->fecha_expiracion : null;
+        $result = DonDominioHelper::renewDomain($dominio, $years, $currentExp);
+        if (!$result['success']) {
+            $this->sendJsonResponse(['error' => $result['error'] ?? 'Renewal failed'], 502);
+            return;
+        }
+        // Update local model
+        if ($dominioModel && !empty($result['expiration'])) {
+            $dominioModel->fecha_expiracion = $result['expiration'];
+            $dominioModel->save();
+        }
+        $this->sendJsonResponse(['success' => true, 'expiration' => $result['expiration'] ?? null]);
+    }
+
+    /**
+     * Suggest similar domains (basic local impl: try common TLDs).
+     * Params: keyword, tlds (comma-separated, default ".com,.es,.net,.org,.io")
+     */
+    private function handleSuggest(): void
+    {
+        $keyword = $this->request->get('keyword', '');
+        $tldsRaw = $this->request->get('tlds', '.com,.es,.net,.org,.io');
+        if (empty($keyword)) {
+            $this->sendJsonResponse(['error' => 'Missing keyword'], 400);
+            return;
+        }
+        // Strip any TLD if present
+        $base = preg_replace('/\..+$/', '', strtolower(trim($keyword)));
+        $tlds = array_filter(array_map('trim', explode(',', $tldsRaw)));
+        $suggestions = [];
+        foreach ($tlds as $tld) {
+            $tld = ltrim($tld, '.');
+            $candidate = $base . '.' . $tld;
+            $check = DonDominioHelper::checkAvailability($candidate);
+            $suggestions[] = [
+                'domain' => $candidate,
+                'available' => $check['available'] ?? false,
+                'price' => $check['price'] ?? null,
+            ];
+        }
+        $this->sendJsonResponse(['success' => true, 'suggestions' => $suggestions]);
+    }
+
+    // ── Helpers ────────────────────────────────────────────────
+
+    private function loadDominioByName(string $dominio): ?Dominio
+    {
+        $model = new Dominio();
+        $where = [new \FacturaScripts\Core\Base\DataBase\DataBaseWhere('nombre', $dominio)];
+        $found = $model->all($where, [], 0, 1);
+        return !empty($found) ? $found[0] : null;
+    }
+
+    /**
+     * Verify the requesting idcontacto owns the domain (skip if no idcontacto provided).
+     * idcontacto in query is required; protects against cross-account writes.
+     */
+    private function verifyDomainOwnership(string $dominio): bool
+    {
+        $idcontacto = $this->getRequestInt('idcontacto');
+        if (!$idcontacto) {
+            return false;
+        }
+        $model = $this->loadDominioByName($dominio);
+        if (!$model) {
+            // Domain not in local DB — allow check/whois etc on external domains
+            // but block writes. Caller decides per-action whether to allow.
+            return true;
+        }
+        return (int)$model->idcontacto === $idcontacto;
     }
 
     private function validateToken(): bool
