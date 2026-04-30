@@ -209,7 +209,7 @@ abstract class ComercialContactController extends EditController
      */
     private function createListView(string $viewName, string $model, string $label, array $fields): ListView
     {
-        $view = $this->addListView($viewName, $model, $label, 'fa-solid fa-copy')
+        $view = $this->addListView($viewName, $model, $label, 'fa-regular fa-file')
             ->addOrderBy(['codigo'], 'code')
             ->addOrderBy(['fecha', 'hora'], 'date', 2)
             ->addOrderBy(['numero'], 'number')
@@ -237,7 +237,7 @@ abstract class ComercialContactController extends EditController
             ->addOrderBy(['vencimiento'], 'expiration', 2)
             ->addOrderBy(['importe'], 'amount')
             ->addSearchFields(['codigofactura', 'observaciones'])
-            ->addFilterPeriod('period-f', 'fecha', 'fecha')
+            ->addFilterPeriod('period-f', 'date', 'fecha')
             ->addFilterPeriod('period-v', 'expiration', 'vencimiento')
             ->addButton([
                 'action' => 'pay-receipt',
@@ -325,6 +325,9 @@ abstract class ComercialContactController extends EditController
 
             case 'lock-invoice':
                 return $this->lockInvoiceAction($codes, $model, $allowUpdate, $this->dataBase);
+
+            case 'pay-invoice':
+                return $this->payInvoiceAction($codes, $model, $allowUpdate, $this->dataBase, $this->user->nick);
 
             case 'pay-receipt':
                 return $this->payReceiptAction($codes, $model, $allowUpdate, $this->dataBase, $this->user->nick);
