@@ -1239,4 +1239,79 @@ HTML;
 
         return $html;
     }
+
+    /**
+     * Notifies customer that recurring subscription payment failed
+     * (subscription suspended until they update payment method).
+     *
+     * @param Contacto $contacto Customer contact
+     * @param object $invoice Stripe invoice object
+     * @return bool
+     */
+    public static function sendPaymentFailedEmail(Contacto $contacto, object $invoice): bool
+    {
+        if (empty($contacto->email)) {
+            Tools::log('solwed')->warning('sendPaymentFailedEmail: contacto sin email');
+            return false;
+        }
+
+        $importe = number_format(($invoice->amount_due ?? 0) / 100, 2, ',', '.');
+        $moneda = strtoupper($invoice->currency ?? 'EUR');
+        $portalUrl = Tools::settings('default', 'site_url', 'https://app.solwed.es') . '/billing';
+        $subject = "Pago fallido — actualiza tu metodo de pago";
+
+        $html = self::buildPaymentFailedHTML($contacto, $importe, $moneda, $portalUrl);
+
+        try {
+            return self::sendSimpleEmail($contacto->email, $subject, $html);
+        } catch (Exception $e) {
+            Tools::log('solwed')->error('Failed to send payment_failed email: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    private static function buildPaymentFailedHTML(
+        Contacto $contacto,
+        string $importe,
+        string $moneda,
+        string $portalUrl
+    ): string {
+        $nombre = htmlspecialchars($contacto->nombre ?? 'cliente', ENT_QUOTES, 'UTF-8');
+        return <<<HTML
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Pago fallido</title>
+    <style>
+        body { font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background:#f4f4f4; }
+        .container { background:#fff; border-radius:10px; overflow:hidden; box-shadow:0 2px 10px rgba(0,0,0,0.1); }
+        .header { background:linear-gradient(135deg,#2E3536,#3A4344); color:#fff; padding:24px; text-align:center; }
+        .header h1 { margin:0; color:#F2E501; font-size:22px; }
+        .content { padding:28px; line-height:1.6; }
+        .alert-box { background:#fff3cd; border-left:4px solid #f0ad4e; padding:16px; border-radius:6px; margin:16px 0; }
+        .cta { display:inline-block; background:#F2E501; color:#2E3536 !important; padding:12px 28px; border-radius:6px; text-decoration:none; font-weight:bold; margin:16px 0; }
+        .footer { background:#f8f9fa; padding:16px; text-align:center; color:#888; font-size:12px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header"><h1>SOLWED</h1></div>
+        <div class="content">
+            <p>Hola <strong>{$nombre}</strong>,</p>
+            <p>No hemos podido cobrar tu suscripcion ({$importe} {$moneda}). Como medida de seguridad hemos suspendido temporalmente el servicio.</p>
+            <div class="alert-box">
+                <strong>Que necesitas hacer?</strong> Actualiza tu metodo de pago en el portal y reanudaremos el servicio automaticamente.
+            </div>
+            <p style="text-align:center;">
+                <a href="{$portalUrl}" class="cta">Actualizar metodo de pago</a>
+            </p>
+            <p>Si crees que es un error o necesitas ayuda, contacta con soporte.</p>
+        </div>
+        <div class="footer">SOLWED &mdash; aviso automatico</div>
+    </div>
+</body>
+</html>
+HTML;
+    }
 }

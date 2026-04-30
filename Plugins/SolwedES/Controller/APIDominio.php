@@ -124,6 +124,14 @@ class APIDominio extends Controller
                     $this->handleSuggest();
                     break;
 
+                case 'createRegistrationCheckout':
+                    $this->handleCreateRegistrationCheckout();
+                    break;
+
+                case 'createTransferCheckout':
+                    $this->handleCreateTransferCheckout();
+                    break;
+
                 default:
                     $this->sendJsonResponse(['error' => 'Invalid action: ' . $action], 400);
             }
@@ -797,6 +805,295 @@ class APIDominio extends Controller
             ];
         }
         $this->sendJsonResponse(['success' => true, 'suggestions' => $suggestions]);
+    }
+
+    /**
+     * Create Stripe Checkout for new domain registration.
+     * Owner data + payment captured before DonDominio call (handled by webhook).
+     *
+     * Required params:
+     * - dominio: Full domain name (example.com)
+     * - idcontacto: Contact ID
+     * - successUrl, cancelUrl: Stripe redirect URLs
+     *
+     * Optional:
+     * - years (default 1)
+     * - whoisPrivacy (0/1)
+     * - autorenew (0/1) — currently informational; auto-renewal subscription is separate
+     * - nameservers (csv)
+     * - contacto[*] — owner contact override (firstName, lastName, email, phone, address, etc.)
+     */
+    private function handleCreateRegistrationCheckout(): void
+    {
+        $dominio = trim((string)$this->request->get('dominio', ''));
+        $idcontacto = $this->getRequestInt('idcontacto');
+        $successUrl = $this->request->get('successUrl', '');
+        $cancelUrl = $this->request->get('cancelUrl', '');
+        $years = $this->getRequestInt('years') ?: 1;
+
+        if (empty($dominio)) {
+            $this->sendJsonResponse(['error' => 'Missing dominio'], 400);
+            return;
+        }
+        if (!$idcontacto) {
+            $this->sendJsonResponse(['error' => 'Missing idcontacto'], 400);
+            return;
+        }
+        if (empty($successUrl) || empty($cancelUrl)) {
+            $this->sendJsonResponse(['error' => 'Missing successUrl or cancelUrl'], 400);
+            return;
+        }
+
+        $contacto = new Contacto();
+        if (!$contacto->load($idcontacto)) {
+            $this->sendJsonResponse(['error' => 'Contact not found'], 404);
+            return;
+        }
+
+        if (!StripeHelper::isConfigured()) {
+            $this->sendJsonResponse(['error' => 'Stripe not configured'], 500);
+            return;
+        }
+
+        // Confirm domain is available before charging
+        $check = DonDominioHelper::checkAvailability($dominio);
+        if (empty($check['available'])) {
+            $this->sendJsonResponse([
+                'error' => 'Domain not available',
+                'detail' => $check['error'] ?? null
+            ], 409);
+            return;
+        }
+
+        $priceFloat = isset($check['price']) ? (float)$check['price'] : 0.0;
+        if ($priceFloat <= 0) {
+            // Fallback to renewal pricing matrix by TLD
+            $tld = strrchr($dominio, '.') ?: '.com';
+            $priceFloat = (float)StripeSubscriptionManager::getDomainRenewalPrice($tld);
+        }
+        $priceInCents = (int)round($priceFloat * max(1, $years) * 100);
+        if ($priceInCents <= 0) {
+            $this->sendJsonResponse(['error' => 'Invalid domain price'], 500);
+            return;
+        }
+
+        try {
+            StripeHelper::initStripe();
+
+            $customer = StripeHelper::findOrCreateCustomer(
+                $contacto->email,
+                $contacto->fullName(),
+                [
+                    'idcontacto' => $contacto->idcontacto,
+                    'codcliente' => $contacto->codcliente ?? ''
+                ]
+            );
+            if (!$customer) {
+                $this->sendJsonResponse(['error' => 'Could not create Stripe customer'], 500);
+                return;
+            }
+
+            $contactoOverride = $this->collectContactoOverride();
+
+            $metadata = [
+                'type' => 'domain_registration',
+                'idcontacto' => (string)$idcontacto,
+                'domain' => $dominio,
+                'years' => (string)$years,
+                'whois_privacy' => (string)((int)$this->request->get('whoisPrivacy', 0)),
+                'autorenew' => (string)((int)$this->request->get('autorenew', 1)),
+            ];
+            $nameservers = trim((string)$this->request->get('nameservers', ''));
+            if ($nameservers !== '') {
+                $metadata['nameservers'] = $nameservers;
+            }
+            // Stripe metadata values must be strings ≤500 chars; serialize override compactly.
+            if (!empty($contactoOverride)) {
+                $metadata['contacto_override'] = substr(json_encode($contactoOverride), 0, 480);
+            }
+
+            $session = \Stripe\Checkout\Session::create([
+                'customer' => $customer->id,
+                'mode' => 'payment',
+                'automatic_tax' => ['enabled' => true],
+                'line_items' => [[
+                    'price_data' => [
+                        'currency' => 'eur',
+                        'unit_amount' => $priceInCents,
+                        'product_data' => [
+                            'name' => 'Registro de dominio: ' . $dominio,
+                            'description' => sprintf('Registro por %d año(s)', $years)
+                        ],
+                        'tax_behavior' => 'exclusive'
+                    ],
+                    'quantity' => 1
+                ]],
+                'success_url' => $successUrl . (strpos($successUrl, '?') !== false ? '&' : '?') . 'session_id={CHECKOUT_SESSION_ID}',
+                'cancel_url' => $cancelUrl,
+                'metadata' => $metadata
+            ]);
+
+            SolwedLogger::stripe(sprintf(
+                'Domain registration checkout created: %s for %s (%d years, %.2f EUR)',
+                $session->id,
+                $dominio,
+                $years,
+                $priceFloat * $years
+            ));
+
+            $this->sendJsonResponse([
+                'success' => true,
+                'checkoutUrl' => $session->url,
+                'sessionId' => $session->id
+            ]);
+        } catch (Exception $e) {
+            SolwedLogger::error('Error creating registration checkout: ' . $e->getMessage());
+            $this->sendJsonResponse(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Create Stripe Checkout for domain transfer (auth code captured up front).
+     * Webhook handler triggers the actual DonDominio transfer after payment.
+     *
+     * Required: dominio, authcode, idcontacto, successUrl, cancelUrl.
+     * Optional: years, whoisPrivacy, autorenew, nameservers, contacto[*].
+     */
+    private function handleCreateTransferCheckout(): void
+    {
+        $dominio = trim((string)$this->request->get('dominio', ''));
+        $authcode = trim((string)$this->request->get('authcode', ''));
+        $idcontacto = $this->getRequestInt('idcontacto');
+        $successUrl = $this->request->get('successUrl', '');
+        $cancelUrl = $this->request->get('cancelUrl', '');
+        $years = $this->getRequestInt('years') ?: 1;
+
+        if (empty($dominio)) {
+            $this->sendJsonResponse(['error' => 'Missing dominio'], 400);
+            return;
+        }
+        if (empty($authcode)) {
+            $this->sendJsonResponse(['error' => 'Missing authcode'], 400);
+            return;
+        }
+        if (!$idcontacto) {
+            $this->sendJsonResponse(['error' => 'Missing idcontacto'], 400);
+            return;
+        }
+        if (empty($successUrl) || empty($cancelUrl)) {
+            $this->sendJsonResponse(['error' => 'Missing successUrl or cancelUrl'], 400);
+            return;
+        }
+
+        $contacto = new Contacto();
+        if (!$contacto->load($idcontacto)) {
+            $this->sendJsonResponse(['error' => 'Contact not found'], 404);
+            return;
+        }
+
+        if (!StripeHelper::isConfigured()) {
+            $this->sendJsonResponse(['error' => 'Stripe not configured'], 500);
+            return;
+        }
+
+        // Transfer pricing: same as 1-year registration price for the TLD.
+        $tld = strrchr($dominio, '.') ?: '.com';
+        $priceFloat = (float)StripeSubscriptionManager::getDomainRenewalPrice($tld);
+        $priceInCents = (int)round($priceFloat * max(1, $years) * 100);
+        if ($priceInCents <= 0) {
+            $this->sendJsonResponse(['error' => 'Invalid domain price'], 500);
+            return;
+        }
+
+        try {
+            StripeHelper::initStripe();
+
+            $customer = StripeHelper::findOrCreateCustomer(
+                $contacto->email,
+                $contacto->fullName(),
+                [
+                    'idcontacto' => $contacto->idcontacto,
+                    'codcliente' => $contacto->codcliente ?? ''
+                ]
+            );
+            if (!$customer) {
+                $this->sendJsonResponse(['error' => 'Could not create Stripe customer'], 500);
+                return;
+            }
+
+            $contactoOverride = $this->collectContactoOverride();
+
+            $metadata = [
+                'type' => 'domain_transfer',
+                'idcontacto' => (string)$idcontacto,
+                'domain' => $dominio,
+                'years' => (string)$years,
+                'authcode' => $authcode,
+                'whois_privacy' => (string)((int)$this->request->get('whoisPrivacy', 0)),
+                'autorenew' => (string)((int)$this->request->get('autorenew', 1)),
+            ];
+            $nameservers = trim((string)$this->request->get('nameservers', ''));
+            if ($nameservers !== '') {
+                $metadata['nameservers'] = $nameservers;
+            }
+            if (!empty($contactoOverride)) {
+                $metadata['contacto_override'] = substr(json_encode($contactoOverride), 0, 480);
+            }
+
+            $session = \Stripe\Checkout\Session::create([
+                'customer' => $customer->id,
+                'mode' => 'payment',
+                'automatic_tax' => ['enabled' => true],
+                'line_items' => [[
+                    'price_data' => [
+                        'currency' => 'eur',
+                        'unit_amount' => $priceInCents,
+                        'product_data' => [
+                            'name' => 'Traspaso de dominio: ' . $dominio,
+                            'description' => sprintf('Traspaso + %d año(s)', $years)
+                        ],
+                        'tax_behavior' => 'exclusive'
+                    ],
+                    'quantity' => 1
+                ]],
+                'success_url' => $successUrl . (strpos($successUrl, '?') !== false ? '&' : '?') . 'session_id={CHECKOUT_SESSION_ID}',
+                'cancel_url' => $cancelUrl,
+                'metadata' => $metadata
+            ]);
+
+            SolwedLogger::stripe(sprintf(
+                'Domain transfer checkout created: %s for %s (%d years, %.2f EUR)',
+                $session->id,
+                $dominio,
+                $years,
+                $priceFloat * $years
+            ));
+
+            $this->sendJsonResponse([
+                'success' => true,
+                'checkoutUrl' => $session->url,
+                'sessionId' => $session->id
+            ]);
+        } catch (Exception $e) {
+            SolwedLogger::error('Error creating transfer checkout: ' . $e->getMessage());
+            $this->sendJsonResponse(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Optional `contacto[*]` request fields override the FS Contacto when
+     * the buyer wants to register the domain under a different titular.
+     */
+    private function collectContactoOverride(): array
+    {
+        $fields = ['firstName', 'lastName', 'orgName', 'identNumber', 'email', 'phone',
+                   'address', 'city', 'state', 'postalCode', 'country', 'type'];
+        $out = [];
+        foreach ($fields as $f) {
+            $v = trim((string)$this->request->get('contacto_' . $f, ''));
+            if ($v !== '') $out[$f] = $v;
+        }
+        return $out;
     }
 
     // ── Helpers ────────────────────────────────────────────────

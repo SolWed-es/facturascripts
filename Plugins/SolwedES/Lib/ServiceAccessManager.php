@@ -11,9 +11,6 @@ namespace FacturaScripts\Plugins\SolwedES\Lib;
 
 use FacturaScripts\Plugins\SolwedES\Model\AccesoServicio;
 use FacturaScripts\Plugins\SolwedES\Model\Servicio;
-use FacturaScripts\Plugins\SolwedES\Model\PleskConfig;
-use FacturaScripts\Plugins\SolwedES\Model\PleskCache;
-use FacturaScripts\Plugins\SolwedES\Lib\PleskApiClient;
 use FacturaScripts\Core\Tools;
 
 /**
@@ -290,118 +287,18 @@ class ServiceAccessManager
     }
 
     /**
-     * Obtiene información de servicios Plesk para un acceso específico
-     * Utiliza caché con TTL de 10 minutos para reducir carga en la API
-     *
-     * @param AccesoServicio $acceso
-     * @return array Array con dominios, aplicaciones, emails y facturascripts
+     * Plesk integration extracted from SolwedES (archived to
+     * `_archive/SolwedHosting/`). Method retained as a stub so callers (e.g.
+     * `Extension\Controller\PortalCliente`) compile and degrade gracefully.
      */
     public static function getPleskServicesInfo(AccesoServicio $acceso): array
     {
-        // Solo procesar si el tipo de acceso es Plesk
-        if ($acceso->tipo_acceso !== 'plesk') {
-            return [
-                'domains' => [],
-                'applications' => [],
-                'emails' => [],
-                'facturascripts' => []
-            ];
-        }
-
-        // Intentar obtener de caché
-        $cacheKey = 'services_info';
-        $cached = PleskCache::getCached($acceso->id, $cacheKey);
-
-        if ($cached !== null) {
-            Tools::log()->info("[Plesk] Datos obtenidos de caché para acceso #{$acceso->id}");
-            return $cached;
-        }
-
-        // No hay caché válida, consultar API de Plesk
-        Tools::log()->info("[Plesk] Consultando API para acceso #{$acceso->id}");
-
-        try {
-            // Obtener configuración activa de Plesk
-            $pleskConfig = PleskConfig::getActiveConfig();
-
-            if (!$pleskConfig) {
-                Tools::log()->warning("[Plesk] No hay configuración activa de Plesk");
-                return [
-                    'domains' => [],
-                    'applications' => [],
-                    'emails' => [],
-                    'facturascripts' => []
-                ];
-            }
-
-            // Crear cliente API
-            $apiClient = new PleskApiClient($pleskConfig);
-
-            // Obtener dominios
-            $domains = $apiClient->getDomains();
-            Tools::log()->info("[Plesk] Dominios obtenidos: " . count($domains));
-
-            // Obtener aplicaciones y correos para cada dominio
-            $allApplications = [];
-            $allEmails = [];
-
-            foreach ($domains as $domain) {
-                $domainName = $domain['name'] ?? '';
-
-                if (empty($domainName)) {
-                    continue;
-                }
-
-                // Obtener aplicaciones del dominio
-                $apps = $apiClient->getApplications($domainName);
-                foreach ($apps as $app) {
-                    $app['domain'] = $domainName;
-                    $allApplications[] = $app;
-                }
-
-                // Obtener cuentas de correo del dominio
-                $emails = $apiClient->getEmailAccounts($domainName);
-                foreach ($emails as $email) {
-                    $email['domain'] = $domainName;
-                    $allEmails[] = $email;
-                }
-            }
-
-            // Obtener instalaciones de FacturaScripts
-            $facturascripts = $apiClient->getFacturaScriptsInstances();
-            Tools::log()->info("[Plesk] Instancias FacturaScripts encontradas: " . count($facturascripts));
-
-            // Construir resultado
-            $result = [
-                'domains' => $domains,
-                'applications' => $allApplications,
-                'emails' => $allEmails,
-                'facturascripts' => $facturascripts
-            ];
-
-            // Guardar en caché (TTL 10 minutos)
-            PleskCache::set($acceso->id, $cacheKey, $result);
-
-            Tools::log()->info(
-                "[Plesk] Datos guardados en caché: " .
-                count($domains) . " dominios, " .
-                count($allApplications) . " aplicaciones, " .
-                count($allEmails) . " correos, " .
-                count($facturascripts) . " FacturaScripts"
-            );
-
-            return $result;
-
-        } catch (\Throwable $e) {
-            Tools::log()->error("[Plesk] Error al obtener servicios: " . $e->getMessage());
-
-            // Retornar estructura vacía en caso de error
-            return [
-                'domains' => [],
-                'applications' => [],
-                'emails' => [],
-                'facturascripts' => []
-            ];
-        }
+        return [
+            'domains' => [],
+            'applications' => [],
+            'emails' => [],
+            'facturascripts' => [],
+            'disabled' => true,
+        ];
     }
 }

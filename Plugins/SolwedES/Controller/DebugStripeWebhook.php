@@ -39,7 +39,21 @@ class DebugStripeWebhook extends Controller
     {
         parent::privateCore($response, $user, $permissions);
 
-        // Only allow admin users
+        // Disabled in production. Re-enable by exporting SOLWED_DEBUG_ENABLED=1
+        // in the ERP container env (and restart) — admin-only gate still applies.
+        $debugEnabled = getenv('SOLWED_DEBUG_ENABLED') === '1';
+        if (!$debugEnabled) {
+            Tools::log()->warning('DebugStripeWebhook access blocked (controller disabled)');
+            $this->setTemplate(false);
+            $this->response->setStatusCode(410);
+            $this->response->headers->set('Content-Type', 'application/json; charset=utf-8');
+            $this->response->setContent(json_encode([
+                'error' => 'Debug controller disabled',
+                'hint' => 'Set SOLWED_DEBUG_ENABLED=1 in ERP env to enable',
+            ]));
+            return;
+        }
+
         if (!$user->admin) {
             Tools::log()->error('Unauthorized access to DebugStripeWebhook');
             $this->response->setContent(json_encode(['error' => 'Unauthorized']));

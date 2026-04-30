@@ -271,6 +271,113 @@ class DonDominioHelper
     }
 
     /**
+     * Inicia un traspaso de dominio desde otro registrar
+     *
+     * @param string $domain Nombre completo del dominio
+     * @param string $authcode Codigo EPP del registrar origen
+     * @param array $contactData Datos del contacto propietario (mismo formato que registerDomain)
+     * @param int $years Anos a registrar tras traspaso (1-10, opcional)
+     * @param array $options Opciones (nameservers, whois_privacy)
+     * @return array ['success' => bool, 'domain_id' => int|null, 'transfer_status' => string|null, 'error' => string|null]
+     */
+    public static function transferDomain(string $domain, string $authcode, array $contactData, int $years = 1, array $options = []): array
+    {
+        $api = self::initAPI();
+        if (!$api) {
+            return [
+                'success' => false,
+                'domain_id' => null,
+                'transfer_status' => null,
+                'error' => 'DonDominio API not configured'
+            ];
+        }
+
+        try {
+            $years = max(1, min(10, $years));
+            $phone = self::formatPhoneNumber($contactData['phone'] ?? '', $contactData['country'] ?? 'ES');
+
+            $params = [
+                'authcode' => $authcode,
+                'period' => $years,
+                'ownerContactType' => $contactData['type'] ?? 'individual',
+                'ownerContactFirstName' => $contactData['firstName'] ?? '',
+                'ownerContactLastName' => $contactData['lastName'] ?? '',
+                'ownerContactIdentNumber' => $contactData['identNumber'] ?? '',
+                'ownerContactEmail' => $contactData['email'] ?? '',
+                'ownerContactPhone' => $phone,
+                'ownerContactAddress' => $contactData['address'] ?? '',
+                'ownerContactCity' => $contactData['city'] ?? '',
+                'ownerContactPostalCode' => $contactData['postalCode'] ?? '',
+                'ownerContactState' => $contactData['state'] ?? '',
+                'ownerContactCountry' => $contactData['country'] ?? 'ES',
+            ];
+
+            if (($contactData['type'] ?? 'individual') === 'organization' && !empty($contactData['orgName'])) {
+                $params['ownerContactOrgName'] = $contactData['orgName'];
+            }
+
+            $nameservers = [];
+            if (!empty($options['nameservers'])) {
+                $ns = is_array($options['nameservers']) ? $options['nameservers'] : explode(',', $options['nameservers']);
+                $nameservers = array_map('trim', $ns);
+            } else {
+                $defaultNs = self::getSetting('dondominio_default_nameservers', '');
+                if (!empty($defaultNs)) {
+                    $nameservers = array_map('trim', explode(',', $defaultNs));
+                }
+            }
+            if (!empty($nameservers)) {
+                $params['nameservers'] = $nameservers;
+            }
+
+            if (!empty($options['whois_privacy'])) {
+                $params['privacy'] = true;
+            }
+
+            Tools::log('solwed')->info('Transferring domain: ' . $domain);
+
+            $response = $api->domain_transfer($domain, $params);
+            $data = $response->getResponseData();
+
+            if (!$response->getSuccess()) {
+                $error = $response->getErrorCodeMsg() ?? 'API Error: ' . $response->getErrorCode();
+                Tools::log('solwed')->error('Domain transfer failed: ' . $error);
+                return [
+                    'success' => false,
+                    'domain_id' => null,
+                    'transfer_status' => null,
+                    'error' => $error
+                ];
+            }
+
+            $domainId = $data['domainID'] ?? null;
+            $transferStatus = $data['status'] ?? 'pending';
+
+            Tools::log('solwed')->notice(sprintf(
+                'Domain transfer initiated: %s (ID: %s, Status: %s)',
+                $domain,
+                $domainId,
+                $transferStatus
+            ));
+
+            return [
+                'success' => true,
+                'domain_id' => $domainId,
+                'transfer_status' => $transferStatus,
+                'error' => null
+            ];
+        } catch (Exception $e) {
+            Tools::log('solwed')->error('Domain transfer error: ' . $e->getMessage());
+            return [
+                'success' => false,
+                'domain_id' => null,
+                'transfer_status' => null,
+                'error' => $e->getMessage()
+            ];
+        }
+    }
+
+    /**
      * Renueva un dominio existente
      *
      * @param string $domain Nombre completo del dominio

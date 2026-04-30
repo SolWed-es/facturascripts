@@ -35,7 +35,7 @@ use FacturaScripts\Plugins\SolwedES\Lib\EmailManager;
 use FacturaScripts\Plugins\SolwedES\Lib\SolwedLogger;
 use FacturaScripts\Plugins\SolwedES\Lib\DonDominioHelper;
 use FacturaScripts\Plugins\SolwedES\Lib\StripeUtils;
-use FacturaScripts\Plugins\SolwedES\Lib\WordPressProvisioner;
+use FacturaScripts\Plugins\SolwedES\Lib\EmailProvisioner;
 use FacturaScripts\Plugins\SolwedES\Model\Dominio;
 
 class StripeWebhook extends Controller
@@ -266,6 +266,35 @@ class StripeWebhook extends Controller
 
             SolwedLogger::stripe('Suscripcion created: ' . $suscripcion->id . ' for subscription: ' . $session->subscription);
 
+            // Email service auto-provisioning: when Servicio.categoria='Correo',
+            // create the Kolab domain so the customer can immediately manage mailboxes
+            // from /email in the portal. Domain is read from session metadata.
+            if ($idservicio) {
+                $servicioCheck = new Servicio();
+                if ($servicioCheck->load($idservicio)
+                    && strcasecmp((string) $servicioCheck->categoria, 'Correo') === 0) {
+                    $emailDomain = $session->metadata->domain ?? $suscripcion->dominio ?? null;
+                    if ($emailDomain) {
+                        SolwedLogger::stripe("Email subscription detected, provisioning Kolab domain: {$emailDomain}");
+                        $emailResult = EmailProvisioner::provision($suscripcion, (string) $emailDomain);
+                        if ($emailResult->success) {
+                            $suscripcion->dominio = (string) $emailDomain;
+                            $suscripcion->provisioning_status = Suscripcion::PROV_COMPLETED;
+                            $suscripcion->save();
+                            SolwedLogger::stripe("Kolab domain {$emailDomain} provisioned");
+                        } else {
+                            $suscripcion->provisioning_status = Suscripcion::PROV_FAILED;
+                            $suscripcion->notas = trim(($suscripcion->notas ?? '') . "\nKolab provisioning failed: " . $emailResult->error);
+                            $suscripcion->save();
+                            SolwedLogger::error("Kolab provisioning failed for {$emailDomain}: " . $emailResult->error);
+                            // Don't throw — keep payment record, alert admin out-of-band
+                        }
+                    } else {
+                        SolwedLogger::error('Email subscription without domain in metadata, cannot provision');
+                    }
+                }
+            }
+
             // Crear acceso al servicio
             if ($idservicio) {
                 $acceso = AccesoServicio::getByClienteServicio((int)$idcontacto, (int)$idservicio);
@@ -342,6 +371,8 @@ class StripeWebhook extends Controller
             return $this->handleDomainRegistration($session);
         } elseif ($type === 'domain_renewal') {
             return $this->handleDomainRenewal($session);
+        } elseif ($type === 'domain_transfer') {
+            return $this->handleDomainTransfer($session);
         } elseif ($type === 'domain_auto_renewal') {
             return $this->handleDomainAutoRenewalCheckout($session);
         }
@@ -1179,6 +1210,7 @@ class StripeWebhook extends Controller
                         $invoice->subscription,
                         $contacto->email
                     ));
+                    EmailManager::sendPaymentFailedEmail($contacto, $invoice);
                 }
             }
         }
@@ -1786,6 +1818,119 @@ class StripeWebhook extends Controller
     }
 
     /**
+     * Handles domain transfer initiation from checkout session.
+     *
+     * Expected metadata:
+     * - type: 'domain_transfer'
+     * - domain: Full domain name
+     * - idcontacto: FS contact ID
+     * - authcode: EPP code from origin registrar
+     * - years: Transfer + register years (optional, default 1)
+     * - whois_privacy / autorenew / nameservers: registration options (optional)
+     * - contacto_override: JSON contact field overrides (optional)
+     *
+     * The DonDominio transfer is asynchronous — the API call only initiates
+     * the transfer; completion happens days later. The local Dominio record
+     * is created immediately with `estado = transfer_pending` and is updated
+     * by the cron sync once DonDominio reports the transfer succeeded.
+     */
+    private function handleDomainTransfer(object $session): array
+    {
+        SolwedLogger::stripe('=== HANDLING DOMAIN TRANSFER ===');
+
+        $domain = $session->metadata->domain ?? null;
+        $idcontacto = $session->metadata->idcontacto ?? null;
+        $authcode = $session->metadata->authcode ?? null;
+        $years = (int)($session->metadata->years ?? 1);
+
+        if (!$domain) {
+            SolwedLogger::error('Domain transfer: missing domain in metadata');
+            return ['success' => false, 'error' => 'Missing domain in metadata'];
+        }
+        if (!$authcode) {
+            SolwedLogger::error('Domain transfer: missing authcode in metadata');
+            return ['success' => false, 'error' => 'Missing authcode in metadata'];
+        }
+
+        $contacto = null;
+        if ($idcontacto) {
+            $contacto = new Contacto();
+            if (!$contacto->load($idcontacto)) {
+                $contacto = null;
+            }
+        }
+        if (!$contacto) {
+            $contacto = $this->findOrCreateContactoFromSession($session);
+        }
+        if (!$contacto) {
+            SolwedLogger::error('Domain transfer: could not find or create contact');
+            return ['success' => false, 'error' => 'Could not find or create contact'];
+        }
+        $idcontacto = $contacto->idcontacto;
+
+        if (!DonDominioHelper::isConfigured()) {
+            SolwedLogger::error('Domain transfer: DonDominio not configured');
+            $result = $this->recordDomainPayment($session, $contacto, $domain, 'domain_transfer');
+            $result['warning'] = 'DonDominio not configured - payment recorded but transfer not initiated';
+            return $result;
+        }
+
+        // Build contact data with optional override
+        $ddContactData = DonDominioHelper::contactoToDD($contacto);
+        $overrideRaw = $session->metadata->contacto_override ?? null;
+        if ($overrideRaw) {
+            $override = json_decode($overrideRaw, true);
+            if (is_array($override)) {
+                $ddContactData = array_merge($ddContactData, $override);
+            }
+        }
+
+        $options = [];
+        $ns = $session->metadata->nameservers ?? null;
+        if ($ns) $options['nameservers'] = $ns;
+        if (!empty($session->metadata->whois_privacy)) $options['whois_privacy'] = true;
+
+        $transferResult = DonDominioHelper::transferDomain($domain, $authcode, $ddContactData, $years, $options);
+
+        if (!$transferResult['success']) {
+            SolwedLogger::error('Domain transfer initiation failed: ' . $transferResult['error']);
+            $result = $this->recordDomainPayment($session, $contacto, $domain, 'domain_transfer');
+            $result['domain_transfer_error'] = $transferResult['error'];
+            return $result;
+        }
+
+        SolwedLogger::stripe('Domain transfer initiated in DonDominio: ' . $transferResult['domain_id']);
+
+        // Create local Dominio record in transfer_pending state
+        $dominio = new Dominio();
+        $lastDot = strrpos($domain, '.');
+        $nombre = $lastDot !== false ? substr($domain, 0, $lastDot) : $domain;
+        $tld = $lastDot !== false ? substr($domain, $lastDot) : '.com';
+
+        $dominio->idcontacto = $idcontacto;
+        $dominio->nombre = strtolower($nombre);
+        $dominio->tld = strtolower($tld);
+        $dominio->dondominio_id = $transferResult['domain_id'];
+        $dominio->fecha_registro = date('Y-m-d');
+        $dominio->estado = 'transfer_pending';
+        $dominio->gestionado_solwed = true;
+        $dominio->observaciones = 'Transfer initiated via portal checkout - Session: ' . $session->id;
+
+        if (!$dominio->save()) {
+            SolwedLogger::error('Could not save Dominio record (transfer_pending)');
+        } else {
+            SolwedLogger::stripe('Dominio record created (transfer_pending): ' . $dominio->id);
+        }
+
+        $result = $this->recordDomainPayment($session, $contacto, $domain, 'domain_transfer', $dominio);
+        $result['domain_id'] = $dominio->id ?? null;
+        $result['dondominio_id'] = $transferResult['domain_id'];
+        $result['transfer_status'] = $transferResult['transfer_status'];
+
+        return $result;
+    }
+
+    /**
      * Handles domain renewal from checkout session
      *
      * Expected metadata:
@@ -2126,61 +2271,22 @@ class StripeWebhook extends Controller
 
             SolwedLogger::stripe('DEBUG [WP-12a]: PagoStripe created with ID: ' . $pago->id);
 
-            // 3. Attempt provisioning (synchronous)
-            SolwedLogger::stripe('DEBUG [WP-13]: Starting WordPress provisioning');
-            SolwedLogger::stripe("DEBUG [WP-13a]: Calling WordPressProvisioner::provision({$domain}, {$plan})");
-            $provisionResult = WordPressProvisioner::provision($suscripcion, $contacto, $domain, $plan);
-            SolwedLogger::stripe('DEBUG [WP-13b]: Provisioning result: ' . ($provisionResult->success ? 'SUCCESS' : 'FAILED'));
-            if (!$provisionResult->success) {
-                SolwedLogger::stripe('DEBUG [WP-13c]: Provisioning error: ' . ($provisionResult->error ?? 'Unknown'));
-            }
+            // 3. WordPress/Plesk provisioning was extracted from SolwedES
+            //    (archived to _archive/SolwedHosting/). Hosting subscriptions
+            //    are now manual: contract stays PENDING, admin gets alert.
+            SolwedLogger::stripe('DEBUG [WP-13]: Hosting provisioning out of plugin — admin manual provision required');
+            $suscripcion->provisioning_status = Suscripcion::PROV_PENDING;
+            $suscripcion->estado = Suscripcion::ESTADO_PENDIENTE;
+            $suscripcion->notas .= "\n\nHosting provisioning out of plugin scope — admin must provision manually.";
+            $suscripcion->save();
 
-            if ($provisionResult->success) {
-                // 4a. Provisioning successful - create AccesoServicio with real credentials
-                SolwedLogger::stripe('DEBUG [WP-14]: Creating AccesoServicio with credentials');
-                $acceso = new AccesoServicio();
-                $acceso->idcontacto = (int)$idcontacto;
-                $acceso->idservicio = $idservicio ? (int)$idservicio : null;
-                $acceso->tipo_acceso = 'wordpress';
-                $acceso->url_acceso = $provisionResult->adminUrl;
-                $acceso->usuario = $provisionResult->username;
-                $acceso->activo = true;
-                $acceso->notas = "Domain: {$domain}, Plan: {$plan}";
-
-                if (!$acceso->save()) {
-                    SolwedLogger::error('DEBUG [WP-14a]: Failed to save AccesoServicio');
-                } else {
-                    SolwedLogger::stripe('DEBUG [WP-14b]: AccesoServicio created with ID: ' . $acceso->id);
-                }
-
-                // 5a. Update contract to active
-                SolwedLogger::stripe('DEBUG [WP-15]: Updating contract status to ACTIVO');
-                $suscripcion->provisioning_status = Suscripcion::PROV_COMPLETED;
-                $suscripcion->estado = Suscripcion::ESTADO_ACTIVO;
-                $suscripcion->save();
-
-                SolwedLogger::stripe('DEBUG [WP-15a]: Contract updated successfully');
-
-            } else {
-                // 4b. Provisioning failed - keep contract as pending
-                SolwedLogger::stripe('DEBUG [WP-16]: Provisioning FAILED - updating contract status');
-                $suscripcion->provisioning_status = Suscripcion::PROV_FAILED;
-                $suscripcion->estado = Suscripcion::ESTADO_PENDIENTE;
-                $suscripcion->notas .= "\n\nProvisioning failed: " . $provisionResult->error;
-                $suscripcion->save();
-
-                // 5b. Alert admin
-                SolwedLogger::stripe('DEBUG [WP-17]: Sending failure alert to admin');
-                $alertSent = EmailManager::sendProvisioningFailureAlert(
-                    $suscripcion,
-                    $contacto,
-                    $domain,
-                    $provisionResult->error ?? 'Unknown error'
-                );
-                SolwedLogger::stripe('DEBUG [WP-17a]: Alert email sent: ' . ($alertSent ? 'YES' : 'NO'));
-
-                SolwedLogger::error('DEBUG [WP-ERROR]: WordPress provisioning failed: ' . $provisionResult->error);
-            }
+            $alertSent = EmailManager::sendProvisioningFailureAlert(
+                $suscripcion,
+                $contacto,
+                $domain,
+                'Hosting provisioning extracted from SolwedES — provision manually'
+            );
+            SolwedLogger::stripe('DEBUG [WP-17a]: Manual-provision alert sent: ' . ($alertSent ? 'YES' : 'NO'));
 
             // Commit transaction
             SolwedLogger::stripe('DEBUG [WP-18]: Committing transaction');
@@ -2189,10 +2295,10 @@ class StripeWebhook extends Controller
 
             $result = [
                 'success' => true,
-                'provisioned' => $provisionResult->success,
+                'provisioned' => false,
                 'contrato_id' => $suscripcion->id,
                 'pago_id' => $pago->id,
-                'provisioning_error' => $provisionResult->success ? null : $provisionResult->error
+                'provisioning_error' => 'Hosting provisioning extracted from SolwedES'
             ];
             SolwedLogger::stripe('DEBUG [WP-19]: Returning result: ' . json_encode($result));
             return $result;

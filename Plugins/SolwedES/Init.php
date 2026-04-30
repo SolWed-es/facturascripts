@@ -33,30 +33,40 @@ class Init extends InitClass
         Kernel::addRoute('/api/3/productos-con-imagenes', 'ApiProductosConImagenes', -1);
         ApiRoot::addCustomResource('productos-con-imagenes');
 
-        // Registrar endpoint API para archivos de tickets
-        Kernel::addRoute('/api/3/ticket-files', 'ApiTicketFiles', -1);
-        ApiRoot::addCustomResource('ticket-files');
+        // Disabled 2026-04-28: ticket-files sin consumidores externos detectados.
+        // Re-enable si app necesita upload/download de adjuntos via FS.
+        // Kernel::addRoute('/api/3/ticket-files', 'ApiTicketFiles', -1);
+        // ApiRoot::addCustomResource('ticket-files');
 
-        // Registrar modelos SolwedES como recursos API REST
-        ApiRoot::addCustomResource('servicios');
-        ApiRoot::addCustomResource('servicioprecios');
-        ApiRoot::addCustomResource('accesoservicios');
+        // Registrar modelos SolwedES como recursos API REST.
+        // Solo los que el bridge consume vía fsFetch.
         ApiRoot::addCustomResource('dominios');
-        ApiRoot::addCustomResource('pagostripes');
-        ApiRoot::addCustomResource('suscripciones');
         ApiRoot::addCustomResource('direccionenvios');
 
-        // Custom API endpoints
-        Kernel::addRoute('/ApiSuscripcion', 'ApiSuscripcion', -1);
-        Kernel::addRoute('/ApiStripe', 'ApiStripe', -1);
-        Kernel::addRoute('/ApiDireccionEnvio', 'ApiDireccionEnvio', -1);
-        Kernel::addRoute('/ApiOAuth', 'ApiOAuth', -1);
-        Kernel::addRoute('/ApiContactSearch', 'ApiContactSearch', -1);
-        Kernel::addRoute('/ApiAccesoServicio', 'ApiAccesoServicio', -1);
-        Kernel::addRoute('/ApiServicio', 'ApiServicio', -1);
-        Kernel::addRoute('/ApiHealth', 'ApiHealth', -1);
-        Kernel::addRoute('/ApiProvision', 'ApiProvision', -1);
-        Kernel::addRoute('/ApiDevices', 'ApiDevices', -1);
+        // Disabled 2026-04-28: REST endpoints sin consumidores en bridge/app/mind.
+        // Modelos siguen accesibles via FS admin UI (Edit*/List* controllers).
+        // ApiRoot::addCustomResource('servicios');
+        // ApiRoot::addCustomResource('servicioprecios');
+        // ApiRoot::addCustomResource('accesoservicios');
+        // ApiRoot::addCustomResource('pagostripes');
+        // ApiRoot::addCustomResource('suscripciones');
+
+        // Custom API endpoints — only routes with confirmed external consumers.
+        Kernel::addRoute('/ApiHealth', 'ApiHealth', -1); // bridge adminHealth()
+
+        // Google OAuth migrated to bridge `/auth/google/callback` (Auth Phase 2).
+        // ApiOAuth.php + Model/OAuthToken.php archived to _archive/SolwedOAuth/.
+
+        // Archived 2026-04-28 to _archive/SolwedES_disabled_controllers/.
+        // Bridge owns equivalent flows:
+        //   - Auth (ApiPortalLogin)         → bridge routers/auth.ts + auth-2fa.ts
+        //   - Push (ApiPush + DB table)     → bridge routers/push.ts (Redis storage)
+        //   - Provision (ApiProvision)      → bridge routers/provision.ts
+        //   - Stripe API (ApiStripe)        → bridge routers/stripe.ts
+        //   - REST resources               → bridge consumes FS native /api/3/<resource>
+        //   - ApiContactSearch / ApiDevices / ApiTicketFiles / ApiBusinessDocument
+        //     no consumer detected; restore from archive if a flow needs them.
+        // ApiOAuth.php + Model/OAuthToken.php archived to _archive/SolwedOAuth/.
     }
 
     public function update(): void
@@ -67,8 +77,8 @@ class Init extends InitClass
         // Configurar valores por defecto de Stripe
         $this->setupStripeSettings();
 
-        // Configurar valores por defecto de Google OAuth
-        $this->setupGoogleSettings();
+        // Google OAuth migrated to bridge — settings managed there.
+        // $this->setupGoogleSettings();
 
         // Configurar valores por defecto de DonDominio
         $this->setupDonDominioSettings();
@@ -123,17 +133,8 @@ class Init extends InitClass
         Tools::settingsSave();
     }
 
-    /**
-     * Configura valores por defecto para Google OAuth
-     */
-    private function setupGoogleSettings(): void
-    {
-        if (empty(Tools::settings('google', 'redirect_uri'))) {
-            $baseUrl = Tools::settings('default', 'site_url', 'https://erp.solwed.es');
-            Tools::settingsSet('google', 'redirect_uri', rtrim($baseUrl, '/') . '/ApiOAuth?action=callback&provider=google');
-            Tools::settingsSave();
-        }
-    }
+    // setupGoogleSettings() removed: Google OAuth handled by bridge
+    // (`/auth/google/callback`). Redirect URI configured in bridge env, not FS.
 
     /**
      * Configura valores por defecto para la integracion DonDominio
