@@ -24,7 +24,18 @@ El ecosistema SolWed se distribuye en **3 repositorios**:
 | Rama | Propósito |
 |------|-----------|
 | `master` | **INTOCABLE** — sync con upstream NeoRazorX/facturascripts |
-| `solwed/production` | Producción. Core modificado + assets erpsolwed. **Rama por defecto.** |
+| `solwed/production` | Producción (erp.solwed.es). Core modificado + assets erpsolwed. **Rama por defecto.** |
+| `solwed/dev` | Pre-producción / preview. Aquí se mergea `upstream/master` y se valida en `erp-dev.solwed.es` antes de promover a `solwed/production`. |
+| `feature/*` | Working branches. PR target = `solwed/dev`. |
+
+### Flujo de cambios
+
+```
+upstream/master (NeoRazorX) ──merge──► solwed/dev ──validar erp-dev──► solwed/production (deploy prod)
+                                          ▲
+                                          │
+                              feature/* ──┘ (PRs)
+```
 
 ### Modificaciones al Core (solwed/production)
 
