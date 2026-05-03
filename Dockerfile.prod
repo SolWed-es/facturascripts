@@ -1,0 +1,57 @@
+# ── Stage 1: Install PHP dependencies ─────────────────────────────────────
+FROM composer:2 AS vendor
+
+WORKDIR /app
+COPY composer.json composer.lock* ./
+RUN composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev --no-scripts \
+    --ignore-platform-req=ext-bcmath \
+    --ignore-platform-req=ext-gd \
+    --ignore-platform-req=ext-mysqli \
+    --ignore-platform-req=ext-pgsql
+
+# ── Stage 2: Production runtime ───────────────────────────────────────────
+FROM php:8.2-apache
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpng-dev \
+    libjpeg62-turbo-dev \
+    libfreetype6-dev \
+    libzip-dev \
+    libxml2-dev \
+    libpq-dev \
+    unzip \
+    curl \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install -j$(nproc) \
+        bcmath \
+        gd \
+        mysqli \
+        pdo \
+        pdo_pgsql \
+        pgsql \
+        simplexml \
+        zip \
+    && a2enmod rewrite \
+    && rm -rf /var/lib/apt/lists/* /tmp/*
+
+COPY .docker/apache.conf /etc/apache2/sites-available/000-default.conf
+
+WORKDIR /var/www/html
+
+# Copy vendor from build stage
+COPY --from=vendor /app/vendor ./vendor/
+
+# Copy application code
+COPY . .
+
+# Remove build artifacts not needed at runtime
+RUN rm -rf .git .docker/config.php node_modules package.json package-lock.json \
+    && cp htaccess-sample .htaccess || true \
+    && mkdir -p MyFiles/Tmp MyFiles/uploads Dinamic \
+    && chown -R www-data:www-data /var/www/html
+
+COPY .docker/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+EXPOSE 80
+ENTRYPOINT ["/entrypoint.sh"]
