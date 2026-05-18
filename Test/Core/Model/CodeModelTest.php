@@ -415,6 +415,80 @@ final class CodeModelTest extends TestCase
         $this->assertTrue($almacen2->delete());
     }
 
+    public function testGetWithEmptyTableName(): void
+    {
+        $codeModel = new CodeModel();
+        $result = $codeModel->get('', 'codalmacen', 'X', 'nombre');
+        $this->assertEquals('', $result->code);
+        $this->assertEquals('', $result->description);
+    }
+
+    public function testGetWithEmptyFieldCode(): void
+    {
+        // En el branch de tabla, fieldCode vacío no puede construir WHERE válido
+        $codeModel = new CodeModel();
+        $result = $codeModel->get('almacenes', '', 'X', 'nombre');
+        $this->assertEquals('', $result->code);
+        $this->assertEquals('', $result->description);
+    }
+
+    public function testGetWithInvalidTableName(): void
+    {
+        // Nombre de tabla con caracteres inválidos: debe rechazarse
+        $codeModel = new CodeModel();
+        $result = $codeModel->get('almacenes; DROP TABLE x--', 'codalmacen', 'X', 'nombre');
+        $this->assertEquals('', $result->code);
+        $this->assertEquals('', $result->description);
+    }
+
+    public function testGetWithInvalidFieldName(): void
+    {
+        $codeModel = new CodeModel();
+        $result = $codeModel->get('almacenes', 'codalmacen OR 1=1', 'X', 'nombre');
+        $this->assertEquals('', $result->code);
+        $this->assertEquals('', $result->description);
+    }
+
+    public function testAllWithJoinModelName(): void
+    {
+        // Pasar 'Join\StockProducto' debe entrar en el branch de modelo
+        // (la clase JoinModel base no expone codeModelAll/modelClassName, así
+        // que cae al check de tabla — debe terminar como "tabla no encontrada"
+        // sin lanzar error por validación de nombre.)
+        $result = CodeModel::all('Join\\StockProducto', '', '', false);
+        $this->assertIsArray($result);
+    }
+
+    public function testAllWithInvalidTableNameContainingBackslash(): void
+    {
+        // Un tableName con barra invertida que no corresponde a un modelo real
+        // debe ser rechazado por isValidTableName y devolver el resultado vacío.
+        $result = CodeModel::all('Join\\NoExiste', 'campo1', 'campo2', true);
+        $this->assertIsArray($result);
+        $this->assertCount(1, $result);
+        $this->assertNull($result[0]->code);
+        $this->assertEquals('------', $result[0]->description);
+    }
+
+    public function testSearchWithInvalidTableNameContainingBackslash(): void
+    {
+        $result = CodeModel::search('Join\\NoExiste', 'codigo', 'nombre', 'foo');
+        $this->assertIsArray($result);
+        $this->assertCount(0, $result);
+    }
+
+    public function testModelBaseNameReflection(): void
+    {
+        // Verifica que el helper protegido modelBaseName devuelve el último segmento
+        $method = new \ReflectionMethod(CodeModel::class, 'modelBaseName');
+        if (PHP_VERSION_ID < 80100) {
+            $method->setAccessible(true);
+        }
+        $this->assertEquals('PartidaAsiento', $method->invoke(null, 'Join\\PartidaAsiento'));
+        $this->assertEquals('Variante', $method->invoke(null, 'Variante'));
+        $this->assertEquals('C', $method->invoke(null, 'A\\B\\C'));
+    }
+
     protected function tearDown(): void
     {
         $this->logErrors();
