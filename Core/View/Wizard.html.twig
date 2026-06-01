@@ -56,18 +56,6 @@
                                 </select>
                             </div>
                         </div>
-                        <div class="col-lg-3 col-md-6">
-                            <div class="mb-3">
-                                {{ forms.simpleSelect('tipoidfiscal', 'tipoidfiscal', fsc.empresa.tipoidfiscal,
-                                    fsc.getSelectValues('IdentificadorFiscal', true), trans('fiscal-id')) }}
-                            </div>
-                        </div>
-                        <div class="col-lg-3 col-md-6">
-                            <div class="mb-3">
-                                {{ forms.simpleInput('cifnif', 'cifnif', fsc.empresa.cifnif, 'text', trans('fiscal-number'),
-                                    '', {'maxlength': '30'}) }}
-                            </div>
-                        </div>
                         <div class="col-lg-6 col-md-12">
                             <div class="mb-3">
                                 {{ forms.simpleInput('direccion', 'direccion', fsc.empresa.direccion, 'text', trans('address'),

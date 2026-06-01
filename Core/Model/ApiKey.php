@@ -29,7 +29,7 @@ use FacturaScripts\Dinamic\Model\ApiAccess;
  * ApiKey model to manage the connection tokens through the api
  * that will be generated to synchronize different applications.
  *
- * @author Joe Nilson           <joenilson at gmail.com>
+ * @author Joe Nilson           <joenilson@gmail.com>
  * @author Carlos García Gómez  <carlos@facturascripts.com>
  */
 class ApiKey extends ModelClass
@@ -56,6 +56,9 @@ class ApiKey extends ModelClass
 
     /** @var string */
     public $lastactivity;
+
+    /** @var string */
+    public $lastip;
 
     /** @var string */
     public $nick;
@@ -187,9 +190,10 @@ class ApiKey extends ModelClass
         return parent::test();
     }
 
-    public function updateActivity(): bool
+    public function updateActivity(?string $ip = null): bool
     {
         $this->lastactivity = Tools::dateTime();
+        $this->lastip = $ip;
         return $this->save();
     }
 
