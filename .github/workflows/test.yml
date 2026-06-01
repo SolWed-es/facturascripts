@@ -2,9 +2,9 @@ name: PHPUnit Tests
 
 on:
   push:
-    branches: [ master, main, solwed/production ]
+    branches: [ master, main, solwed/production, solwed/dev ]
   pull_request:
-    branches: [ master, main, solwed/production ]
+    branches: [ master, main, solwed/production, solwed/dev ]
 
 env:
   DB_NAME: facturascripts_test
