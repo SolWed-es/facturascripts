@@ -72,7 +72,13 @@ class AlbaranManager
             // Marcar como pagado desde portal (pago confirmado por Stripe invoice.paid)
             $albaran->pc_paid = true;
             $albaran->pc_created = true;
+            $albaran->pc_impago = false;
             $albaran->pc_payment_intent_stripe = $invoice->payment_intent ?? '';
+
+            // Si existía un albarán de impago para esta invoice, lo resolvemos (se sustituye por el pagado)
+            if (!empty($invoice->id)) {
+                self::resolveImpagoForInvoice($invoice->id);
+            }
 
             // Configurar serie desde Settings
             $serieCodigo = StripeHelper::getSetting('serie_albaran', 'A');
@@ -301,5 +307,146 @@ class AlbaranManager
         $existentes = $albaran->all($where, [], 0, 1);
 
         return !empty($existentes);
+    }
+
+    /**
+     * Marca el impago de una invoice de Stripe creando un albarán "impago" (se pinta en rojo
+     * en el listado de albaranes). Idempotente por invoice id.
+     *
+     * @param object $invoice Invoice object de Stripe (evento invoice.payment_failed)
+     * @return AlbaranCliente|null
+     */
+    public static function createImpagoFromInvoice($invoice): ?AlbaranCliente
+    {
+        $invoiceId = $invoice->id ?? '';
+        if (empty($invoiceId)) {
+            Tools::log('solwed')->error('No invoice id in failed payment');
+            return null;
+        }
+
+        // Evitar duplicados: ¿ya hay un albarán de impago para esta invoice?
+        if (self::findImpagoByInvoice($invoiceId)) {
+            Tools::log('solwed')->warning('Impago albaran already exists for invoice: ' . $invoiceId);
+            return null;
+        }
+
+        // Si el cobro ya se resolvió y existe albarán pagado para el PaymentIntent, no creamos impago
+        $paymentIntent = $invoice->payment_intent ?? null;
+        if ($paymentIntent && self::checkDuplicate($paymentIntent)) {
+            return null;
+        }
+
+        $customerEmail = $invoice->customer_email ?? '';
+        if (empty($customerEmail)) {
+            Tools::log('solwed')->error('No customer email in failed invoice');
+            return null;
+        }
+
+        $cliente = self::findOrCreateCliente($customerEmail, $invoice);
+        if (!$cliente) {
+            Tools::log('solwed')->error('Could not find or create client for failed invoice: ' . $customerEmail);
+            return null;
+        }
+
+        try {
+            $albaran = new AlbaranCliente();
+            $albaran->setSubject($cliente);
+
+            $albaran->observaciones = sprintf(
+                'IMPAGO Stripe | Cobro rechazado | Subscription: %s | Invoice: %s',
+                $invoice->subscription ?? 'N/A',
+                $invoiceId
+            );
+
+            // Marcar como impago (no pagado) -> coloreado en rojo en el listado
+            $albaran->pc_paid = false;
+            $albaran->pc_created = true;
+            $albaran->pc_impago = true;
+            $albaran->pc_payment_intent_stripe = 'impago:' . $invoiceId;
+
+            $serieCodigo = StripeHelper::getSetting('serie_albaran', 'A');
+            $serie = new Serie();
+            if ($serie->load($serieCodigo)) {
+                $albaran->codserie = $serie->codserie;
+            }
+
+            if (!$albaran->save()) {
+                Tools::log('solwed')->error('Could not save impago albaran');
+                return null;
+            }
+
+            // Líneas desde la invoice (importe que se intentó cobrar)
+            if (isset($invoice->lines) && isset($invoice->lines->data)) {
+                foreach ($invoice->lines->data as $item) {
+                    $linea = $albaran->getNewLine();
+                    $linea->descripcion = '[IMPAGO] ' . ($item->description ?? 'Suscripción Stripe');
+                    $linea->pvpunitario = $item->amount / 100;
+                    $linea->cantidad = $item->quantity ?? 1;
+                    $linea->pvptotal = $linea->pvpunitario * $linea->cantidad;
+                    if (!$linea->save()) {
+                        Tools::log('solwed')->error('Could not save impago albaran line');
+                        $albaran->delete();
+                        return null;
+                    }
+                }
+            }
+
+            $total = 0;
+            foreach ($albaran->getLines() as $linea) {
+                $total += $linea->pvptotal;
+            }
+            $albaran->neto = $total;
+            $albaran->total = $total;
+            $albaran->save();
+
+            Tools::log('solwed')->warning(sprintf(
+                'IMPAGO albaran created: %s (Amount: %.2f EUR) for customer: %s',
+                $albaran->codigo,
+                $albaran->total,
+                $customerEmail
+            ));
+
+            return $albaran;
+        } catch (Exception $e) {
+            Tools::log('solwed')->error('Error creating impago albaran: ' . $e->getMessage());
+            if (isset($albaran) && $albaran->exists()) {
+                $albaran->delete();
+            }
+            return null;
+        }
+    }
+
+    /**
+     * Elimina el albarán de impago asociado a una invoice cuando el cobro se resuelve.
+     *
+     * @param string $invoiceId
+     * @return void
+     */
+    public static function resolveImpagoForInvoice(string $invoiceId): void
+    {
+        $albaran = self::findImpagoByInvoice($invoiceId);
+        if ($albaran) {
+            Tools::log('solwed')->info('Resolving impago albaran ' . $albaran->codigo . ' for invoice ' . $invoiceId);
+            $albaran->delete();
+        }
+    }
+
+    /**
+     * Busca un albarán de impago por invoice id (stamp pc_payment_intent_stripe = "impago:<invoiceId>").
+     *
+     * @param string $invoiceId
+     * @return AlbaranCliente|null
+     */
+    private static function findImpagoByInvoice(string $invoiceId): ?AlbaranCliente
+    {
+        if (empty($invoiceId)) {
+            return null;
+        }
+
+        $albaran = new AlbaranCliente();
+        $where = [new DataBaseWhere('pc_payment_intent_stripe', 'impago:' . $invoiceId)];
+        $existentes = $albaran->all($where, [], 0, 1);
+
+        return !empty($existentes) ? $existentes[0] : null;
     }
 }

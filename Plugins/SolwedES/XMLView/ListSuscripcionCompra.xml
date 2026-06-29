@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ * Plugin SolwedES - Suscripciones de Compra
+ *
+ * @author    Solwed Desarrollo
+ * @copyright 2026 Solwed
+-->
+<view>
+    <columns>
+        <column name="id" order="100">
+            <widget type="text" fieldname="id"/>
+        </column>
+        <column name="supplier" order="110">
+            <widget type="autocomplete" fieldname="codproveedor" onclick="EditProveedor">
+                <values source="proveedores" fieldcode="codproveedor" fieldtitle="nombre"/>
+            </widget>
+        </column>
+        <column name="concept" order="120">
+            <widget type="text" fieldname="concepto"/>
+        </column>
+        <column name="status" order="130">
+            <widget type="text" fieldname="estado"/>
+        </column>
+        <column name="payment-method" order="140">
+            <widget type="text" fieldname="metodo_pago"/>
+        </column>
+        <column name="start-date" order="150">
+            <widget type="date" fieldname="fecha_inicio"/>
+        </column>
+        <column name="next-payment" order="160">
+            <widget type="date" fieldname="fecha_proximo_pago"/>
+        </column>
+        <column name="amount" display="right" order="170">
+            <widget type="money" fieldname="importe"/>
+        </column>
+        <column name="intervalo" display="center" order="175">
+            <widget type="text" fieldname="intervalo"/>
+        </column>
+        <column name="auto-renew" display="center" order="180">
+            <widget type="checkbox" fieldname="auto_renovar"/>
+        </column>
+    </columns>
+    <rows>
+        <row type="status" fieldname="estado">
+            <option color="success">activa</option>
+            <option color="warning">pausada</option>
+            <option color="danger">cancelada</option>
+        </row>
+        <row type="actions">
+            <option icon="fa-solid fa-edit" label="edit" type="edit"/>
+            <option icon="fa-solid fa-trash-alt" label="delete" type="delete" confirm="true"/>
+        </row>
+        <row type="statistics" fieldname="importe">
+            <option type="sum" label="sum"/>
+            <option type="count" label="count"/>
+        </row>
+    </rows>
+</view>

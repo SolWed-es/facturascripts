@@ -360,5 +360,21 @@
   "address-required": "La direccion es obligatoria",
   "city-required": "La ciudad es obligatoria",
   "cancel_at_period_end": "Cancelar al final del periodo",
-  "impago_alerta_sent": "Alerta impago enviada"
+  "impago_alerta_sent": "Alerta impago enviada",
+  "purchase-subscriptions": "Suscripciones de compra",
+  "purchase-subscription": "Suscripcion de compra",
+  "payment-failed": "Cobro fallido",
+  "supplier-required": "El proveedor es obligatorio",
+  "activa": "Activa",
+  "pausada": "Pausada",
+  "cancelada": "Cancelada",
+  "domiciliacion": "Domiciliacion",
+  "tarjeta": "Tarjeta",
+  "transferencia": "Transferencia",
+  "next-payment": "Proximo pago",
+  "month": "Mensual",
+  "trimestre": "Trimestral",
+  "auto-renewal": "Auto-renovacion",
+  "auto-renew": "Auto-renueva",
+  "reference": "Referencia"
 }

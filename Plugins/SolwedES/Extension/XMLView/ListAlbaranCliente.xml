@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ * Plugin SolwedES - Extension del listado de albaranes de cliente.
+ * Anade coloreado en rojo de los albaranes con cobro Stripe fallido (pc_impago).
+-->
+<view>
+    <rows>
+        <row type="status">
+            <option color="danger" title="payment-failed" fieldname="pc_impago">1</option>
+        </row>
+    </rows>
+</view>
