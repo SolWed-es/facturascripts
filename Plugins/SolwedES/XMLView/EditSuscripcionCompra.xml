@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ * Plugin SolwedES - Edicion de Suscripcion de Compra
+ *
+ * @author    Solwed Desarrollo
+ * @copyright 2026 Solwed
+-->
+<view>
+    <columns>
+        <group name="subscription-info" numcolumns="12" title="subscription-info">
+            <column name="supplier" numcolumns="6" order="100">
+                <widget type="autocomplete" fieldname="codproveedor" required="true" onclick="EditProveedor">
+                    <values source="proveedores" fieldcode="codproveedor" fieldtitle="nombre"/>
+                </widget>
+            </column>
+            <column name="concept" numcolumns="6" order="110">
+                <widget type="text" fieldname="concepto" required="true" maxlength="255"/>
+            </column>
+            <column name="status" numcolumns="3" order="120">
+                <widget type="select" fieldname="estado" required="true" translate="true">
+                    <values title="activa">activa</values>
+                    <values title="pausada">pausada</values>
+                    <values title="cancelada">cancelada</values>
+                </widget>
+            </column>
+            <column name="auto-renew" numcolumns="3" order="130">
+                <widget type="checkbox" fieldname="auto_renovar"/>
+            </column>
+        </group>
+        <group name="payment" numcolumns="12" title="payment">
+            <column name="payment-method" numcolumns="3" order="100">
+                <widget type="select" fieldname="metodo_pago" required="true" translate="true">
+                    <values title="domiciliacion">domiciliacion</values>
+                    <values title="transferencia">transferencia</values>
+                    <values title="tarjeta">tarjeta</values>
+                    <values title="manual">manual</values>
+                </widget>
+            </column>
+            <column name="amount" numcolumns="3" order="110">
+                <widget type="number" fieldname="importe" decimal="2"/>
+            </column>
+            <column name="moneda" numcolumns="2" order="115">
+                <widget type="text" fieldname="moneda" maxlength="5"/>
+            </column>
+            <column name="intervalo" numcolumns="2" order="120">
+                <widget type="select" fieldname="intervalo" translate="true">
+                    <values title="monthly">month</values>
+                    <values title="quarterly">trimestre</values>
+                    <values title="yearly">year</values>
+                </widget>
+            </column>
+            <column name="reference" numcolumns="6" order="130">
+                <widget type="text" fieldname="referencia_externa" maxlength="255">
+                    <hint>Referencia del proveedor, nº de contrato, etc.</hint>
+                </widget>
+            </column>
+        </group>
+        <group name="dates" numcolumns="12" title="dates">
+            <column name="start-date" numcolumns="3" order="100">
+                <widget type="date" fieldname="fecha_inicio"/>
+            </column>
+            <column name="next-payment" numcolumns="3" order="110">
+                <widget type="date" fieldname="fecha_proximo_pago"/>
+            </column>
+            <column name="last-payment" numcolumns="3" order="120">
+                <widget type="date" fieldname="fecha_ultimo_pago"/>
+            </column>
+        </group>
+        <group name="notes" numcolumns="12" title="notes">
+            <column name="notas" numcolumns="12" order="100">
+                <widget type="textarea" fieldname="notas" rows="4"/>
+            </column>
+        </group>
+        <group name="timestamps" numcolumns="12" title="dates">
+            <column name="creation-date" numcolumns="6" order="100">
+                <widget type="datetime" fieldname="creation_date" readonly="dinamic"/>
+            </column>
+            <column name="last-update" numcolumns="6" order="110">
+                <widget type="datetime" fieldname="last_update" readonly="dinamic"/>
+            </column>
+        </group>
+    </columns>
+</view>

@@ -1183,7 +1183,17 @@ class StripeWebhook extends Controller
             }
         }
 
-        return ['success' => true, 'pago_id' => $pago->id];
+        // Crear albarán de impago (se muestra en rojo en el listado) si crear_albaran está habilitado
+        $result = ['success' => true, 'pago_id' => $pago->id];
+        if (StripeHelper::getSetting('crear_albaran', true)) {
+            $albaranImpago = AlbaranManager::createImpagoFromInvoice($invoice);
+            if ($albaranImpago) {
+                $result['albaran_impago'] = $albaranImpago->codigo;
+                SolwedLogger::stripe('Impago albaran created: ' . $albaranImpago->codigo);
+            }
+        }
+
+        return $result;
     }
 
     // ==================== HELPER METHODS ====================
