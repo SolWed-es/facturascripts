@@ -151,7 +151,9 @@ class WidgetLibrary extends BaseWidget
                 break;
         }
 
-        foreach ($model->all($where, $orderBy) as $file) {
+        // limitamos los resultados: sin límite, instalaciones con miles de adjuntos
+        // agotan la memoria de PHP al renderizar la galería (la búsqueda ya filtra vía AJAX)
+        foreach ($model->all($where, $orderBy, 0, 50) as $file) {
             // excluimos el archivo seleccionado
             if ($file->idfile === $model->idfile) {
                 continue;
