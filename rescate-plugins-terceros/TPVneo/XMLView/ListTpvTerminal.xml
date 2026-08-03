@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ * Copyright (C) 2022 Carlos Garcia Gomez <carlos@facturascripts.com>
+ * Author Daniel Fernández Giménez <hola@danielfg.es>
+-->
+<view>
+    <columns>
+        <column name="code" display="none" order="0">
+            <widget type="text" fieldname="idtpv"/>
+        </column>
+        <column name="name" order="100">
+            <widget type="text" fieldname="name"/>
+        </column>
+        <column name="customer" order="110">
+            <widget type="select" fieldname="codcliente" required="true">
+                <values source="clientes" fieldcode="codcliente" fieldtitle="nombre"/>
+            </widget>
+        </column>
+        <column name="printer" order="120">
+            <widget type="select" fieldname="idprinter" required="true">
+                <values source="tickets_printers" fieldcode="id" fieldtitle="name"/>
+            </widget>
+        </column>
+        <column name="active" display="center" order="130">
+            <widget type="checkbox" fieldname="active"/>
+        </column>
+        <column name="opened" display="center" order="140">
+            <widget type="checkbox" fieldname="open"/>
+        </column>
+    </columns>
+</view>

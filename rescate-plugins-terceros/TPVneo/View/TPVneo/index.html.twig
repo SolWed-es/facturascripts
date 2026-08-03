@@ -1,0 +1,1827 @@
+{#
+* Copyright (C) 2022-2024 Carlos Garcia Gomez <carlos@facturascripts.com>
+* Author Daniel Fernández Giménez <hola@danielfg.es>
+#}
+
+{% extends "Master/MenuBgTemplate.html.twig" %}
+{% import 'Macro/Forms.html.twig' as forms %}
+
+{% block body %}
+    {{ parent() }}
+    <div class="container-fluid">
+        <div class="form-row">
+            <div class="col-lg-7 col-xl-8">
+                <div id="titletpv" class="col-12 text-center mb-3">
+                    <h3 class="mb-0">
+                        {{ fsc.agente.nombre }}
+                        {% if fsc.tpvAgents %}
+                            <form action="{{ fsc.url() }}" method="post">
+                                <input type="hidden" name="idtpv" value="{{ fsc.tpv.idtpv }}">
+                                <button type="submit" name="action" value="agent-out"
+                                        class="btn btn-outline-secondary ml-1">
+                                    <i class="fas fa-users fa-fw"></i> {{ trans('change-agent') }}
+                                </button>
+                            </form>
+                        {% endif %}
+                    </h3>
+                    <small class="text-secondary">{{ trans('pos-terminal') }}: {{ fsc.tpv.name }}</small>
+                </div>
+                <div class="form-row">
+                    <div class="col-sm">
+                        <form action="#" method="post" name="barcodeForm" onsubmit="return addBarcode()">
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text"><i class="fas fa-barcode"></i></span>
+                                </div>
+                                <input type="text" name="barcode" class="form-control form-control-lg"
+                                       placeholder="{{ trans('barcode') }}" autofocus>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="col-sm">
+                        <form method="post" name="productsForm" onsubmit="return searchProducts()">
+                            <input type="hidden" name="action" value="find-products">
+                            <input type="hidden" name="productlimit" value="{{ fsc.tpv.productlimit }}">
+                            <input type="hidden" name="codalmacen" value="{{ fsc.tpv.codalmacen }}">
+                            <input type="hidden" name="codfamilia" value="-1">
+                            <input type="hidden" name="multireqtoken"
+                                   value="{{ fsc.multiRequestProtection.newToken(fsc.user.logkey) }}"/>
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                                <input type="text" name="query" class="form-control form-control-lg"
+                                       placeholder="{{ trans('search') }}">
+                                <div class="input-group-append">
+                                    <button type="button" class="btn btn-secondary" title="{{ trans('delete') }}"
+                                            onclick="this.form.query.value=''; this.form.query.focus(); return searchProducts();">
+                                        <i class="fas fa-backspace"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="col-12">
+                        <div class="form-row" id="productList">
+                            {{ fsc.renderProductList(fsc.tpv.codalmacen) | raw }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-5 col-xl-4">
+                <div id="cart" class="card border-secondary shadow-sm">
+                    <div class="card-header bg-secondary">
+                        <div class="mb-3 d-flex justify-content-between align-items-center">
+                            <div class="text-white font-weight-bold h4 m-0">
+                                <i class="fas fa-shopping-basket"></i> {{ trans('cart') }}
+                            </div>
+                            <div class="btn-group dropdown">
+                                <button class="btn btn-light dropdown-toggle" type="button" id="dropdownMenuButton"
+                                        data-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-cash-register"></i> {{ trans('box') }}
+                                </button>
+                                <div class="dropdown-menu dropdown-menu-right py-0"
+                                     aria-labelledby="dropdownMenuButton">
+                                    <form action="{{ fsc.url() }}" method="post">
+                                        <input type="hidden" name="idtpv" value="">
+                                        <input type="hidden" name="idcaja" value="">
+                                        <input type="hidden" name="action" value="">
+                                        <button type="submit" class="dropdown-item p-3" id="btnChangeTerminal">
+                                            <i class="fas fa-exchange-alt fa-fw"></i> {{ trans('pos-terminals') }}
+                                        </button>
+                                    </form>
+                                    <div class="dropdown-divider my-0"></div>
+                                    {% if fsc.tpv.idprinter %}
+                                        <button type="button" class="dropdown-item p-3" onclick="return openDrawer()">
+                                            <i class="fas fa-inbox fa-fw"></i> {{ trans('open-drawer') }}
+                                        </button>
+                                    {% endif %}
+                                    <button type="button" class="dropdown-item p-3" onclick="modalBoxMovement()">
+                                        <i class="fas fa-coins fa-fw"></i> {{ trans('box-movement') }}
+                                    </button>
+                                    <form action="{{ fsc.url() }}" method="post">
+                                        <input type="hidden" name="idtpv" value="{{ fsc.tpv.idtpv }}">
+                                        <input type="hidden" name="idcaja" value="{{ fsc.caja.idcaja }}">
+                                        <button type="submit" name="action" value="close-box-start"
+                                                class="dropdown-item p-3 text-danger">
+                                            <i class="fas fa-times fa-fw"></i> {{ trans('close-box') }}
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="input-group input-group-lg">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">
+                                    <i id="iconCustomerSearch" class="fas fa-user"></i>
+                                    <i id="iconCustomerClear"
+                                       class="fas fa-times text-danger cursor-pointer d-none"></i>
+                                </span>
+                            </div>
+                            <input type="text" name="query" class="form-control" id="customertpv"
+                                   placeholder="{{ fsc.getNameClient() }}"/>
+                            <div class="input-group-append">
+                                <button class="btn btn-success btn-spin-action" type="button"
+                                        onclick="return modalAddCustomer()" title="{{ trans('new-customer') }}">
+                                    <i class="fas fa-user-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="saleDiv" class="card-body p-0 overflow-auto">
+                        {{ fsc.renderSaleForm() | raw }}
+                    </div>
+                    {% if fsc.tpv.addemptyline or fsc.tpv.adddiscount %}
+                        <div class="form-row p-3">
+                            {% if fsc.tpv.addemptyline %}
+                                <div class="col">
+                                    <button class="btn btn-block btn-outline-success" onclick="modalNewLine()">
+                                        <i class="fas fa-plus"></i>
+                                        {{ trans('line') }}
+                                    </button>
+                                </div>
+                            {% endif %}
+                            {% if fsc.tpv.adddiscount %}
+                                <div class="col">
+                                    <div class="input-group">
+                                        <input type="number" name="dtopor_global" value="0" min="0" max="100"
+                                               class="form-control text-center">
+                                        <div class="input-group-append">
+                                            <span class="input-group-text">%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                    <div class="card-footer bg-secondary">
+                        <div id="btnSaleFooter" class="form-row mb-2">
+                            <div class="col">
+                                <button type="button" onclick="collectMoney()"
+                                        class="btn btn-block btn-success btn-lg btn-spin-action">
+                                    {{ trans('collect-money') }}
+                                    <span id="saleAmount">{{ fsc.getAmount() }}</span>
+                                </button>
+                            </div>
+                            {% if fsc.tpv.preticket and fsc.tpv.idprinter %}
+                                <div class="col-auto">
+                                    <button onclick="return prePrintTicket()" title="{{ trans('print-preticket') }}"
+                                            class="btn btn-block btn-light btn-lg btn-spin-action">
+                                        <i class="fas fa-print"></i>
+                                    </button>
+                                </div>
+                            {% endif %}
+                            <div class="col-auto">
+                                <button onclick="return clearCart()"
+                                        class="btn btn-block btn-danger btn-lg btn-spin-action">
+                                    {{ trans('delete') }}
+                                </button>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-8">
+                                <div class="btn-group btn-block" role="group">
+                                    <button onclick="return modalPark()" class="btn btn-warning btn-lg btn-spin-action">
+                                        {{ trans('park-ticket') }}
+                                    </button>
+                                    <button type="button"
+                                            class="btn btn-outline-warning btn-lg btn-spin-action text-nowrap"
+                                            id="btnPark" onclick="return modalListPark()">
+                                        {{ trans('parked-tickets') }}
+                                        <span class="badge badge-warning">{{ fsc.getParkCount() }}</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <button type="button" onclick="return modalTickets()"
+                                        class="btn btn-block btn-primary btn-lg  btn-spin-action">
+                                    {{ trans('tickets') }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="floatCart" class="btn rounded-0 d-xl-none w-100 p-2 bg-success text-white text-center">
+        <i class="fas fa-shopping-cart fa-fw"></i> {{ trans('view-cart') }}
+    </div>
+
+    <div class="modal fade" tabindex="-1" id="modalAddCustomer">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">{{ trans('new-customer')|capitalize }}</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="{{ trans('close') }}">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>{{ trans('business-name') }}</label>
+                        <input type="text" class="form-control" name="razonsocial" maxlength="100">
+                    </div>
+                    <div class="form-row">
+                        <div class="col-sm">
+                            <div class="form-group">
+                                <label>{{ trans('type') }}</label>
+                                <select name="personafisica" class="form-control">
+                                    <option value="1">{{ trans('is-person') }}</option>
+                                    <option value="0">{{ trans('company') }}</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-sm">
+                            <div class="form-group">
+                                <label>{{ trans('fiscal-id') }}</label>
+                                {{ forms.simpleSelect('customer-fiscal', 'tipoidfiscal', settings('default', 'tipoidfiscal', 'NIF'),
+                                    fsc.getSelectValues('idsfiscales', 'tipoidfiscal', 'tipoidfiscal', false)) }}
+                            </div>
+                        </div>
+                        <div class="col-sm">
+                            <div class="form-group">
+                                <label>{{ trans('fiscal-number') }}</label>
+                                <input type="text" class="form-control" name="cifnif" maxlength="30">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="col-sm">
+                            <div class="form-group">
+                                <label>{{ trans('address') }}</label>
+                                <input type="text" class="form-control" name="address" maxlength="100">
+                            </div>
+                        </div>
+                        <div class="col-sm-2">
+                            <div class="form-group">
+                                <label>{{ trans('post-office-box') }}</label>
+                                <input type="text" class="form-control" name="apartado" maxlength="10">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="col-sm">
+                            <div class="form-group">
+                                <label>{{ trans('zip-code') }}</label>
+                                <input type="text" class="form-control" name="codpostal" maxlength="10">
+                            </div>
+                        </div>
+                        <div class="col-sm">
+                            <div class="form-group">
+                                <label>{{ trans('city') }}</label>
+                                <input type="text" class="form-control" name="ciudad" maxlength="100">
+                            </div>
+                        </div>
+                        <div class="col-sm">
+                            <div class="form-group">
+                                <label>{{ trans('province') }}</label>
+                                <input type="text" class="form-control" name="provincia" maxlength="100">
+                            </div>
+                        </div>
+                        <div class="col-sm">
+                            <div class="form-group">
+                                <label>{{ trans('country') }}</label>
+                                {{ forms.simpleSelect('customer-country', 'codpais', settings('default', 'codpais', 'ESP'),
+                                    fsc.getSelectValues('paises', 'codpais', 'nombre', false)) }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="col-sm">
+                            <div class="form-group">
+                                <label>{{ trans('phone') }}</label>
+                                <input type="text" class="form-control" name="telefono1" maxlength="30">
+                            </div>
+                        </div>
+                        <div class="col-sm">
+                            <div class="form-group">
+                                <label>{{ trans('email') }}</label>
+                                <input type="text" class="form-control" name="email" maxlength="100">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-lg"
+                            data-dismiss="modal">{{ trans('cancel') }}</button>
+                    <button type="button" class="btn btn-success btn-lg btn-spin-action"
+                            onclick="return saveAddCustomer()">{{ trans('save') }}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" tabindex="-1" id="modalReturn">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">{{ trans('returns') }}</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="{{ trans('close') }}">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div id="productsReturn"></div>
+                <div id="optsReturn" class="modal-body">
+                    <div class="row">
+                        <div class="col-12 col-md-6 text-center">
+                            <div>
+                                <label>{{ trans('total-return') }}</label>
+                            </div>
+                            <div class="h1" id="totalReturn">
+                                <span class="money"></span>
+                                <span class="symbol ml-1">{{ fsc.getDivisa().simbolo }}</span>
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-6 text-center">
+                            <div>
+                                <label>{{ trans('method-return') }}</label>
+                            </div>
+                            <div class="h1" id="methodReturn"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-lg"
+                            data-dismiss="modal">{{ trans('cancel') }}</button>
+                    <button type="button" class="btn btn-success btn-lg btn-spin-action"
+                            onclick="return saveReturn()">{{ trans('return') }}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" tabindex="-1" id="modalTickets">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">{{ trans('tickets') }}</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="{{ trans('close') }}">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body text-center">
+                    <div class="row text-center">
+                        <div class="col-2 col-sm">
+                            <div class="font-weight-bolder">{{ trans('start-money') }}</div>
+                            <div>{{ fsc.getFormatMoney(fsc.caja.dineroini) }}</div>
+                        </div>
+                        <div class="col-2 col-sm">
+                            <div class="font-weight-bolder">{{ trans('cash-income') }}</div>
+                            <div id="boxEstimated"></div>
+                        </div>
+                        <div class="col-2 col-sm">
+                            <div class="font-weight-bolder">{{ trans('total-movements') }}</div>
+                            <div id="boxTotalMovements"></div>
+                        </div>
+                        <div class="col-2 col-sm">
+                            <div class="font-weight-bolder">{{ trans('total-in-box') }}</div>
+                            <div id="boxTotal"></div>
+                        </div>
+                        <div class="col-2 col-sm">
+                            <div class="font-weight-bolder">{{ trans('total-sales') }}</div>
+                            <div id="boxTotalTickets"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-body text-center">
+                    <div class="form-group border-top">
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <div class="input-group-text">
+                                    <i class="fas fa-search"></i>
+                                </div>
+                            </div>
+                            <input type="text" class="form-control text-center" id="searchTicket"
+                                   placeholder="{{ trans('search-document', {'%doctype%': trans(fsc.tpv.doctype ~ '-min')|lower}) }}">
+                        </div>
+                    </div>
+                </div>
+                <div class="table-responsive" id="listTickets">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                        <tr>
+                            <th class="text-nowrap">{{ trans('agent') }}</th>
+                            <th class="text-nowrap">{{ trans('code') }}</th>
+                            <th class="text-nowrap">{{ trans('number2') }}</th>
+                            <th class="text-nowrap">{{ trans('customer') }}</th>
+                            <th class="text-nowrap">{{ trans('payment-method') }}</th>
+                            <th class="text-nowrap">{{ trans('observations') }}</th>
+                            <th class="text-nowrap text-right">{{ trans('total') }}</th>
+                            <th class="text-nowrap text-right">{{ trans('date') }}</th>
+                            <th></th>
+                        </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" tabindex="-1" id="modalPrintTicket">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">{{ trans('options-ticket') }}</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="{{ trans('close') }}">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body text-center">
+                    <div id="optsPrint"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" tabindex="-1" id="modalCollectMoney">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">{{ trans('collect-money') }}</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="{{ trans('close') }}">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body py-0">
+                    <div class="row bg-light text-center">
+                        <div class="col-12 col-sm-6 py-3">
+                            <div class="h1 mb-0" id="moneyTotal"></div>
+                            <div class="small">{{ trans('total') }}</div>
+                        </div>
+                        <div class="col-12 col-sm-6 py-3">
+                            <div class="h1 mb-0">
+                                <span id="moneyChange"></span>
+                                <span id="symbolChange"></span>
+                            </div>
+                            <div class="small">{{ trans('money-change') }}</div>
+                        </div>
+                    </div>
+                    <div class="my-3 text-center">
+                        <label class="font-weight-bold text-dark">{{ trans('payment-methods') }}</label>
+                        <div id="paymentMethods">{{ fsc.getPaymentMethodsModalCollectMoneyHtml()|raw }}</div>
+                    </div>
+                    <div class="form-row">
+                        <div class="col-12 col-sm-6">
+                            <div class="form-group">
+                                {{ trans('number2') }}
+                                <input id="number2" maxlength="50" class="form-control"/>
+                            </div>
+                        </div>
+                        <div class="col-12 col-sm-6">
+                            <div class="form-group">
+                                {{ trans('serie') }}
+                                <select id="series" class="form-control">
+                                    {% for serie in fsc.getSeries() %}
+                                        {% set select = serie.codserie is same as(fsc.tpv.codserie) ? 'selected' : '' %}
+                                        <option value="{{ serie.codserie }}" {{ select }}>{{ serie.descripcion }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-group">
+                                {{ trans('observations') }}
+                                <textarea id="observations" class="form-control"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-lg"
+                            data-dismiss="modal">{{ trans('cancel') }}</button>
+                    <button type="button" class="btn btn-success btn-lg btn-spin-action"
+                            onclick="return saveCart()">{{ trans('save') }}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" tabindex="-1" id="modalPark">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">{{ trans('park-ticket') }}</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="{{ trans('close') }}">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    {% if fsc.prepagos %}
+                        <div class="form-group">
+                            <label>{{ trans('payment-method') }}</label>
+                            <div class="input-group my-group">
+                                <input type="number" min="0" id="amount" class="form-control" placeholder="0.00"/>
+                                <select id="payments" class="form-control">
+                                    {% for key, payment in fsc.getPaymentMethodsTpv() %}
+                                        {% set select = payment.codpago is same as(fsc.tpv.codpago) ? 'selected' : '' %}
+                                        <option value="{{ payment.codpago }}" {{ select }}>{{ payment.descripcion }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    {% endif %}
+                    <textarea id="observations" class="form-control"
+                              placeholder="{{ trans('observations') }}"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-lg"
+                            data-dismiss="modal">{{ trans('cancel') }}</button>
+                    <button type="button" class="btn btn-warning btn-lg btn-spin-action"
+                            onclick="return savePark()">{{ trans('park-ticket') }}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" tabindex="-1" id="modalListPark">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">{{ trans('cart-parking') }}</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="{{ trans('close') }}">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body"></div>
+                <div class="table-responsive" id="listPark">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                        <tr>
+                            <th>{{ trans('code') }}</th>
+                            <th>{{ trans('customer') }}</th>
+                            <th class="text-right">{{ trans('total') }}</th>
+                            <th class="text-right">{{ trans('date') }}</th>
+                            <th>{{ trans('observations') }}</th>
+                            <th></th>
+                            <th></th>
+                        </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="deletePark">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"></h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="{{ trans('close') }}">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body text-center">
+                    <i class="fas fa-trash-alt fa-3x"></i>
+                    <h5 class="mt-3 mb-1">{{ trans('confirm-delete') }}</h5>
+                    <p class="mb-0">{{ trans('are-you-sure') }}</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="return modalListPark()"
+                            data-dismiss="modal">{{ trans('cancel') }}</button>
+                    <button type="button" class="btnDelete btn btn-danger"
+                            onclick="">{{ trans('delete') }}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" tabindex="-1" id="modalBoxMovement">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">{{ trans('new-box-movement') }}</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="{{ trans('close') }}">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form method="post" name="boxMovementForm">
+                        <div class="form-group">
+                            {{ trans('quantity') }}
+                            <div class="input-group mb-3">
+                                <input type="number" min="0" class="form-control" name="qtyBoxMovement" autofocus
+                                       required>
+                                <div class="input-group-append">
+                                    <span class="input-group-text"
+                                          id="basic-addon2">{{ fsc.getDivisa().simbolo }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            {{ trans('type') }}
+                            <div class="custom-control custom-radio">
+                                <input type="radio" id="inBoxMovement" name="typeBoxMovement" value="IN"
+                                       class="custom-control-input" required>
+                                <label class="custom-control-label" for="inBoxMovement">{{ trans('money-in') }}</label>
+                            </div>
+                            <div class="custom-control custom-radio">
+                                <input type="radio" id="outBoxMovement" name="typeBoxMovement" value="OUT"
+                                       class="custom-control-input" required checked>
+                                <label class="custom-control-label"
+                                       for="outBoxMovement">{{ trans('money-out') }}</label>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            {{ trans('motive') }}
+                            <textarea class="form-control" maxlength="250" name="motiveBoxMovement"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary"
+                            data-dismiss="modal">{{ trans('cancel') }}</button>
+                    <button type="submit" class="btn btn-success btn-spin-action"
+                            onclick="return boxMovement()">{{ trans('save') }}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="newLine">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">{{ trans('new-line') }}</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="{{ trans('close') }}">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        {{ trans('description') }}
+                        <textarea class="form-control form-control-lg" rows="4" name="description"></textarea>
+                    </div>
+                    <div class="form-group">
+                        {{ trans('tax') }}
+                        <select name="codimpuesto" class="form-control form-control-lg">
+                            {% for tax in fsc.getTaxes() %}
+                                <option value="{{ tax.codimpuesto }}" {{ tax.codimpuesto is same as(settings('default', 'codimpuesto')) ? 'selected' : '' }}>{{ tax.descripcion }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary"
+                            data-dismiss="modal">{{ trans('cancel') }}</button>
+                    <button type="submit" class="btn btn-success btn-spin-action"
+                            onclick="return newLine()">{{ trans('add') }}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-none" id="iframe">
+        {% if fsc.tpv.idprinter %}
+            <iframe src="http://localhost:8089"></iframe>
+        {% endif %}
+    </div>
+{% endblock %}
+
+{% block css %}
+    {{ parent() }}
+    <link rel="stylesheet" href="{{ asset('node_modules/jquery-ui-dist/jquery-ui.min.css') }}"/>
+    <style>
+        img.photo-modal, img.photo-cart {
+            max-width: 50px;
+            max-height: 50px;
+            width: 100%;
+            height: 100%;
+        }
+
+        img.photo-default {
+            width: 100%;
+            height: 100px;
+            object-fit: cover;
+            overflow: hidden;
+        }
+
+        #floatCart {
+            position: fixed;
+            bottom: 0;
+            z-index: 10;
+        }
+
+        #btnPark {
+            position: relative;
+        }
+
+        .w-9 {
+            max-width: 9%;
+            width: 100%;
+        }
+
+        .text-orange, .text-orange:hover {
+            color: #ff9557;
+        }
+
+        .cursor-pointer {
+            cursor: pointer;
+        }
+
+        #productList .card {
+            /*height: 130px;*/
+        }
+
+        #productList .card .add-product {
+            height: 90%;
+        }
+
+        .ui-autocomplete {
+            z-index: 5000;
+        }
+
+        /* Animations Spinner */
+        .spinner-add,
+        .spinner-remove {
+            animation-fill-mode: both;
+            animation-duration: .4s;
+        }
+
+        .spinner-add {
+            animation-name: spinner-add;
+        }
+
+        @keyframes spinner-add {
+            from {
+                transform: scale(0);
+            }
+            to {
+                transform: scale(1);
+            }
+        }
+
+        .spinner-remove {
+            animation-name: spinner-remove;
+        }
+
+        @keyframes spinner-remove {
+            to {
+                transform: scale(0);
+            }
+        }
+
+        @media (min-width: 992px) {
+            #cart {
+                position: fixed;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="{{ asset('node_modules/jquery-ui-dist/jquery-ui.min.js') }}"></script>
+    <script>
+        let codcliente = '';
+        let codpark = '';
+        let editLine = 0;
+        let idDocReturn = '';
+        let keyupInputName = null;
+        let totalCart = 0;
+        let totalReturn = 0;
+        let waitCounter = 0;
+
+        function addBarcode() {
+            // obtenemos el barcode
+            let barcode = document.forms['barcodeForm']['barcode'].value;
+
+            if (barcode === '') {
+                // obtenemos cuantos productos hay en el carrito
+                let productCart = $('#linesCart .line').length;
+
+                // si hay productos en el carrito, abrimos el modal de cobrar
+                if (productCart > 0) {
+                    collectMoney();
+                }
+
+                // en cualquier caso, no hacemos nada más
+                return false;
+            }
+
+            document.forms['saleForm']['action'].value = 'add-barcode';
+            document.forms['saleForm']['action-code'].value = barcode;
+            let formData = new FormData(document.forms['saleForm']);
+
+            document.forms['barcodeForm']['barcode'].value = '';
+
+            return sendFormTpv(formData);
+        }
+
+        function addProduct(ref) {
+            {% if fsc.tpv.sound %}
+            let snd = new Audio("data:audio/wav;base64,//uQRAAAAWMSLwUIYAAsYkXgoQwAEaYLWfkWgAI0wWs/ItAAAGDgYtAgAyN+QWaAAihwMWm4G8QQRDiMcCBcH3Cc+CDv/7xA4Tvh9Rz/y8QADBwMWgQAZG/ILNAARQ4GLTcDeIIIhxGOBAuD7hOfBB3/94gcJ3w+o5/5eIAIAAAVwWgQAVQ2ORaIQwEMAJiDg95G4nQL7mQVWI6GwRcfsZAcsKkJvxgxEjzFUgfHoSQ9Qq7KNwqHwuB13MA4a1q/DmBrHgPcmjiGoh//EwC5nGPEmS4RcfkVKOhJf+WOgoxJclFz3kgn//dBA+ya1GhurNn8zb//9NNutNuhz31f////9vt///z+IdAEAAAK4LQIAKobHItEIYCGAExBwe8jcToF9zIKrEdDYIuP2MgOWFSE34wYiR5iqQPj0JIeoVdlG4VD4XA67mAcNa1fhzA1jwHuTRxDUQ//iYBczjHiTJcIuPyKlHQkv/LHQUYkuSi57yQT//uggfZNajQ3Vmz+Zt//+mm3Wm3Q576v////+32///5/EOgAAADVghQAAAAA//uQZAUAB1WI0PZugAAAAAoQwAAAEk3nRd2qAAAAACiDgAAAAAAABCqEEQRLCgwpBGMlJkIz8jKhGvj4k6jzRnqasNKIeoh5gI7BJaC1A1AoNBjJgbyApVS4IDlZgDU5WUAxEKDNmmALHzZp0Fkz1FMTmGFl1FMEyodIavcCAUHDWrKAIA4aa2oCgILEBupZgHvAhEBcZ6joQBxS76AgccrFlczBvKLC0QI2cBoCFvfTDAo7eoOQInqDPBtvrDEZBNYN5xwNwxQRfw8ZQ5wQVLvO8OYU+mHvFLlDh05Mdg7BT6YrRPpCBznMB2r//xKJjyyOh+cImr2/4doscwD6neZjuZR4AgAABYAAAABy1xcdQtxYBYYZdifkUDgzzXaXn98Z0oi9ILU5mBjFANmRwlVJ3/6jYDAmxaiDG3/6xjQQCCKkRb/6kg/wW+kSJ5//rLobkLSiKmqP/0ikJuDaSaSf/6JiLYLEYnW/+kXg1WRVJL/9EmQ1YZIsv/6Qzwy5qk7/+tEU0nkls3/zIUMPKNX/6yZLf+kFgAfgGyLFAUwY//uQZAUABcd5UiNPVXAAAApAAAAAE0VZQKw9ISAAACgAAAAAVQIygIElVrFkBS+Jhi+EAuu+lKAkYUEIsmEAEoMeDmCETMvfSHTGkF5RWH7kz/ESHWPAq/kcCRhqBtMdokPdM7vil7RG98A2sc7zO6ZvTdM7pmOUAZTnJW+NXxqmd41dqJ6mLTXxrPpnV8avaIf5SvL7pndPvPpndJR9Kuu8fePvuiuhorgWjp7Mf/PRjxcFCPDkW31srioCExivv9lcwKEaHsf/7ow2Fl1T/9RkXgEhYElAoCLFtMArxwivDJJ+bR1HTKJdlEoTELCIqgEwVGSQ+hIm0NbK8WXcTEI0UPoa2NbG4y2K00JEWbZavJXkYaqo9CRHS55FcZTjKEk3NKoCYUnSQ0rWxrZbFKbKIhOKPZe1cJKzZSaQrIyULHDZmV5K4xySsDRKWOruanGtjLJXFEmwaIbDLX0hIPBUQPVFVkQkDoUNfSoDgQGKPekoxeGzA4DUvnn4bxzcZrtJyipKfPNy5w+9lnXwgqsiyHNeSVpemw4bWb9psYeq//uQZBoABQt4yMVxYAIAAAkQoAAAHvYpL5m6AAgAACXDAAAAD59jblTirQe9upFsmZbpMudy7Lz1X1DYsxOOSWpfPqNX2WqktK0DMvuGwlbNj44TleLPQ+Gsfb+GOWOKJoIrWb3cIMeeON6lz2umTqMXV8Mj30yWPpjoSa9ujK8SyeJP5y5mOW1D6hvLepeveEAEDo0mgCRClOEgANv3B9a6fikgUSu/DmAMATrGx7nng5p5iimPNZsfQLYB2sDLIkzRKZOHGAaUyDcpFBSLG9MCQALgAIgQs2YunOszLSAyQYPVC2YdGGeHD2dTdJk1pAHGAWDjnkcLKFymS3RQZTInzySoBwMG0QueC3gMsCEYxUqlrcxK6k1LQQcsmyYeQPdC2YfuGPASCBkcVMQQqpVJshui1tkXQJQV0OXGAZMXSOEEBRirXbVRQW7ugq7IM7rPWSZyDlM3IuNEkxzCOJ0ny2ThNkyRai1b6ev//3dzNGzNb//4uAvHT5sURcZCFcuKLhOFs8mLAAEAt4UWAAIABAAAAAB4qbHo0tIjVkUU//uQZAwABfSFz3ZqQAAAAAngwAAAE1HjMp2qAAAAACZDgAAAD5UkTE1UgZEUExqYynN1qZvqIOREEFmBcJQkwdxiFtw0qEOkGYfRDifBui9MQg4QAHAqWtAWHoCxu1Yf4VfWLPIM2mHDFsbQEVGwyqQoQcwnfHeIkNt9YnkiaS1oizycqJrx4KOQjahZxWbcZgztj2c49nKmkId44S71j0c8eV9yDK6uPRzx5X18eDvjvQ6yKo9ZSS6l//8elePK/Lf//IInrOF/FvDoADYAGBMGb7FtErm5MXMlmPAJQVgWta7Zx2go+8xJ0UiCb8LHHdftWyLJE0QIAIsI+UbXu67dZMjmgDGCGl1H+vpF4NSDckSIkk7Vd+sxEhBQMRU8j/12UIRhzSaUdQ+rQU5kGeFxm+hb1oh6pWWmv3uvmReDl0UnvtapVaIzo1jZbf/pD6ElLqSX+rUmOQNpJFa/r+sa4e/pBlAABoAAAAA3CUgShLdGIxsY7AUABPRrgCABdDuQ5GC7DqPQCgbbJUAoRSUj+NIEig0YfyWUho1VBBBA//uQZB4ABZx5zfMakeAAAAmwAAAAF5F3P0w9GtAAACfAAAAAwLhMDmAYWMgVEG1U0FIGCBgXBXAtfMH10000EEEEEECUBYln03TTTdNBDZopopYvrTTdNa325mImNg3TTPV9q3pmY0xoO6bv3r00y+IDGid/9aaaZTGMuj9mpu9Mpio1dXrr5HERTZSmqU36A3CumzN/9Robv/Xx4v9ijkSRSNLQhAWumap82WRSBUqXStV/YcS+XVLnSS+WLDroqArFkMEsAS+eWmrUzrO0oEmE40RlMZ5+ODIkAyKAGUwZ3mVKmcamcJnMW26MRPgUw6j+LkhyHGVGYjSUUKNpuJUQoOIAyDvEyG8S5yfK6dhZc0Tx1KI/gviKL6qvvFs1+bWtaz58uUNnryq6kt5RzOCkPWlVqVX2a/EEBUdU1KrXLf40GoiiFXK///qpoiDXrOgqDR38JB0bw7SoL+ZB9o1RCkQjQ2CBYZKd/+VJxZRRZlqSkKiws0WFxUyCwsKiMy7hUVFhIaCrNQsKkTIsLivwKKigsj8XYlwt/WKi2N4d//uQRCSAAjURNIHpMZBGYiaQPSYyAAABLAAAAAAAACWAAAAApUF/Mg+0aohSIRobBAsMlO//Kk4soosy1JSFRYWaLC4qZBYWFRGZdwqKiwkNBVmoWFSJkWFxX4FFRQWR+LsS4W/rFRb/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////VEFHAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAU291bmRib3kuZGUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMjAwNGh0dHA6Ly93d3cuc291bmRib3kuZGUAAAAAAAAAACU=");
+            snd.play();
+            {% endif %}
+
+            document.forms['saleForm']['action'].value = 'add-product';
+            document.forms['saleForm']['action-code'].value = ref;
+            let formData = new FormData(document.forms['saleForm']);
+            return sendFormTpv(formData);
+        }
+
+        function boxMovement() {
+            const qty = $('input[name="qtyBoxMovement"]').val();
+            const type = $('input[name="typeBoxMovement"]:checked').val();
+            const motive = $('textarea[name="motiveBoxMovement"]').val();
+            if (isNaN(qty) || type === undefined) {
+                return false;
+            }
+
+            // la cantidad debe ser mayor que cero
+            if (parseFloat(qty) <= 0) {
+                setToast('{{ trans('box-movement-qty-error') }}', 'warning');
+                return false;
+            }
+
+            let formData = new FormData();
+            formData.append('action', 'box-movement');
+            formData.append('quantity', qty);
+            formData.append('type', type);
+            formData.append('motive', motive);
+            return sendFormTpv(formData);
+        }
+
+        function calculateReturn() {
+            totalReturn = 0;
+            $('#modalReturn #productsReturn tbody tr').each(function () {
+                let input = $(this).find('input');
+
+                if (parseFloat($(input).val()) > 0) {
+                    totalReturn += parseFloat($(input).val()) * parseFloat($(this).attr('pvpunitario'));
+                }
+            });
+
+            $('#modalReturn #totalReturn .money').html(totalReturn.toFixed(2));
+        }
+
+        function changeClient() {
+            document.forms['saleForm']['action'].value = 'recalculate';
+            let formData = new FormData(document.forms['saleForm']);
+            return sendFormTpv(formData);
+        }
+
+        function checkTotalPayments(input) {
+            let total = 0;
+            let cont = 0;
+            let totalDefault = 0;
+            let totalLine = 0;
+
+            if (input.attr('max') !== '' && parseFloat(input.val()) > parseFloat(input.attr('max'))) {
+                input.val('');
+            }
+
+            $("#modalCollectMoney #paymentMethods input").each(function () {
+                if ($(this).val() !== '') {
+                    let value = parseFloat($(this).val());
+
+                    if ($(this).attr('max') === '') {
+                        totalDefault = value;
+                    } else {
+                        totalLine += value;
+                    }
+                }
+            });
+
+            if (totalLine > 0 && parseFloat((totalDefault + totalLine).toFixed(2)) > parseFloat(totalCart)) {
+                input.val('');
+            }
+
+            $("#modalCollectMoney #paymentMethods input").each(function () {
+                if ($(this).val() !== '') {
+                    total += parseFloat($(this).val());
+                    cont++;
+                }
+            });
+
+            let amount = $('#saleAmount').html().split(' ');
+            let dec = amount[0].charAt(amount[0].length - 3);
+
+            if (total === 0) {
+                $('#modalCollectMoney #moneyChange').html((0).toFixed(2).replace('.', dec));
+            } else {
+                $('#modalCollectMoney #moneyChange').html((total - totalCart).toFixed(2).replace('.', dec));
+            }
+
+            $('#modalCollectMoney #symbolChange').html(amount[amount.length - 1]);
+        }
+
+        function clearCart() {
+            codpark = '';
+            document.forms['saleForm']['action'].value = 'clear-cart';
+            document.forms['saleForm']['action-code'].value = '';
+            let formData = new FormData(document.forms['saleForm']);
+            return sendFormTpv(formData);
+        }
+
+        function collectMoney() {
+            if ($('#linesCart .line').length <= 0) {
+                return;
+            }
+
+            $('#modalCollectMoney #moneyTotal').html($('#saleAmount').html());
+            $('#modalCollectMoney #moneyChange').html('');
+            $('#modalCollectMoney #symbolChange').html('');
+
+            $("#modalCollectMoney #paymentMethods input").each(function () {
+                if ($(this).attr('codpago') !== '{{ fsc.tpv.codpago }}') {
+                    $(this).attr('max', totalCart);
+                }
+                checkTotalPayments($(this));
+            });
+
+            $('#modalCollectMoney').modal('show');
+            $('#modalCollectMoney').on('shown.bs.modal', function () {
+                $('#modalCollectMoney #paymentMethods input:first').focus();
+            });
+        }
+
+        function collectMoneyClear() {
+            $('#modalCollectMoney textarea, #modalCollectMoney input').val('');
+        }
+
+        function deleteDocPark(codpark) {
+            let formData = new FormData();
+            formData.append('action', 'delete-park');
+            formData.append('codpark', codpark);
+            return sendFormTpv(formData);
+        }
+
+        function heightCart() {
+            let windowh = $(window).height();
+            let nav = $('nav:first').outerHeight();
+            let space = $('nav:first').next().outerHeight();
+            let titletpv = $('#titletpv').outerHeight();
+            $('#cart').css('height', windowh - (nav + space + titletpv + 25) + 'px');
+        }
+
+        function heightProductCard() {
+            let height = 0;
+            $('#productList .card').each(function () {
+                if ($(this).height() > height) {
+                    height = $(this).height();
+                }
+            });
+            $('#productList .card').height(height);
+        }
+
+        function lineDiscount(num, dto) {
+            document.forms['saleForm']['action'].value = 'recalculate';
+            document.forms['saleForm']['action-code'].value = '';
+            document.forms['saleForm']['dtopor_' + num].value = dto;
+            let formData = new FormData(document.forms['saleForm']);
+            return sendFormTpv(formData);
+        }
+
+        function lineQuantity(num, qty) {
+            document.forms['saleForm']['action'].value = 'recalculate';
+            document.forms['saleForm']['action-code'].value = '';
+            document.forms['saleForm']['cantidad_' + num].value = qty;
+            let formData = new FormData(document.forms['saleForm']);
+            return sendFormTpv(formData);
+        }
+
+        function linePrice(num, price) {
+            document.forms['saleForm']['action'].value = 'recalculate';
+            document.forms['saleForm']['action-code'].value = '';
+            document.forms['saleForm']['new_precio_' + num].value = price;
+            let formData = new FormData(document.forms['saleForm']);
+            return sendFormTpv(formData);
+        }
+
+        function changeDescriptionPrompt(num) {
+            let desc = prompt('{{ trans('description') }}');
+            if (desc.trim() === '') {
+                return false;
+            }
+
+            $('#linesCart .line' + num + ' .desc').html(desc);
+            $('#linesCart .line' + num + ' input[name="descripcion_' + num + '"]').val(desc);
+        }
+
+        function changeDtoPrompt(num) {
+            const dto = parseFloat(prompt('{{ trans('discount') }}').replace(',', '.')) || 0;
+            return lineDiscount(num, dto);
+        }
+
+        function changePricePrompt(num) {
+            const price = parseFloat(prompt('{{ trans('price') }}').replace(',', '.')) || 0;
+            return linePrice(num, price);
+        }
+
+        function changeQtyPrompt(num) {
+            const qty = parseFloat(prompt('{{ trans('quantity') }}').replace(',', '.')) || 0;
+            return lineQuantity(num, qty);
+        }
+
+        function loadPark(codpark) {
+            document.forms['saleForm']['action'].value = 'load-park';
+            document.forms['saleForm']['codpark'].value = codpark;
+            let formData = new FormData(document.forms['saleForm']);
+            return sendFormTpv(formData);
+        }
+
+        function modalAddCustomer() {
+            $('#modalAddCustomer').modal('show');
+            $('#modalAddCustomer').on('shown.bs.modal', function () {
+                $('#modalAddCustomer input:first').focus();
+            });
+        }
+
+        function modalBoxMovement() {
+            $('#modalBoxMovement').modal('show');
+            $('#modalBoxMovement').on('show.bs.modal', function () {
+                // limpiamos los campos
+                $('form[name="boxMovementForm"]').get(0).reset();
+            });
+        }
+
+        function modalDeletePark(codpark) {
+            $('#modalListPark').modal('hide');
+            $('#deletePark .btnDelete').attr('onclick', "return deleteDocPark(" + codpark + ")");
+            $('#deletePark').modal('show');
+        }
+
+        function modalNewLine() {
+            $('#newLine').modal('show');
+            $('#newLine').on('shown.bs.modal', function () {
+                $('#newLine textarea[name="description"]').focus();
+            });
+        }
+
+        function modalTickets() {
+            return searchTickets();
+        }
+
+        function modalListPark() {
+            $('#listPark tbody').html('');
+            let formData = new FormData();
+            formData.append('action', 'modal-list-park');
+            return sendFormTpv(formData);
+        }
+
+        function modalPark() {
+            if (totalCart <= 0) {
+                return false;
+            }
+
+            $('#modalPark').modal('show');
+            $('#modalPark input, #modalPark textarea').val('');
+            $('#modalPark').on('shown.bs.modal', function () {
+                $('#modalPark input:first').focus();
+            });
+        }
+
+        function modalPrintTicket(idDoc, pay = false) {
+            $('#modalTickets').modal('hide');
+            $('#modalPrintTicket').modal('show');
+            $('#modalPrintTicket #optsPrint').html('');
+            let formData = new FormData();
+            formData.append('action', 'load-doc-print');
+            formData.append('idDoc', idDoc);
+
+            if (pay) {
+                formData.append('pay', true);
+            }
+
+            return sendFormTpv(formData);
+        }
+
+        function modalReturn(idDoc) {
+            $('#modalTickets').modal('hide');
+            $('#modalReturn #optsReturn').hide();
+            $('#modalReturn #productsReturn').html('');
+            $('#modalReturn').modal('show');
+            let formData = new FormData();
+            formData.append('action', 'load-doc-return');
+            formData.append('idDoc', idDoc);
+            return sendFormTpv(formData);
+        }
+
+        function newLine() {
+            let desc = $('#newLine textarea[name="description"]').val();
+            let tax = $('#newLine select[name="codimpuesto"] option:selected').val();
+
+            if (desc.trim() === '' || tax === '') {
+                return false;
+            }
+
+            document.forms['saleForm']['action'].value = 'new-line';
+            document.forms['saleForm']['new-desc'].value = desc;
+            document.forms['saleForm']['new-tax'].value = tax;
+            let formData = new FormData(document.forms['saleForm']);
+            if (false === sendFormTpv(formData)) {
+                return false;
+            }
+
+            $('#linesCart .line:last .desc').html(desc);
+            $('#linesCart .line:last input[name="desc_*"]').val(desc);
+            document.forms['saleForm']['action'].value = '';
+            return true;
+        }
+
+        function openDrawer() {
+            let formData = new FormData();
+            formData.append('action', 'open-drawer');
+            return sendFormTpv(formData);
+        }
+
+        function prePrintTicket() {
+            document.forms['saleForm']['action'].value = 'pre-print-ticket';
+            let formData = new FormData(document.forms['saleForm']);
+            return sendFormTpv(formData);
+        }
+
+        function printTicket(idDoc) {
+            let formData = new FormData();
+            formData.append('action', 'print-ticket');
+            formData.append('idDoc', idDoc);
+            formData.append('ticketformat', $('#modalPrintTicket #ticketformat option:selected').val());
+            formData.append('ticket_number', $('#modalPrintTicket input[name="ticket_number"]').val());
+            return sendFormTpv(formData);
+        }
+
+        function rmLine(num) {
+            document.forms['saleForm']['action'].value = 'rm-line';
+            document.forms['saleForm']['action-code'].value = num;
+            let formData = new FormData(document.forms['saleForm']);
+            return sendFormTpv(formData);
+        }
+
+        function saveAddCustomer() {
+            let formData = new FormData();
+            formData.append('action', 'add-customer');
+            formData.append('empresa', $('#modalAddCustomer input[name="razonsocial"]').val());
+            formData.append('cifnif', $('#modalAddCustomer input[name="cifnif"]').val());
+            formData.append('direccion', $('#modalAddCustomer input[name="address"]').val());
+            formData.append('apartado', $('#modalAddCustomer input[name="apartado"]').val());
+            formData.append('codpostal', $('#modalAddCustomer input[name="codpostal"]').val());
+            formData.append('ciudad', $('#modalAddCustomer input[name="ciudad"]').val());
+            formData.append('provincia', $('#modalAddCustomer input[name="provincia"]').val());
+            formData.append('telefono1', $('#modalAddCustomer input[name="telefono1"]').val());
+            formData.append('email', $('#modalAddCustomer input[name="email"]').val());
+            formData.append('personafisica', $('#modalAddCustomer select[name="personafisica"] option:selected').val());
+            formData.append('tipoidfiscal', $('#modalAddCustomer select[name="tipoidfiscal"] option:selected').val());
+            formData.append('codpais', $('#modalAddCustomer select[name="codpais"] option:selected').val());
+
+            // limpiamos los campos
+            $('#modalAddCustomer input').val('');
+            $('#modalAddCustomer select[name="personafisica"] option[value="1"]').prop('selected', true);
+            $('#modalAddCustomer select[name="tipoidfiscal"] option[value="{{ settings('default', 'tipoidfiscal') }}"]').prop('selected', true);
+            $('#modalAddCustomer select[name="codpais"] option[value="{{ settings('default', 'codpais') }}"]').prop('selected', true);
+
+            return sendFormTpv(formData);
+        }
+
+        function saveCart() {
+            document.forms['saleForm']['action'].value = 'save-cart';
+            document.forms['saleForm']['action-code'].value = '';
+
+            let formData = new FormData(document.forms['saleForm']);
+            formData.append('observations', $('#modalCollectMoney #observations').val());
+            formData.append('numero2', $('#modalCollectMoney #number2').val());
+            formData.append('codserie', $('#modalCollectMoney select#series option:selected').val());
+            let moneyReceived = 0;
+            let formasPagos = 0;
+
+            $("#modalCollectMoney #paymentMethods input").each(function () {
+                let money = parseFloat($(this).val());
+                if (money > 0) {
+                    formasPagos++;
+                    moneyReceived += money;
+                    formData.append($(this).attr('codpago'), money);
+                }
+            });
+
+            let decimals = totalCart.split('.');
+            if (moneyReceived.toFixed(decimals.length) >= parseFloat(totalCart)) {
+                formData.append('formasPagos', formasPagos);
+                if (codpark != '') {
+                    document.forms['saleForm']['codpark'].value = codpark;
+                    formData.append('codpark', codpark);
+                }
+                return sendFormTpv(formData);
+            }
+
+            return false;
+        }
+
+        function savePark() {
+            if (totalCart <= 0) {
+                return false;
+            }
+
+            document.forms['saleForm']['action'].value = 'save-park';
+            document.forms['saleForm']['action-code'].value = '';
+            if (codpark !== '') {
+                document.forms['saleForm']['codpark'].value = codpark;
+            }
+            let formData = new FormData(document.forms['saleForm']);
+            formData.append('advance-payment-amount', $('#modalPark #amount').val());
+            formData.append('advance-payment', $('#modalPark #payments option:selected').val());
+            formData.append('observations', $('#modalPark #observations').val());
+            return sendFormTpv(formData);
+        }
+
+        function saveReturn() {
+            let formData = new FormData();
+            let cont = 0;
+            $('#modalReturn #productsReturn tbody tr').each(function () {
+                let val = parseFloat($(this).find('input').val());
+
+                if (val > 0) {
+                    formData.append('referencia_' + cont, $(this).attr('referencia'));
+                    formData.append('idlinea_' + cont, $(this).attr('idlinea'));
+                    formData.append('cantidad_' + cont, val);
+                    cont++;
+                }
+            });
+            formData.append('action', 'save-return');
+            formData.append('lines', cont);
+            formData.append('idDocReturn', idDocReturn);
+            return sendFormTpv(formData);
+        }
+
+        function searchProducts() {
+            document.forms['productsForm']['productlimit'].value = 0;
+            let formData = new FormData(document.forms['productsForm']);
+            return sendFormTpv(formData);
+        }
+
+        function searchTickets(codigo = '') {
+            $('#listTickets tbody').html('<i class="fas fa-spinner fa-spin"></i>');
+            let formData = new FormData();
+            formData.append('action', 'modal-tickets');
+            formData.append('codigo', codigo);
+            return sendFormTpv(formData);
+        }
+
+        function sendDoc(idDoc) {
+            let formData = new FormData();
+            formData.append('action', 'send-doc');
+            formData.append('idDoc', idDoc);
+            formData.append('email', $('#modalPrintTicket #emailInput').val());
+            formData.append('mailbox', $('#modalPrintTicket select[name="mailbox"] option:selected').val());
+            return sendFormTpv(formData);
+        }
+
+        function sendFormTpv(formData) {
+            if (editLine > 1) {
+                editLine--;
+                return false;
+            }
+
+            editLine = 0;
+            animateSpinner('add');
+
+            formData.append('linesCart', $('#linesCart .line').length);
+            formData.append('codcliente', codcliente);
+            formData.append('idtpv', {{ fsc.tpv.idtpv }});
+            formData.append('idcaja', {{ fsc.caja.idcaja }});
+            formData.append('dtopor_global', $('input[name="dtopor_global"]').val());
+            formData.append('ajax', true);
+
+            console.log(Object.fromEntries(formData));
+
+            fetch('{{ fsc.url() }}', {
+                method: 'POST',
+                body: formData
+            }).then(function (response) {
+                if (response.ok) {
+                    animateSpinner('remove', true);
+                    return response.json();
+                }
+
+                animateSpinner('remove', false);
+                return Promise.reject(response);
+            }).then(function (data) {
+                console.log(data);
+
+                if (data.refresh) {
+                    $('#btnChangeTerminal').click();
+                }
+
+                if (['add-product', 'new-line', 'add-barcode'].includes(formData.get('action'))) {
+                    $('.modalProductInfo').modal('hide');
+                    $("#saleDiv").animate({scrollTop: $('#saleDiv').prop("scrollHeight")}, 1000);
+                }
+
+                if (formData.get('action') === 'delete-park') {
+                    modalListPark();
+                    $('#deletePark').modal('hide');
+                    $('#btnPark span.badge').html(data.totalParks);
+
+                    if (parseInt(formData.get('codpark')) === parseInt(codpark)) {
+                        codpark = '';
+                        document.forms['saleForm']['codpark'].value = codpark;
+                    }
+                }
+
+                if (formData.get('action') === 'load-park') {
+                    $('#modalListPark').modal('hide');
+
+                    collectMoneyClear();
+
+                    // cargamos el descuento global
+                    $('input[name="dtopor_global"]').val(data['dtopor_global']);
+
+                    // cargamos las observaciones
+                    $('#modalCollectMoney #observations').val(data['observations']);
+
+                    // cargamos los pagos anticipados
+                    $.each(data['advance-payments'], function (key, value) {
+                        $('#modalCollectMoney #paymentMethods input[codpago="' + value.codpago + '"]').val(value.amount);
+                    });
+
+                    // cargamos el cliente si es diferente al del tpv
+                    if (data['customer'] && data['customer']['codcliente'] !== '{{ fsc.tpv.codcliente }}') {
+                        $('#customertpv').val(data['customer']['nombre']);
+                        codcliente = data['customer']['codcliente'];
+                        $('#saleDiv input[name="codcliente"]').val(codcliente);
+                        $('#iconCustomerSearch').addClass('d-none');
+                        $('#iconCustomerClear').removeClass('d-none');
+                        setSerie(data['customer']['codserie']);
+                    } else {
+                        codcliente = '';
+                        $('#customertpv').val('');
+                        $('#saleDiv input[name="codcliente"]').val(codcliente);
+                        $('#iconCustomerSearch').removeClass('d-none');
+                        $('#iconCustomerClear').addClass('d-none');
+                        setSerie('{{ fsc.tpv.codserie }}');
+                    }
+                }
+
+                if (formData.get('action') === 'modal-list-park') {
+                    $('#modalListPark').modal('show');
+
+                    if (data.totalParks > 0) {
+                        $('#btnPark span.badge').html(data.totalParks);
+                    } else {
+                        $('#btnPark span.badge').html('');
+                    }
+                }
+
+                if (formData.get('action') === 'save-park') {
+                    $('#modalPark').modal('hide');
+                }
+
+                if (formData.get('action') === 'modal-tickets') {
+                    $('#modalTickets').modal('show');
+                    $('#modalTickets #boxEstimated').html(data.boxEstimated);
+                    $('#modalTickets #boxTotal').html(data.boxTotal);
+                    $('#modalTickets #boxTotalTickets').html(data.boxTotalTickets);
+                    $('#modalTickets #boxTotalMovements').html(data.boxTotalMovements);
+                }
+
+                if (formData.get('action') === 'print-ticket') {
+                    $('#modalPrintTicket').modal('hide');
+                    $('form[name="barcodeForm"] input[name="barcode"]').focus();
+                }
+
+                if (['open-drawer', 'print-ticket', 'pre-print-ticket'].includes(formData.get('action'))) {
+                    setIframe();
+                }
+
+                if (data.totalCart) {
+                    totalCart = data.totalCart;
+
+                    if (data.totalCart > 0) {
+                        $('#saleAmount').popover('show');
+                        setInterval(function () {
+                            $('#saleAmount').popover('hide');
+                        }, 2000);
+                        $('#btnSaleFooter').show();
+                    } else if (formData.get('action') !== 'recalculate' && formData.get('action') !== 'load-park') {
+                        $('#btnSaleFooter').hide();
+                        $('#products-tab').click();
+                    }
+                }
+
+                if (data.amount && data.amount !== '' && data.amount !== document.getElementById("saleAmount").innerHTML) {
+                    document.getElementById("saleAmount").innerHTML = data.amount;
+                }
+
+                if (data.cart && data.cart !== '') {
+                    document.getElementById("saleDiv").innerHTML = data.cart;
+                } else if (data.cartMap && !data.cartMap.length) {
+                    $.each(data.cartMap, function (index, value) {
+                        $('#saleDiv').find('#' + index).html(value);
+                    });
+                }
+
+                if (formData.get('action') === 'new-line') {
+                    $('#linesCart .line:last input.precio').val('').focus();
+
+                    // ocultamos el modal de nueva línea y restauramos
+                    $('#newLine').modal('hide');
+                    $('#newLine textarea').val('');
+                    $('#newLine select[name="codimpuesto"] option[value="{{ settings('default', 'codimpuesto') }}"]').prop('selected', true);
+                }
+
+                if (data.products && data.products !== '') {
+                    document.getElementById("productList").innerHTML = data.products;
+                    heightProductCard();
+                }
+
+                if (data.savecart) {
+                    $('#modalCollectMoney').modal('hide');
+                    collectMoneyClear();
+                    modalPrintTicket(data.document.code, true);
+                    $('#btnPark span.badge').html(data.totalParks);
+                }
+
+                if (data.savereturn) {
+                    $('#modalReturn').modal('hide');
+                    modalPrintTicket(data.document.code);
+                }
+
+                if (data.savepark || data.savecart || data.clearcart) {
+                    // si el cliente no es él por defecto, lo restablecemos
+                    if (codcliente !== '{{ fsc.tpv.codcliente }}') {
+                        $('#iconCustomerClear').click();
+                    }
+                }
+
+                if (data.savepark || data.savecart) {
+                    clearCart();
+                }
+
+                if (data.clearcart) {
+                    searchProducts();
+                    $('#btnSaleFooter').hide();
+                    $('#products-tab').click();
+                    $('input[name="dtopor_global"]').val(0);
+                }
+
+                if (data.savecart && codpark !== '' || $('#linesCart .line').length === 0 && codpark !== '') {
+                    codpark = '';
+                }
+
+                if (data.savepark) {
+                    $('#btnPark button').popover('show');
+                    setInterval(function () {
+                        $('#btnPark button').popover('hide');
+                    }, 2000);
+                    $('#btnPark span.badge').html(data.totalParks);
+                }
+
+                if (data.codpark && data.codpark !== '') {
+                    codpark = data.codpark;
+                }
+
+                if (data.presupuestos && data.presupuestos !== '') {
+                    $('#listPark tbody').html(data.presupuestos);
+                }
+
+                if (data.tickets && data.tickets !== '') {
+                    $('#listTickets tbody').html(data.tickets);
+                }
+
+                if (data.docprint && data.docprint !== '') {
+                    $('#modalPrintTicket #optsPrint').html(data.docprint);
+                }
+
+                if (data.docreturn && data.docreturn !== '') {
+                    $('#modalReturn #productsReturn').html(data.docreturn);
+                    $('#modalReturn #methodReturn').html(data.methodreturn);
+
+                    totalReturn = 0;
+                    idDocReturn = data.idDoc;
+                    $('#modalReturn #totalReturn .money').html(totalReturn.toFixed(2));
+                    $('#modalReturn #optsReturn').show();
+                }
+
+                if (formData.get('action') === 'add-customer' && data.customer) {
+                    codcliente = data.customer.codcliente;
+                    $('#customertpv').val(data.customer.nombre);
+                    $('#saleDiv input[name="codcliente"]').val(codcliente);
+                    $('#iconCustomerSearch').addClass('d-none');
+                    $('#iconCustomerClear').removeClass('d-none');
+                    changeClient();
+                    $('#modalAddCustomer').modal('hide');
+
+                    // establecemos la serie del tpv
+                    setSerie('{{ fsc.tpv.codserie }}');
+                }
+
+                if (data.boxMovement) {
+                    $('#modalBoxMovement').modal('hide');
+                }
+
+                document.forms['productsForm']['productlimit'].value = {{ fsc.tpv.productlimit }};
+
+                // si no hay foco, establecemos el foco si tenemos el name del input donde se estaba escribiendo
+                if (formData.get('action') === 'recalculate-line' && document.activeElement.name === undefined && keyupInputName !== null) {
+                    let focusInput = $('input[name="' + keyupInputName + '"]');
+                    let focusLength = focusInput.val().length;
+                    let focusType = focusInput[0].type;
+                    // para establecer el cursor al final de input el type debe ser text
+                    if (focusType !== 'text') {
+                        focusInput[0].type = 'text';
+                    }
+                    focusInput.focus();
+                    focusInput[0].setSelectionRange(focusLength, focusLength);
+                    focusInput[0].type = focusType;
+                    keyupInputName = null;
+                }
+
+                // si hay líneas, establecemos el orden de las líneas
+                if ($('#linesCart .line').length > 0) {
+                    let orderInputs = $("#linesCart .line input[name^='orden_']");
+                    let count = orderInputs.length * 10;
+                    orderInputs.each(function (index) {
+                        $(this).val(count - (index * 10));
+                    });
+                }
+
+                // si hay mensajes de error
+                if (data.messages) {
+                    data.messages.forEach(function (msg) {
+                        if (msg.level === 'danger') {
+                            setToast(msg.message, msg.level, '', 0);
+                        } else {
+                            setToast(msg.message, msg.level);
+                        }
+                    });
+                }
+            }).catch(function (error) {
+                alert('error');
+                console.warn(error);
+            });
+
+            return false;
+        }
+
+        function setIframe() {
+            $('#iframe').html('<iframe src="http://localhost:8089"></iframe>');
+        }
+
+        function setSerie(codserie) {
+            $('select#series option').each(function () {
+                if ($(this).val() === codserie) {
+                    $(this).prop('selected', true);
+                }
+            });
+        }
+
+        function selectAllReturn() {
+            $('#modalReturn #productsReturn tbody tr input').each(function () {
+                $(this).val($(this).attr('max'));
+            });
+
+            calculateReturn();
+        }
+
+        function selectNoneReturn() {
+            $('#modalReturn #productsReturn tbody tr input').each(function () {
+                $(this).val($(this).attr('min'));
+            });
+
+            calculateReturn();
+        }
+
+        function showFamily(codfamilia) {
+            document.forms['productsForm']['codfamilia'].value = codfamilia;
+            document.forms['productsForm']['query'].value = '';
+            let formData = new FormData(document.forms['productsForm']);
+            return sendFormTpv(formData);
+        }
+
+        $(document).on('keyup', '#modalCollectMoney #paymentMethods input', function () {
+            checkTotalPayments($(this));
+        });
+
+        $(document).on('click', '#modalCollectMoney #paymentMethods .setMaxPayment', function () {
+            let input = $(this).parent().parent().find('input');
+
+            // recorremos todas las formas de pago sumando cada importe
+            let total = 0;
+            $("#modalCollectMoney #paymentMethods input").each(function () {
+                if ($(this).val() !== '') {
+                    total += parseFloat($(this).val());
+                }
+            });
+
+            // obtenemos la diferencia entre el total y el importe del carrito
+            let diff = parseFloat(totalCart) - total;
+
+            // si la diferencia es menor o igual a 0, no hacemos nada
+            if (diff <= 0) {
+                return;
+            }
+
+            // si la diferencia es mayor a 0, establecemos el importe de la forma de pago
+            $(input).val(diff.toFixed(2));
+
+            checkTotalPayments(input);
+        });
+
+        $(document).on('keyup change', 'input[name="dtopor_global"]', async function () {
+            // usamos un contador y un temporizador para solamente procesar la última llamada
+            waitCounter++;
+            let waitNum = waitCounter;
+            await new Promise(r => setTimeout(r, 300));
+            if (waitNum < waitCounter) {
+                return;
+            }
+
+            // obtenemos el name del input si cumple la condición de pulsado
+            keyupInputName = $(this).attr('name');
+
+            editLine++;
+            document.forms['saleForm']['action'].value = 'recalculate-line';
+            let formData = new FormData(document.forms['saleForm']);
+            sendFormTpv(formData);
+        });
+
+        $(document).on('keyup change', '#modalReturn #productsReturn tbody tr input', function () {
+            let max = parseFloat($(this).attr('max'));
+            let val = parseFloat($(this).val());
+
+            if (val > max) {
+                $(this).val(max);
+            }
+
+            calculateReturn();
+        });
+
+        $(document).on('keyup change', '#searchTicket', function () {
+            let val = $(this).val();
+            if (val.length >= 3) {
+                return searchTickets(val);
+            } else if (val === '') {
+                return searchTickets();
+            }
+        });
+
+        // al pulsar enter en cualquier input del modal de cobrar
+        // hacer clic en el botón de guardar
+        $(document).on('keypress', '#modalCollectMoney #paymentMethods input', function (e) {
+            var code = (e.keyCode ? e.keyCode : e.which);
+            if (code === 13) {
+                $('#modalCollectMoney .modal-footer .btn-success').click();
+            }
+        });
+
+        // al poner el foco en el campo barcode
+        $(document).on('focus', 'input[name="barcode"]', function () {
+            // si el campo de búsqueda está vacío, no hacemos nada
+            if ($('input[name="query"]').val() === '') {
+                return;
+            }
+
+            // vaciamos el campo de búsqueda
+            $('input[name="query"]').val('');
+
+            // enviamos el formulario
+            searchProducts();
+        });
+
+        $(document).ready(function () {
+            $('#btnSaleFooter').hide();
+            let changeAgentTime = parseInt({{ fsc.tpv.closeagent }});
+
+            {% if fsc.tpv.idprinter %}
+            // creamos un contador para ejecutar cada minuto el iframe de la impresora
+            setInterval(function () {
+                setIframe();
+            }, 60000);
+            {% endif %}
+
+            if (changeAgentTime > 0) {
+                let intervalCloseAgent;
+
+                function startCounter() {
+                    intervalCloseAgent = setInterval(function () {
+                        window.location.href = '{{ fsc.url() }}?action=agent-out';
+                    }, changeAgentTime * 60000);
+                }
+
+                startCounter();
+
+                function stopCounter() {
+                    clearInterval(intervalCloseAgent);
+                    startCounter();
+                }
+
+                $(document).mousemove(function (e) {
+                    stopCounter();
+                });
+
+                $(document).click(function (e) {
+                    stopCounter();
+                });
+
+                $(document).keypress(function (e) {
+                    stopCounter();
+                });
+            }
+
+            function widthCart() {
+                let parentDiv = $('#cart').parent().width();
+                $('#cart').css({'width': '100%', 'max-width': parentDiv + 'px'});
+            }
+
+            widthCart();
+
+            let observerCart = new IntersectionObserver(function (entries) {
+                if (entries[0]['isIntersecting'] === true) {
+                    if (entries[0].intersectionRatio >= 0.5) {
+                        $('#floatCart').hide('slow');
+                    } else {
+                        $('#floatCart').show('slow');
+                    }
+                } else {
+                    $('#floatCart').show('slow');
+                }
+            }, {threshold: [0, 0.5, 1]});
+            observerCart.observe(document.querySelector("#cart"));
+
+            $('#floatCart').click(function () {
+                $('html,body').animate({
+                    scrollTop: $('#cart').offset().top
+                }, 'slow');
+            });
+
+            $('#saleAmount').popover({
+                placement: 'bottom',
+                trigger: 'manual',
+                content: '{{ trans('updated-cart') }}'
+            });
+
+            $('#btnPark button').popover({
+                placement: 'bottom',
+                trigger: 'hover manual',
+                content: '{{ trans('cart-parking') }}'
+            });
+
+            $('#saleAmount').click(function () {
+                $('#saleAmount').popover('hide');
+            });
+
+            $(document).on('click', '#iconCustomerClear', function () {
+                if ($("#customertpv").val() != '') {
+                    $('#iconCustomerSearch').removeClass('d-none');
+                    $('#iconCustomerClear').addClass('d-none');
+                    $("#customertpv").val('');
+                    codcliente = '';
+                    changeClient();
+
+                    // establecemos la serie por defecto del terminal
+                    setSerie('{{ fsc.tpv.codserie }}');
+                }
+            });
+
+            $("#customertpv").autocomplete({
+                source: function (request, response) {
+                    let formData = {};
+                    formData["action"] = "autocomplete-customer";
+                    formData["query"] = $("#customertpv").val();
+                    formData["idcaja"] = '{{ fsc.caja.idcaja }}';
+                    formData["idtpv"] = '{{ fsc.tpv.idtpv }}';
+                    formData["ajax"] = true;
+
+                    $.ajax({
+                        method: "POST",
+                        url: "{{ fsc.url() }}",
+                        data: formData,
+                        dataType: "json",
+                        success: function (results) {
+                            if (results.refresh) {
+                                $('#btnChangeTerminal').click();
+                            }
+
+                            response(results);
+                        },
+                        error: function (msg) {
+                            alert(msg.status + " " + msg.responseText);
+                        }
+                    });
+                },
+                select: function (event, ui) {
+                    if (ui.item.key !== null) {
+                        codcliente = ui.item.key;
+                        $('#iconCustomerSearch').addClass('d-none');
+                        $('#iconCustomerClear').removeClass('d-none');
+                        changeClient();
+
+                        // establecemos la serie del cliente
+                        if (ui.item.serie !== null) {
+                            setSerie(ui.item.serie);
+                        }
+                    }
+                }
+            });
+
+            heightProductCard();
+            heightCart();
+        });
+    </script>
+{% endblock %}

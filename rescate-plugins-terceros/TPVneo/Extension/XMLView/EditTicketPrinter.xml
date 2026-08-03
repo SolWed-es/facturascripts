@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ * Copyright (C) 2023 Carlos Garcia Gomez <carlos@facturascripts.com>
+ * Author Daniel Fernández Giménez <hola@danielfg.es>
+-->
+<view>
+    <columns>
+        <group name="design">
+            <column name="print-name-terminal" order="125">
+                <widget type="checkbox" fieldname="print_name_terminal"/>
+            </column>
+        </group>
+    </columns>
+</view>

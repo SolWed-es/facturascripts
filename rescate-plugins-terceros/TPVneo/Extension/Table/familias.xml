@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ * Copyright (C) 2024 Carlos Garcia Gomez <carlos@facturascripts.com>
+ * Author Daniel Fernández Giménez <hola@danielfg.es>
+-->
+<table>
+    <column>
+        <name>tpv_show</name>
+        <type>boolean</type>
+        <default>true</default>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>tpv_sort</name>
+        <type>INT</type>
+        <null>NO</null>
+        <default>100</default>
+    </column>
+</table>

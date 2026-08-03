@@ -1,0 +1,454 @@
+{% extends "Master/MenuTemplate.html.twig" %}
+{% block body %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+
+<div class="container w-100">
+  <div id="aviso" class="alert alert-danger alert-dismissible fade show" role="alert" style="display: none;">
+    ¡Debes seleccionar al menos un recibo para pagar!
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+  <div id="copiarEnlaceAviso" class="alert alert-success alert-dismissible fade show" role="alert" style="display: none;">
+    El enlace se ha copiado al portapapeles.
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+  <div id="correoEnviadoAviso" class="alert alert-success alert-dismissible fade show" role="alert" style="display: none;">
+    El correo se ha enviado correctamente.
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+
+  <h2>Selecciona los recibos a pagar</h2>
+  <div class="table-responsive w-100">
+    <button id="btnPagar" class="btn btn-primary mt-2 mb-2"><i class="fas fa-eye"></i> Vista previa</button>
+    <button id="enviarCorreoGeneral" class="btn btn-primary mt-2 mb-2"><i class="fas fa-envelope"></i> Enviar correo electrónico</button>
+    <button id="copiarEnlaceGeneral" class="btn btn-secondary mt-2 mb-2"><i class="fas fa-clipboard"></i> Copiar enlace</button>
+    <table class="table table-striped table-hover w-100">
+      <thead>
+        <tr>
+          <th><input type="checkbox" id="checkTodos"></th>
+          <th>Factura</th>
+          <th>Cliente</th>
+          <th>Pagado</th>
+          <th>A pagar</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for factura in fsc.facturas %}
+          <tr data-bs-toggle="collapse" data-bs-target="#{{factura.codigo}}" class="accordion-toggle">
+            <td><input type="checkbox" class="checkFila" data-target="{{factura.codigo}}"></td>
+            <td>{{factura.codigo}}</td>
+            {% for cliente in fsc.clientes %}
+              {% if cliente.codcliente == factura.codcliente %}
+                <td>{{ cliente.nombre }}</td>
+              {% endif %}
+            {% endfor %}
+            {% if attribute(fsc.pagado, factura.codigo) %}
+              <td class="text-success">{{ attribute(fsc.pagado, factura.codigo) }}</td>
+            {% else %}
+              <td class="text-success">0,00 €</td>
+            {% endif %}
+
+            {% if attribute(fsc.nopagado, factura.codigo) %}
+              <td class="text-danger">{{ attribute(fsc.nopagado, factura.codigo) }}</td>
+            {% else %}
+              <td class="text-danger">0,00 €</td>
+            {% endif %}
+            <td>
+              <div class="dropdown">
+                  <button class="btn btn-secondary dropdown-toggle" style="font-size: 15px;" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+                     
+                  </button>
+                  <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                      <li><a class="dropdown-item enviarMail" href="#" data-factura="{{ factura.codigo }}" data-cliente="{% for cliente in fsc.clientes %}
+                          {% if cliente.codcliente == factura.codcliente %}
+                            {{ cliente.nombre }}
+                          {% endif %}
+                        {% endfor %}" data-correo="{% for cliente in fsc.clientes %}
+                          {% if cliente.codcliente == factura.codcliente %}
+                            {{ cliente.email }}
+                          {% endif %}
+                        {% endfor %}">Enviar email</a>
+                      </li>
+                      <li><a class="dropdown-item pagar-recibos" href="#" data-factura="{{ factura.codigo }}">Vista previa</a></li>
+                      <li><a class="dropdown-item" href="#" id="copiarEnlace" data-factura="{{ factura.codigo }}">Copiar enlace</a></li>
+                  </ul>
+              </div>
+            </td>
+            <td><i class="bi bi-caret-down-fill"></i></td>
+          </tr>
+          <tr>
+            <td colspan="6" class="hiddenRow w-100">
+              <div id="{{factura.codigo}}" class="accordian-body collapse w-100">
+              <table class="subtable w-100">
+              {% for recibo in fsc.recibos %}
+                {% if recibo.codigofactura == factura.codigo %}
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th>#</th>
+                        <th>Importe</th>
+                        <th>Vencimiento</th>
+                        {# <th>Vencido</th> #}
+                        <th>Pagado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr {% if recibo.pagado == 1 %} class="table-success" {% else %} class="table-danger" {% endif %}>
+                      <td><input type="checkbox" class="checkSubFila" data-parent="{{ factura.codigo }}" data-idrecibo="{{ recibo.idrecibo }}"></td>
+                      <td>{{ recibo.numero }}</td>
+                      <td>{{ recibo.importe|number_format(2, ',', '.') }} €</td>
+                      <td{% if recibo.vencido == 1 %} class="text-danger" {% endif %}>{{ recibo.vencimiento|date("d-m-Y") }}</td>
+{#                       {% if recibo.vencido == 1 %}
+                          <td>Si</td>
+                      {% else %}
+                          <td>No</td>
+                      {% endif %}  #}
+                                          
+                      {% if recibo.pagado == 1 %}
+                          <td class="text-success">Si</td>
+                      {% else %}
+                          <td class="text-danger">No</td>
+                      {% endif %} 
+                  </tr>
+                </tbody>
+                {% endif %}
+              {% endfor %}
+              </table>
+              </div>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        var checkTodos = document.getElementById('checkTodos');
+        checkTodos.addEventListener('change', function() {
+            var checkboxes = document.querySelectorAll('.checkFila');
+            checkboxes.forEach(function(checkbox) {
+                checkbox.checked = checkTodos.checked;
+                var parentCodigo = checkbox.dataset.target;
+                var checkboxesSubFilaParent = document.querySelectorAll('.checkSubFila[data-parent="' + parentCodigo + '"]');
+                checkboxesSubFilaParent.forEach(function(subcheckbox) {
+                    subcheckbox.checked = checkbox.checked;
+                });
+            });
+        });
+
+        var checkboxes = document.querySelectorAll('.checkFila');
+        checkboxes.forEach(function(checkbox) {
+            checkbox.addEventListener('click', function(event) {
+                event.stopPropagation();
+                var todosSeleccionados = true;
+                checkboxes.forEach(function(checkbox) {
+                    if (!checkbox.checked) {
+                        todosSeleccionados = false;
+                    }
+                });
+                checkTodos.checked = todosSeleccionados;
+                var parentCodigo = this.dataset.target;
+                var checkboxesSubFilaParent = document.querySelectorAll('.checkSubFila[data-parent="' + parentCodigo + '"]');
+                checkboxesSubFilaParent.forEach(function(subcheckbox) {
+                    subcheckbox.checked = checkbox.checked;
+                });
+            });
+        });
+
+        var checkboxesSubFilaPadre = document.querySelectorAll('.checkFila');
+        checkboxesSubFilaPadre.forEach(function(checkbox) {
+            checkbox.addEventListener('click', function(event) {
+                var parentCodigo = checkbox.dataset.target;
+                var checkboxesSubFilaParent = document.querySelectorAll('.checkSubFila[data-parent="' + parentCodigo + '"]');
+                checkboxesSubFilaParent.forEach(function(subcheckbox) {
+                    subcheckbox.checked = checkbox.checked;
+                });
+            });
+        });
+
+        var btnPagar = document.getElementById('btnPagar');
+        btnPagar.addEventListener('click', function() {
+            var checkboxesRecibos = document.querySelectorAll('.checkSubFila:checked');
+            if (checkboxesRecibos.length === 0) {
+                aviso.style.display = 'block'; // Mostrar el aviso
+                setTimeout(function() {
+                    aviso.style.display = 'none'; // Ocultar el aviso después de 3 segundos
+                }, 3000);
+                return; // Detiene la ejecución de la función si no hay checkboxes marcados
+            }
+            
+            var idsRecibos = [];
+            var nombresFacturas = [];
+            checkboxesRecibos.forEach(function(checkbox) {
+                idsRecibos.push(checkbox.dataset.idrecibo);
+                var parentCodigo = checkbox.dataset.parent;
+                var nombreFactura = document.querySelector('.checkFila[data-target="' + parentCodigo + '"]').parentNode.nextElementSibling.textContent;
+                nombresFacturas.push(nombreFactura);
+            });
+            var url = 'ListPasarelaPago?ids=' + idsRecibos.join(',') + '&facturas=' + nombresFacturas.join(',');
+            window.location.href = url;
+        });
+
+        var botonesPagar = document.querySelectorAll('.pagar-recibos');
+        botonesPagar.forEach(function(boton) {
+            boton.addEventListener('click', function(event) {
+                event.preventDefault();
+                var facturaCodigo = this.dataset.factura;
+                var checkboxesRecibos = document.querySelectorAll('.checkSubFila[data-parent="' + facturaCodigo + '"]:checked');
+                
+                if (checkboxesRecibos.length === 0) {
+                    aviso.style.display = 'block';
+                    setTimeout(function() {
+                        aviso.style.display = 'none';
+                    }, 3000);
+                    return;
+                }
+                
+                var idsRecibos = [];
+                var nombresFacturas = [];
+                checkboxesRecibos.forEach(function(checkbox) {
+                    idsRecibos.push(checkbox.dataset.idrecibo);
+                    nombresFacturas.push(facturaCodigo);
+                });
+                var url = 'ListPasarelaPago?ids=' + idsRecibos.join(',') + '&facturas=' + nombresFacturas.join(',');
+                window.location.href = url;
+            });
+        });
+
+        var calcularTotalAPagar = function() {
+            var checkboxesRecibos = document.querySelectorAll('.checkSubFila:checked');
+            var totalAPagar = 0;
+            checkboxesRecibos.forEach(function(checkbox) {
+                var importeRecibo = parseFloat(checkbox.parentNode.nextElementSibling.nextElementSibling.textContent.replace(' €', '').replace('.', '').replace(',', '.'));
+                totalAPagar += importeRecibo;
+            });
+            return totalAPagar.toFixed(2);
+        };
+
+        var botonesEnviarMail = document.querySelectorAll('.enviarMail');
+        botonesEnviarMail.forEach(function(boton) {
+            boton.addEventListener('click', function(evento) {
+              evento.preventDefault();
+              var nombreCliente = this.dataset.cliente.trim();
+              var correoCliente = this.dataset.correo.trim();
+              console.log(nombreCliente); // Obtener el nombre del cliente desde el atributo de datos
+              var totalAPagar = calcularTotalAPagar();
+              var urlPago = construirURLPago(); // Aquí construyes la URL de pago
+
+              // Crear un formulario oculto
+              var form = document.createElement('form');
+              form.setAttribute('method', 'post');
+              form.setAttribute('action', 'EnviarCorreo'); // Establecer la acción del formulario
+
+              // Crear campos ocultos para los datos a enviar
+              var inputNombre = document.createElement('input');
+              inputNombre.setAttribute('type', 'hidden');
+              inputNombre.setAttribute('name', 'name');
+              inputNombre.setAttribute('value', nombreCliente);
+              form.appendChild(inputNombre);
+
+              var inputCorreo = document.createElement('input');
+              inputCorreo.setAttribute('type', 'hidden');
+              inputCorreo.setAttribute('name', 'email');
+              inputCorreo.setAttribute('value', correoCliente);
+              form.appendChild(inputCorreo);
+
+              var inputAmount = document.createElement('input');
+              inputAmount.setAttribute('type', 'hidden');
+              inputAmount.setAttribute('name', 'amount');
+              inputAmount.setAttribute('value', totalAPagar);
+              form.appendChild(inputAmount);
+
+              var inputURLPago = document.createElement('input');
+              inputURLPago.setAttribute('type', 'hidden');
+              inputURLPago.setAttribute('name', 'url');
+              inputURLPago.setAttribute('value', urlPago);
+              form.appendChild(inputURLPago);
+
+              // Adjuntar el formulario al cuerpo del documento
+              document.body.appendChild(form);
+
+              // Enviar el formulario
+              form.submit();
+            });
+        });
+
+        // Función para construir la URL de pago
+        function construirURLPago() {
+            var checkboxesRecibos = document.querySelectorAll('.checkSubFila:checked');
+            var idsRecibos = [];
+            var nombresFacturas = [];
+            checkboxesRecibos.forEach(function(checkbox) {
+                idsRecibos.push(checkbox.dataset.idrecibo);
+                var parentCodigo = checkbox.dataset.parent;
+                var nombreFactura = document.querySelector('.checkFila[data-target="' + parentCodigo + '"]').parentNode.nextElementSibling.textContent;
+                nombresFacturas.push(nombreFactura);
+            });
+            if(window.location.href.includes("vencidas=0")){
+              return window.location.href.replace("ListSeleccionFacturas?vencidas=0", "") + 'ListPasarelaPago?ids=' + idsRecibos.join(',') + '&facturas=' + nombresFacturas.join(',');
+            } else{
+              return window.location.href.replace("ListSeleccionFacturas?vencidas=1", "") + 'ListPasarelaPago?ids=' + idsRecibos.join(',') + '&facturas=' + nombresFacturas.join(',');
+            }
+        }
+
+
+        var botonesCopiarEnlace = document.querySelectorAll('#copiarEnlace');
+        var copiarEnlaceAviso = document.getElementById('copiarEnlaceAviso');
+
+        botonesCopiarEnlace.forEach(function(boton) {
+            boton.addEventListener('click', function(evento) {
+                evento.preventDefault();
+                var facturaCodigo = this.dataset.factura;
+                var idsRecibos = [];
+                var nombresFacturas = [];
+                var recibosSeleccionados = document.querySelectorAll('.checkSubFila[data-parent="' + facturaCodigo + '"]:checked');
+                recibosSeleccionados.forEach(function(checkbox) {
+                    idsRecibos.push(checkbox.dataset.idrecibo);
+                    nombresFacturas.push(facturaCodigo);
+                });
+                if(window.location.href.includes("vencidas=0")){
+                  var url = window.location.href.replace("ListSeleccionFacturas?vencidas=0", "") + 'ListPasarelaPago?ids=' + idsRecibos.join(',') + '&facturas=' + nombresFacturas.join(',');
+                } else{
+                  var url = window.location.href.replace("ListSeleccionFacturas?vencidas=1", "") + 'ListPasarelaPago?ids=' + idsRecibos.join(',') + '&facturas=' + nombresFacturas.join(',');
+                }
+                
+                if (recibosSeleccionados.length === 0) {
+                    aviso.style.display = 'block';
+                    setTimeout(function() {
+                        aviso.style.display = 'none';
+                    }, 3000);
+                    return;
+                }
+
+                // Copiar el enlace generado al portapapeles
+                var elementoTemporal = document.createElement("input");
+                document.body.appendChild(elementoTemporal);
+                elementoTemporal.setAttribute('value', url);
+                elementoTemporal.select();
+                document.execCommand("copy");
+                document.body.removeChild(elementoTemporal);
+                
+                copiarEnlaceAviso.style.display = 'block';
+            });
+        });
+
+        function copiarEnlaceSeleccionados() {
+            var checkboxesRecibos = document.querySelectorAll('.checkSubFila:checked');
+            var idsRecibos = [];
+            var nombresFacturas = [];
+            checkboxesRecibos.forEach(function(checkbox) {
+                var facturaCodigo = checkbox.dataset.parent;
+                idsRecibos.push(checkbox.dataset.idrecibo);
+                nombresFacturas.push(facturaCodigo);
+            });
+            if(window.location.href.includes("vencidas=0")){
+                var url = window.location.href.replace("ListSeleccionFacturas?vencidas=0", "") + 'ListPasarelaPago?ids=' + idsRecibos.join(',') + '&facturas=' + nombresFacturas.join(',');
+            } else {
+                var url = window.location.href.replace("ListSeleccionFacturas?vencidas=1", "") + 'ListPasarelaPago?ids=' + idsRecibos.join(',') + '&facturas=' + nombresFacturas.join(',');
+            }
+
+            if (checkboxesRecibos.length === 0) {
+                aviso.style.display = 'block';
+                setTimeout(function() {
+                    aviso.style.display = 'none';
+                }, 3000);
+                return;
+            }
+
+            // Copiar el enlace generado al portapapeles
+            var elementoTemporal = document.createElement("input");
+            document.body.appendChild(elementoTemporal);
+            elementoTemporal.setAttribute('value', url);
+            elementoTemporal.select();
+            document.execCommand("copy");
+            document.body.removeChild(elementoTemporal);
+
+            copiarEnlaceAviso.style.display = 'block';
+        }
+
+        // Event listener para el botón "Copiar enlace (General)"
+        document.getElementById('copiarEnlaceGeneral').addEventListener('click', function(evento) {
+            evento.preventDefault();
+            copiarEnlaceSeleccionados();
+        });
+
+        function distinct(array) {
+          return array.filter((value, index, self) => self.indexOf(value) === index);
+        }
+
+        var botonesEnviarMailGeneral = document.querySelectorAll('#enviarCorreoGeneral');
+    botonesEnviarMailGeneral.forEach(function(boton) {
+        boton.addEventListener('click', function(evento) {
+            evento.preventDefault();
+
+            var clientes = [];
+            var correos = [];
+            var totalAPagar = calcularTotalAPagar();
+            var urlPago = construirURLPago();
+
+            var checkboxesRecibos = document.querySelectorAll('.checkSubFila:checked');
+            checkboxesRecibos.forEach(function(checkbox) {
+                var parentCodigo = checkbox.dataset.parent;
+                var facturaRow = document.querySelector('.checkFila[data-target="' + parentCodigo + '"]').parentNode.parentNode;
+                var clienteNombre = facturaRow.querySelector('td:nth-child(3)').textContent.trim();
+                var clienteCorreo = facturaRow.querySelector('.enviarMail').dataset.correo.trim();
+                clientes.push(clienteNombre);
+                correos.push(clienteCorreo);
+            });
+
+            if (checkboxesRecibos.length === 0) {
+                aviso.style.display = 'block';
+                setTimeout(function() {
+                    aviso.style.display = 'none';
+                }, 3000);
+                return;
+            }
+
+            clientes = distinct(clientes);
+            correos = distinct(correos);
+
+            var form = document.createElement('form');
+            form.setAttribute('method', 'post');
+            form.setAttribute('action', 'EnviarCorreo');
+
+            var inputNombre = document.createElement('input');
+            inputNombre.setAttribute('type', 'hidden');
+            inputNombre.setAttribute('name', 'name');
+            inputNombre.setAttribute('value', clientes);
+            form.appendChild(inputNombre);
+
+            var inputCorreo = document.createElement('input');
+            inputCorreo.setAttribute('type', 'hidden');
+            inputCorreo.setAttribute('name', 'email');
+            inputCorreo.setAttribute('value', correos);
+            form.appendChild(inputCorreo);
+
+            var inputAmount = document.createElement('input');
+            inputAmount.setAttribute('type', 'hidden');
+            inputAmount.setAttribute('name', 'amount');
+            inputAmount.setAttribute('value', totalAPagar);
+            form.appendChild(inputAmount);
+
+            var inputURLPago = document.createElement('input');
+            inputURLPago.setAttribute('type', 'hidden');
+            inputURLPago.setAttribute('name', 'url');
+            inputURLPago.setAttribute('value', urlPago);
+            form.appendChild(inputURLPago);
+
+            document.body.appendChild(form);
+            form.submit();
+        });
+    });
+
+        
+
+    });
+</script>
+
+
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js" integrity="sha384-oBqDVmMz9ATKxIep9tiCxS/Z9fNfEXiDAYTujMAeBAsjFuCZSmKbSSUnQlmh/jp3" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.min.js" integrity="sha384-cuYeSxntonz0PPNlHhBs68uyIAVpIIOZZ5JqeqvYYIcEL727kskC66kF92t6Xl2V" crossorigin="anonymous"></script>
+
+{% endblock %}

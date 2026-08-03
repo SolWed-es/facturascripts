@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ * Copyright (C) 2022 Carlos Garcia Gomez <carlos@facturascripts.com>
+ * Author Daniel Fernández Giménez <hola@danielfg.es>
+-->
+<table>
+    <column>
+        <name>diferencia</name>
+        <type>double precision</type>
+    </column>
+    <column>
+        <name>dinerofin</name>
+        <type>double precision</type>
+    </column>
+    <column>
+        <name>dineroini</name>
+        <type>double precision</type>
+    </column>
+    <column>
+        <name>fechafin</name>
+        <type>timestamp</type>
+    </column>
+    <column>
+        <name>fechaini</name>
+        <type>timestamp</type>
+    </column>
+    <column>
+        <name>idcaja</name>
+        <type>serial</type>
+    </column>
+    <column>
+        <name>idtpv</name>
+        <type>int</type>
+    </column>
+    <column>
+        <name>ingresos</name>
+        <type>double precision</type>
+    </column>
+    <column>
+        <name>nick</name>
+        <type>character varying(50)</type>
+    </column>
+    <column>
+        <name>numtickets</name>
+        <type>int</type>
+    </column>
+    <column>
+        <name>observaciones</name>
+        <type>text</type>
+    </column>
+    <column>
+        <name>totalcaja</name>
+        <type>double precision</type>
+        <default>0</default>
+    </column>
+    <column>
+        <name>totalmovi</name>
+        <type>double precision</type>
+        <default>0</default>
+    </column>
+    <column>
+        <name>totaltickets</name>
+        <type>double precision</type>
+        <default>0</default>
+    </column>
+    <constraint>
+        <name>tpvsneo_cajas_pkey</name>
+        <type>PRIMARY KEY (idcaja)</type>
+    </constraint>
+    <constraint>
+        <name>ca_tpvsneo_cajas_users2</name>
+        <type>FOREIGN KEY (nick) REFERENCES users (nick) ON DELETE SET NULL ON UPDATE CASCADE</type>
+    </constraint>
+    <constraint>
+        <name>ca_tpvsneo_cajas_tpvsneo</name>
+        <type>FOREIGN KEY (idtpv) REFERENCES tpvsneo (idtpv) ON DELETE CASCADE ON UPDATE CASCADE</type>
+    </constraint>
+</table>

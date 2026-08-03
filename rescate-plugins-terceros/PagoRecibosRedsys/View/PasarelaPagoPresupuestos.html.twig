@@ -1,0 +1,232 @@
+{% extends "Master/MenuTemplate.html.twig" %}
+{% set fuc = settings('tpv', 'fuc') %}
+{% set terminal = settings('tpv', 'terminal') %}
+{% block body %}
+	<script src="https://sis.redsys.es/sis/NC/redsysV3.js"></script>
+
+
+	{# <div class="cardinfo-card-number">
+					        <label class="cardinfo-label" for="card-number">Numero de tarjeta</label>
+					        <div class='input-wrapper' id="card-number"></div>
+					    </div>
+					    <div class="cardinfo-exp-date">
+					        <label class="cardinfo-label" for="card-expiration">Caducidad</label>
+					        <div class='input-wrapper' id="card-expiration"></div>
+					    </div>
+					    <div class="cardinfo-cvv">
+					        <label class="cardinfo-label" for="cvv">CVV</label>
+					        <div class='input-wrapper' id="cvv"></div>
+					    </div>
+					    <div id="boton"></div> #}
+
+	<div class="container mt-2 w-100">
+		<h2 class="mb-3">Pago Recibo</h2>
+		<div class="row justify-content-between">
+			<div class="col-md-8 col-12">
+				<div class="card">
+					<div class="card-body">
+						<div class="row ">
+							<div class="col-md-6">
+								<h5>Información</h5>
+								<p>Nombre del Cliente:
+									<strong>{{ fsc.datos.nombre }}</strong>
+								</p>
+								{# <p>Teléfono:
+																	{% if fsc.datos.telefono == "" %}
+																		<strong>Sin información</strong>
+																	{% else %}
+																		<strong>{{ fsc.datos.telefono }}</strong>
+																	{% endif %}
+																</p> #}
+							</div>
+							<div class="col-md-6">
+								<h5>&nbsp;</h5>
+								<p>Fecha:
+									<strong>{{ fsc.datos.fecha }}</strong>
+								</p>
+							</div>
+						</div>
+						<div class="table-responsive mt-4">
+							<h5>Presupuestos</h5>
+							<table class="table table-bordered">
+								<thead>
+									<tr>
+										<th scope="col">PRESUPUESTO</th>
+										<th scope="col" class="text-center">TOTAL PAGADO</th>
+										<th scope="col" class="text-center">TOTAL A PAGAR</th>
+									</tr>
+								</thead>
+								<tbody>
+									{% for presupuesto in fsc.presupuestos %}
+										<tr>
+											<td>{{ presupuesto.codigo }}</td>
+											{% if attribute(fsc.pagado, presupuesto.codigo) %}
+												<td class="text-center">{{ attribute(fsc.pagado, presupuesto.codigo) }}
+												{% else %}
+													<td class="text-center">0,00 €</td>
+												{% endif %}
+												{% if attribute(fsc.nopagado, presupuesto.codigo) %}
+													<td class="text-center text-center">{{ attribute(fsc.nopagado, presupuesto.codigo) }}
+													{% else %}
+														<td class="text-center">0,00 €</td>
+													{% endif %}
+												</tr>
+											{% endfor %}
+										</tr>
+									</tbody>
+								</tbody>
+								<tfoot>
+									<tr>
+										<td colspan="2" class="text-right">Total:</td>
+										<td class="text-center">
+											<strong>{{ fsc.datos.total }}</strong>
+										</td>
+									</tr>
+								</tfoot>
+							</table>
+						</div>
+						<div class="text-right mt-3">
+							<button class="btn btn-primary">Descargar PDF <i class="fas fa-file-pdf"></i></button>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="col-md-4 col-12">
+				<div id="card-form"/>
+				<form name="datos">
+					<input type="hidden" id="token"></input>
+				<input type="hidden" id="errorCode"></input>
+			{# <a href="javascript:void(0);" onclick="verToken()">Ver</a> #}
+		</div>
+	</form>
+</div>
+</div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+<script>
+	document.querySelector('.btn-primary').addEventListener('click', function() {
+		var urlDescargar = new URL(window.location.href);
+
+		var urls = [
+			{% for presupuesto in fsc.presupuestos %}
+				{
+					url: 'EditPresupuestoCliente?code={{ presupuesto.idpresupuesto }}&action=export&option=PDF',
+					nombreArchivo: 'presupuesto_{{ presupuesto.idpresupuesto }}.pdf'
+				},
+			{% endfor %}
+		];
+
+		if (urls.length > 1) {
+			var zip = new JSZip();
+
+			function agregarArchivosAlZip(urls) {
+				var contador = 0;
+				urls.forEach(function(urlData, index) {
+					var url = urlData.url;
+					var nombreArchivo = urlData.nombreArchivo;
+
+					fetch(url)
+						.then(function(response) {
+							return response.blob();
+						})
+						.then(function(blob) {
+							zip.file(nombreArchivo, blob);
+							contador++;
+							if (contador === urls.length) {
+								zip.generateAsync({ type: "blob" })
+									.then(function(content) {
+										var link = document.createElement('a');
+										link.href = window.URL.createObjectURL(content);
+										link.setAttribute('download', 'presupuestos.zip');
+										document.body.appendChild(link);
+										link.click();
+									});
+							}
+						});
+				});
+			}
+
+			agregarArchivosAlZip(urls);
+		} else {
+			var link = document.createElement('a');
+			link.href = urls[0].url;
+			link.setAttribute('download', urls[0].nombreArchivo);
+			document.body.appendChild(link);
+			link.click();
+		}
+	});
+
+
+
+
+	var intervalo = setInterval(function () {
+	var token = document.getElementById('token').value;
+	if (token) {
+	clearInterval(intervalo);
+	ejecutarCuandoTokenListo();
+	}
+	}, 100);
+
+	function verToken() {
+	var token = document.getElementById('token').value;
+	var errorCode = document.getElementById('errorCode').value;
+
+	if (token) {
+	alert("El token es: " + token + "\nEl errorCode es: " + errorCode);
+	} else {
+	alert("El token no tiene un valor.");
+	}
+	}
+
+	function merchantValidationEjemplo() {
+	return true;
+	}
+
+	window.addEventListener("message", function receiveMessage(event) {
+	storeIdOper(event, "token", "errorCode", merchantValidationEjemplo);
+	});
+
+	const urlParams = new URLSearchParams(window.location.search);
+	let idsParams = urlParams.get('presupuestos');
+	const ids = idsParams.substring(8);
+
+	idspresupuestos = ids.split(',');
+	idspresupuestos.sort((a, b) => a - b);
+
+	var num = 0;
+	idspresupuestos.forEach(id => {
+	num = parseInt(num) + id;
+	});
+
+	var pedido = "pedido" + num;
+
+	var insiteJSON = {
+	"id": "card-form",
+	"fuc": '{{ fuc }}',
+	"terminal": '{{ terminal }}',
+	"order": pedido,
+	"estiloInsite": "twoRows"
+	}
+
+	getInSiteFormJSON(insiteJSON);
+
+	var estilosCSS = 'text-align:center;';
+
+	let iframe = document.querySelector('iframe');
+	iframe.style.height = '25rem';
+
+	function ejecutarCuandoTokenListo() {
+	var queryString = window.location.search;
+	var params = new URLSearchParams(queryString);
+	var ids = params.get('presupuestos');
+
+	var token = document.getElementById('token').value;
+	var errorCode = document.getElementById('errorCode').value;
+	console.log(pedido);
+	if (token) {
+	var url = 'EditPasarelaPago?' + 'presupuestos=' + ids + '&token=' + token + '&pedido=' + pedido + '&amount=' + {{fsc.datos.amount}};
+	window.location.href = url;
+	}
+	}
+</script>
+{% endblock %}

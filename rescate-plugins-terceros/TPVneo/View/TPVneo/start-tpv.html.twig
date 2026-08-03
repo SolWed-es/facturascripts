@@ -1,0 +1,111 @@
+{#
+* Copyright (C) 2021-2024 Carlos Garcia Gomez <carlos@facturascripts.com>
+* Author Daniel Fernández Giménez <hola@danielfg.es>
+#}
+
+{% extends "Master/MenuBghTemplate.html.twig" %}
+
+{% block body %}
+    {{ parent() }}
+    {% set divisa = fsc.getDivisa() %}
+    <div class="bg-light pt-3 pb-5">
+        <div class="container">
+            <div class="row">
+                <div class="col">
+                    <h1 class="h2">
+                        <i class="fas fa-cash-register"></i> {{ trans('start-money') }}
+                        ({{ divisa.simbolo }})
+                    </h1>
+                    <small class="text-secondary">{{ trans('pos-terminal') }}: {{ fsc.tpv.name }}</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="container" style="margin-top: -40px;">
+        <div class="row">
+            <div class="col-sm">
+                <form action="{{ fsc.url() }}" method="post" id="saveForm">
+                    {{ formToken() }}
+                    <input type="hidden" name="action" value="starting-money"/>
+                    <input type="hidden" name="idtpv" value="{{ fsc.tpv.idtpv }}"/>
+                    <div class="card shadow mb-4">
+                        <div class="card-body">
+                            <div class="form-row">
+                                {% for coin in fsc.getCoinTypes() %}
+                                    <div class="col-sm-4 pb-3">
+                                        {{ (coin.name < 1) ? coin.name|number_format(2) : coin.name }}
+                                        {{ divisa.simbolo }}
+                                        <input type="number" name="{{ coin.name|replace({'.': '_'}) }}" value="0"
+                                               min="0" class="form-control" required=""/>
+                                    </div>
+                                {% else %}
+                                    <div class="col">
+                                        <div class="alert alert-warning">{{ trans('currency-setup-incomplete') }}</div>
+                                        <a href="{{ fsc.getDivisa().url() }}" class="btn btn-warning">
+                                            {{ trans('configure') }}</a>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            <div class="form-row d-flex align-items-center">
+                                <div class="col">
+                                    <button type="button" onclick="cancelForm()" class="btn btn-secondary btn-spin-action">
+                                        {{ trans('cancel') }}
+                                    </button>
+                                </div>
+                                <div class="col-sm text-center">
+                                    <div class="font-weight-bolder">{{ trans('box-counting') }}</div>
+                                    <span id="boxCounting">0.00</span> {{ divisa.simbolo }}
+                                </div>
+                                <div class="col text-right">
+                                    <button type="button" onclick="saveForm()" class="btn btn-primary btn-spin-action" onsubmit="animateSpinner('add');">
+                                        {{ trans('save') }}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+                <div class="text-center">
+                    <a href="{{ fsc.url() }}" class="btn btn-block btn-secondary">
+                        <i class="fas fa-list mr-1"></i> {{ trans('pos-terminals') }}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <iframe class="d-none" src="http://localhost:8089"></iframe>
+    <script src="{{ asset('Dinamic/Assets/JS/boxCounting.js') }}"></script>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+
+    <script>
+        function cancelForm() {
+            animateSpinner('add');
+
+            // creamos un formulario post
+            var form = document.createElement('form');
+            form.setAttribute('method', 'post');
+            form.setAttribute('action', '{{ fsc.url() }}');
+
+            // añadimos el input con el action
+            var input = document.createElement('input');
+            input.setAttribute('type', 'hidden');
+            input.setAttribute('name', 'action');
+            input.setAttribute('value', 'agent-out');
+
+            // enviamos el formulario
+            form.appendChild(input);
+            document.body.appendChild(form);
+            form.submit();
+        }
+
+        function saveForm() {
+            animateSpinner('add');
+            document.getElementById('saveForm').submit();
+        }
+    </script>
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends "Master/MenuTemplate.html.twig" %}
+{% block body %}
+    <div class="card bg-light mb-3 m-2">
+        <div class="card-header bg-danger text-white">
+            <h3 class="text-center m-0">Error en el pago</h3>
+        </div>
+        <div class="card-body">
+            <p class="card-text text-center" id="errorMessage">Tu pago no se ha podido procesar con éxito. Vuelve a intentarlo</p>
+        </div>
+    </div>
+
+    <script>
+        // Obtener el objeto URLSearchParams de la URL actual
+        const urlParams = new URLSearchParams(window.location.search);
+
+        // Obtener el mensaje de error de los parámetros de la URL
+        const errorMessage = urlParams.get('error');
+
+        // Insertar el mensaje en el párrafo
+        const errorParagraph = document.getElementById('errorMessage');
+        if (errorMessage) {
+            errorParagraph.innerText = errorMessage;
+        }
+    </script>			
+{% endblock %}	 	  		

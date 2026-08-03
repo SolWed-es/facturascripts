@@ -1,0 +1,30 @@
+{% extends "Master/MenuTemplate.html.twig" %}
+{% block body %}
+    <div class="card bg-light mb-3 m-2" id="correoEnviadoAviso" display="none">
+        <div class="card-header bg-success text-white">
+            <h3 class="text-center m-0">¡Correo enviado!</h3>
+        </div>
+        <div class="card-body">
+            <p class="card-text text-center">El correo ha sido enviado correctamente</p>
+        </div>
+    </div>					
+
+
+<script>
+    // Función para mostrar el mensaje de correo enviado y luego redirigir a la página anterior
+    function mostrarCorreoEnviado() {
+        var correoEnviadoAviso = document.getElementById("correoEnviadoAviso");
+        correoEnviadoAviso.style.display = "block";
+
+        // Esperar 3 segundos antes de redirigir
+        setTimeout(function() {
+            // Redirigir al usuario a la página anterior
+            window.history.back();
+        }, 1000); 
+    }
+
+    // Llama a la función para mostrar el aviso
+    mostrarCorreoEnviado();
+</script>
+
+{% endblock %}	 

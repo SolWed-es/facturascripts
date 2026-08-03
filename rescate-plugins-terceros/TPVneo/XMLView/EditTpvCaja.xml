@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view>
+    <columns>
+        <group name="data" numcolumns="12">
+            <column name="pos-terminal" order="100">
+                <widget type="select" fieldname="idtpv" required="true" onclick="EditTpvTerminal">
+                    <values source="tpvsneo" fieldcode="idtpv" fieldtitle="name"/>
+                </widget>
+            </column>
+            <column name="start-date" order="110">
+                <widget type="datetime" fieldname="fechaini"/>
+            </column>
+            <column name="end-date" order="120">
+                <widget type="datetime" fieldname="fechafin"/>
+            </column>
+            <column name="tickets" order="130">
+                <widget type="number" decimal="0" fieldname="numtickets"/>
+            </column>
+        </group>
+        <group name="money" numcolumns="12">
+            <column name="start-money" order="100">
+                <widget type="number" fieldname="dineroini"/>
+            </column>
+            <column name="end-money" order="110">
+                <widget type="number" fieldname="dinerofin"/>
+            </column>
+            <column name="cash-income" order="120">
+                <widget type="number" fieldname="ingresos"/>
+            </column>
+            <column name="total-movements" order="130">
+                <widget type="number" fieldname="totalmovi"/>
+            </column>
+            <column name="total-in-box" order="140">
+                <widget type="number" fieldname="totalcaja"/>
+            </column>
+            <column name="total-sales" order="150">
+                <widget type="number" fieldname="totaltickets"/>
+            </column>
+        </group>
+        <group name="advanced" numcolumns="12">
+            <column name="observations" numcolumns="12" order="100">
+                <widget type="textarea" fieldname="observaciones"/>
+            </column>
+            <column name="closed" order="110">
+                <widget type="checkbox" fieldname="fechafin"/>
+            </column>
+        </group>
+    </columns>
+</view>

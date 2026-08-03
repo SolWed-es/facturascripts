@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ * Copyright (C) 2022 Carlos Garcia Gomez <carlos@facturascripts.com>
+ * Author Daniel Fernández Giménez <hola@danielfg.es>
+-->
+<table>
+    <column>
+        <name>aparcado</name>
+        <type>boolean</type>
+        <default>false</default>
+    </column>
+    <column>
+        <name>idcaja</name>
+        <type>int</type>
+    </column>
+    <column>
+        <name>idtpv</name>
+        <type>int</type>
+    </column>
+    <constraint>
+        <name>ca_presupuestoscli_tpvsneo_cajas</name>
+        <type>FOREIGN KEY (idcaja) REFERENCES tpvsneo_cajas (idcaja) ON DELETE SET NULL ON UPDATE CASCADE</type>
+    </constraint>
+    <constraint>
+        <name>ca_presupuestoscli_tpvsneo</name>
+        <type>FOREIGN KEY (idtpv) REFERENCES tpvsneo (idtpv) ON DELETE SET NULL ON UPDATE CASCADE</type>
+    </constraint>
+</table>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ * Copyright (C) 2022 Carlos Garcia Gomez <carlos@facturascripts.com>
+ * Author Daniel Fernández Giménez <hola@danielfg.es>
+-->
+<table>
+    <column>
+        <name>codagente</name>
+        <type>character varying(10)</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>idtpv</name>
+        <type>integer</type>
+    </column>
+    <column>
+        <name>idtpvagente</name>
+        <type>serial</type>
+    </column>
+    <constraint>
+        <name>tpvsneo_agentes_pkey</name>
+        <type>PRIMARY KEY (idtpvagente)</type>
+    </constraint>
+    <constraint>
+        <name>ca_tpvsneo_agentes_agentes</name>
+        <type>FOREIGN KEY (codagente) REFERENCES agentes (codagente) ON DELETE CASCADE ON UPDATE CASCADE</type>
+    </constraint>
+    <constraint>
+        <name>ca_tpvsneo_agentes_tpvsneo</name>
+        <type>FOREIGN KEY (idtpv) REFERENCES tpvsneo (idtpv) ON DELETE CASCADE ON UPDATE CASCADE</type>
+    </constraint>
+</table>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ * Copyright (C) 2023 Carlos Garcia Gomez <carlos@facturascripts.com>
+ * Author Daniel Fernández Giménez <hola@danielfg.es>
+-->
+<view>
+    <columns>
+        <column name="user" order="100">
+            <widget type="text" fieldname="nick"/>
+        </column>
+        <column name="agent" order="110">
+            <widget type="select" fieldname="codagente">
+                <values source="agentes" fieldcode="codagente" fieldtitle="nombre"/>
+            </widget>
+        </column>
+        <column name="amount" display="right" order="120">
+            <widget type="number" fieldname="amount"/>
+        </column>
+        <column name="motive" order="130">
+            <widget type="text" fieldname="motive"/>
+        </column>
+        <column name="date" display="right" order="140">
+            <widget type="datetime" fieldname="creationdate"/>
+        </column>
+    </columns>
+    <rows>
+        <row type="status">
+            <option color="danger" fieldname="amount">lt:0</option>
+            <option color="success" fieldname="amount">gt:0</option>
+        </row>
+    </rows>
+</view>

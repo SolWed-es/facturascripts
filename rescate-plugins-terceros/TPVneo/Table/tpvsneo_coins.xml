@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ * Copyright (C) 2022 Carlos Garcia Gomez <carlos@facturascripts.com>
+ * Author Daniel Fernández Giménez <hola@danielfg.es>
+-->
+<table>
+    <column>
+        <name>idcoin</name>
+        <type>serial</type>
+    </column>
+    <column>
+        <name>coddivisa</name>
+        <type>character varying(3)</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>name</name>
+        <type>double</type>
+        <null>NO</null>
+    </column>
+    <constraint>
+        <name>tpvsneo_coins_pkey</name>
+        <type>PRIMARY KEY (idcoin)</type>
+    </constraint>
+    <constraint>
+        <name>ca_tpvsneo_coins_divisas</name>
+        <type>FOREIGN KEY (coddivisa) REFERENCES divisas (coddivisa) ON DELETE CASCADE ON UPDATE CASCADE</type>
+    </constraint>
+</table>
