@@ -1,0 +1,74 @@
+{% extends "Master/MenuTemplate.html.twig" %}
+{% block body %}
+<div class="card bg-light mb-3 m-2">
+        <div class="card-header bg-secondary text-white">
+            <h3 class="text-center m-0">Comprimiendo...</h3>
+        </div>
+        <div class="card-body">
+            <p class="card-text text-center">Espera unos segundos</p>
+        </div>
+    </div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+<script>
+    var urlDescargar = new URL(window.location.href);
+    var urls = [
+        {% for factura in fsc.facturas %}
+            {
+                url: 'EditFacturaCliente?code={{ factura.idfactura }}&action=export&option=PDF',
+                nombreArchivo: '{{ factura.codigo }}.pdf'
+            },
+        {% endfor %}
+    ];
+
+    console.log({{urls}});
+
+    if (urls.length > 1) {
+        var zip = new JSZip();
+
+        function agregarArchivosAlZip(urls) {
+            var contador = 0;
+            urls.forEach(function(urlData, index) {
+                var url = urlData.url;
+                var nombreArchivo = urlData.nombreArchivo;
+
+                fetch(url)
+                    .then(function(response) {
+                        return response.blob();
+                    })
+                    .then(function(blob) {
+                        zip.file(nombreArchivo, blob);
+                        contador++;
+                        if (contador === urls.length) {
+                            zip.generateAsync({ type: "blob" })
+                                .then(function(content) {
+                                    var link = document.createElement('a');
+                                    link.href = window.URL.createObjectURL(content);
+                                    link.setAttribute('download', 'facturas.zip');
+
+                                    // Agregar evento click para esperar a que se descargue el archivo ZIP
+                                    link.addEventListener('click', function() {
+                                        history.back(); // Volver atrás cuando se haya descargado el ZIP
+                                    });
+
+                                    document.body.appendChild(link);
+                                    link.click();
+                                });
+                        }
+                    });
+            });
+        }
+
+        agregarArchivosAlZip(urls);
+    } else {
+        var link = document.createElement('a');
+        link.href = urls[0].url;
+        link.setAttribute('download', urls[0].nombreArchivo);
+        document.body.appendChild(link);
+        link.click();
+
+        // Si es solo un archivo, volvemos atrás después de la descarga
+        history.back();
+    }
+</script>
+
+{% endblock %}

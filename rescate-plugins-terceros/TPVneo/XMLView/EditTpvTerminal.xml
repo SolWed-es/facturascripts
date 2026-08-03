@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ * Copyright (C) 2022-2024 Carlos Garcia Gomez <carlos@facturascripts.com>
+ * Author Daniel Fernández Giménez <hola@danielfg.es>
+-->
+<view>
+    <columns>
+        <group name="data" numcolumns="12">
+            <column name="code" display="none" order="0">
+                <widget type="text" fieldname="idtpv"/>
+            </column>
+            <column name="name" numcolumns="3" order="100">
+                <widget type="text" fieldname="name" required="true"/>
+            </column>
+            <column name="serie" numcolumns="3" order="110">
+                <widget type="select" fieldname="codserie" required="true" onclick="EditSerie">
+                    <values source="series" fieldcode="codserie" fieldtitle="descripcion"/>
+                </widget>
+            </column>
+            <column name="customer" titleurl="ListCliente" numcolumns="4" order="120">
+                <widget type="autocomplete" fieldname="codcliente" onclick="EditCliente" required="true">
+                    <values source="clientes" fieldcode="codcliente" fieldtitle="nombre"/>
+                </widget>
+            </column>
+            <column name="currency" numcolumns="2" order="130">
+                <widget type="select" fieldname="coddivisa" required="true" onclick="EditDivisa">
+                    <values source="divisas" fieldcode="coddivisa" fieldtitle="descripcion"/>
+                </widget>
+            </column>
+            <column name="company" numcolumns="3" order="140">
+                <widget type="select" fieldname="idempresa" required="true" onclick="EditEmpresa">
+                    <values source="empresas" fieldcode="idempresa" fieldtitle="nombre"/>
+                </widget>
+            </column>
+            <column name="warehouse" numcolumns="3" order="150">
+                <widget type="select" fieldname="codalmacen" parent="idempresa" required="true" onclick="EditAlmacen">
+                    <values source="almacenes" fieldcode="codalmacen" fieldtitle="nombre" fieldfilter="idempresa"/>
+                </widget>
+            </column>
+            <column name="payment-method-cash" numcolumns="3" order="160">
+                <widget type="select" fieldname="codpago" parent="idempresa" required="true" onclick="EditFormaPago">
+                    <values source="formaspago" fieldcode="codpago" fieldtitle="descripcion" fieldfilter="idempresa"/>
+                </widget>
+            </column>
+            <column name="doc-type" numcolumns="3" order="170">
+                <widget type="select" fieldname="doctype" translate="true" required="true">
+                    <values title="invoice">FacturaCliente</values>
+                    <values title="delivery-note">AlbaranCliente</values>
+                </widget>
+            </column>
+            <column name="list-type" order="180">
+                <widget type="select" fieldname="listtype" translate="true" required="true">
+                    <values title="variants">Variant</values>
+                    <values title="products">Product</values>
+                </widget>
+            </column>
+            <column name="product-limit" numcolumns="2" order="190">
+                <widget type="number" min="0" fieldname="productlimit" required="true"/>
+            </column>
+            <column name="days-until-expiration" description="cart-parking" numcolumns="2" order="200">
+                <widget type="number" min="0" fieldname="budgetdateend" required="true"/>
+            </column>
+            <column name="printer" titleurl="ListTicketPrinter" order="210">
+                <widget type="select" fieldname="idprinter" onclick="EditTicketPrinter">
+                    <values source="tickets_printers" fieldcode="id" fieldtitle="name"/>
+                </widget>
+            </column>
+            <column name="ticket-format" title="ticket" order="220">
+                <widget type="select" fieldname="ticketformat" parent="doctype"/>
+            </column>
+            <column name="number-tickets" order="230">
+                <widget type="number" min="1" step="1" fieldname="ticket_number" required="true"/>
+            </column>
+            <column name="close-agent" numcolumns="2" order="240">
+                <widget type="number" min="0" fieldname="closeagent" required="true"/>
+            </column>
+        </group>
+        <group name="advanced" numcolumns="12" valign="bottom">
+            <column name="active" order="100">
+                <widget type="checkbox" fieldname="active"/>
+            </column>
+            <column name="group-lines" order="110">
+                <widget type="checkbox" fieldname="grouplines"/>
+            </column>
+            <column name="change-price-tpv" order="120">
+                <widget type="checkbox" fieldname="changeprice"/>
+            </column>
+            <column name="add-discount-tpv" order="130">
+                <widget type="checkbox" fieldname="adddiscount"/>
+            </column>
+            <column name="add-empty-line-tpv" order="140">
+                <widget type="checkbox" fieldname="addemptyline"/>
+            </column>
+            <column name="print-preticket" order="150">
+                <widget type="checkbox" fieldname="preticket"/>
+            </column>
+            <column name="activate-sound" order="160">
+                <widget type="checkbox" fieldname="sound"/>
+            </column>
+            <column name="show-prices-with-vat" order="170">
+                <widget type="checkbox" fieldname="price_tax_include"/>
+            </column>
+            <column name="not-allow-selling-price-cero" order="180">
+                <widget type="checkbox" fieldname="not_line_price_empty"/>
+            </column>
+        </group>
+    </columns>
+</view>

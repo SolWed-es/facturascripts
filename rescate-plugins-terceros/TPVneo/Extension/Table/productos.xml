@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ * Copyright (C) 2022 Carlos Garcia Gomez <carlos@facturascripts.com>
+ * Author Daniel Fernández Giménez <hola@danielfg.es>
+-->
+<table>
+    <column>
+        <name>tpvsort</name>
+        <type>INT</type>
+        <null>NO</null>
+        <default>100</default>
+    </column>
+</table>

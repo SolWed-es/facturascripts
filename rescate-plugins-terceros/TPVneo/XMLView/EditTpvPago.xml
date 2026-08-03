@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ * Copyright (C) 2022-2023 Carlos Garcia Gomez <carlos@facturascripts.com>
+ * Author Daniel Fernández Giménez <hola@danielfg.es>
+-->
+<view>
+    <columns>
+        <group name="data" numcolumns="12" valign="bottom">
+            <column name="code" display="none" order="0">
+                <widget type="text" fieldname="idtpvpago"/>
+            </column>
+            <column name="pos-terminal" numcolumns="3" order="100">
+                <widget type="select" fieldname="idtpv" required="true" onclick="EditTPVneo">
+                    <values source="tpvsneo" fieldcode="idtpv" fieldtitle="name"/>
+                </widget>
+            </column>
+            <column name="payment-method" titleurl="ListFormaPago" numcolumns="3" order="110">
+                <widget type="select" fieldname="codpago" onclick="EditFormaPago" required="true">
+                    <values/>
+                </widget>
+            </column>
+            <column name="paid" order="120">
+                <widget type="checkbox" fieldname="paid"/>
+            </column>
+        </group>
+    </columns>
+</view>

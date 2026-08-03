@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ * Copyright (C) 2022 Carlos Garcia Gomez <carlos@facturascripts.com>
+ * Author Daniel Fernández Giménez <hola@danielfg.es>
+-->
+<view>
+    <columns>
+        <group name="coins" numcolumns="12">
+            <column name="code" display="none" order="0">
+                <widget type="text" fieldname="idcoin"/>
+            </column>
+            <column name="currency" display="none" order="0">
+                <widget type="text" fieldname="coddivisa"/>
+            </column>
+            <column name="name" order="100">
+                <widget type="number" min="0" decimal="2" fieldname="name" required="true"/>
+            </column>
+        </group>
+    </columns>
+</view>

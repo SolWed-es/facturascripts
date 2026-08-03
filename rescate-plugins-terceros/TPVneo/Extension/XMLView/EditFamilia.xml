@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ * Copyright (C) 2024 Carlos Garcia Gomez <carlos@facturascripts.com>
+ * Author Daniel Fernández Giménez <hola@danielfg.es>
+-->
+<view>
+    <columns>
+        <group name="advanced">
+            <column name="tpv-show" numcolumns="4" order="140">
+                <widget type="checkbox" fieldname="tpv_show"/>
+            </column>
+            <column name="tpv-sort" numcolumns="4" order="150">
+                <widget type="number" min="0" step="1" fieldname="tpv_sort"/>
+            </column>
+        </group>
+    </columns>
+</view>

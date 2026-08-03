@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ * Copyright (C) 2022-2023 Carlos Garcia Gomez <carlos@facturascripts.com>
+ * Author Daniel Fernández Giménez <hola@danielfg.es>
+-->
+<table>
+    <column>
+        <name>codpago</name>
+        <type>character varying(10)</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>idtpv</name>
+        <type>integer</type>
+    </column>
+    <column>
+        <name>idtpvpago</name>
+        <type>serial</type>
+    </column>
+    <column>
+        <name>paid</name>
+        <type>boolean</type>
+        <default>false</default>
+    </column>
+    <constraint>
+        <name>tpvsneo_pagos_pkey</name>
+        <type>PRIMARY KEY (idtpvpago)</type>
+    </constraint>
+    <constraint>
+        <name>ca_tpvsneo_pagos_formaspago</name>
+        <type>FOREIGN KEY (codpago) REFERENCES formaspago (codpago) ON DELETE CASCADE ON UPDATE CASCADE</type>
+    </constraint>
+    <constraint>
+        <name>ca_tpvsneo_pagos_tpvsneo</name>
+        <type>FOREIGN KEY (idtpv) REFERENCES tpvsneo (idtpv) ON DELETE CASCADE ON UPDATE CASCADE</type>
+    </constraint>
+</table>
