@@ -448,7 +448,12 @@ abstract class ModelClass
 
             $this->{$key} = match ($type) {
                 'tinyint', 'boolean' => $this->getBoolValueForField($field, $value),
-                'integer', 'int' => $this->getIntegerValueForField($field, $value),
+                // SolwedES fix (bug borrado de líneas de documento): PostgreSQL
+                // reporta idlinea/idpartida como 'bigint'. Sin castear, el valor
+                // se queda como string y la comparación estricta de los *LineHTML
+                // ($value->idlinea === (int)$rmLineId) falla, impidiendo eliminar
+                // líneas. PHP 64-bit -> castear bigint a int es seguro.
+                'integer', 'int', 'int2', 'int4', 'int8', 'smallint', 'bigint', 'serial', 'bigserial' => $this->getIntegerValueForField($field, $value),
                 'decimal', 'double', 'double precision', 'float' => $this->getFloatValueForField($field, $value),
                 'date' => empty($value) ? null : Tools::date($value),
                 'datetime', 'timestamp' => empty($value) ? null : Tools::dateTime($value),
