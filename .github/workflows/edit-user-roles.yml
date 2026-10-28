@@ -1,0 +1,33 @@
+name: EditUser role regression
+
+on:
+  pull_request:
+    branches: [dev, solwed/dev, solwed/production]
+    paths:
+      - 'Core/**'
+      - 'Test/Isolated/EditUserRoles.php'
+      - '.github/workflows/edit-user-roles.yml'
+  push:
+    branches: [fix/erp-asignar-grupo-empleado]
+
+permissions:
+  contents: read
+
+jobs:
+  roles:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php: ['8.0', '8.3', '8.5']
+    steps:
+      - uses: actions/checkout@v5
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '${{ matrix.php }}'
+          coverage: none
+      - name: Check syntax
+        run: |
+          php -l Core/Controller/EditUser.php
+          php -l Test/Isolated/EditUserRoles.php
+      - name: Run isolated regression without a database
+        run: php Test/Isolated/EditUserRoles.php
