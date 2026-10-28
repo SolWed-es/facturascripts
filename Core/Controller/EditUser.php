@@ -132,6 +132,12 @@ class EditUser extends EditController
 
     protected function editAction(): bool
     {
+        // Role rows use an assignment ID as code, not the user's immutable nick.
+        if ($this->active === 'EditRoleUser') {
+            $this->permissions->allowUpdate = $this->user->admin;
+            return parent::editAction();
+        }
+
         $this->permissions->allowUpdate = $this->allowUpdate();
 
         // prevent nick change: nick is immutable once created
